@@ -8,6 +8,13 @@ with a link to the example that this package is based on found here https://gith
 
 
 # Quick Setup :
+
+If you don't already have kerberos authentication set up, do that first:
+
+```
+kinit username@CERN.CH
+```
+
 ```
 git clone https://gitlab.cern.ch/JetSubstructure/Tutorial_HCW2016.git
 cd Tutorial_HCW2016/
