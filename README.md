@@ -50,3 +50,9 @@ Run an example on the grid by:
 ```
 source Run_grid_zprime_list.sh
 ```
+
+## ToDo List For Future:
+- [] Make the jet grooming in JetRec
+- [] Make jet moment calculation in JetRec using JetSubstructureUtils but keep one example with fastjet directly and/or fastjet/contrib so that someone can see how to use that
+- [] Make new xAH algorithm for calculation of MET
+- [] Make new xAH algorithm to show how to do jet input modifications
