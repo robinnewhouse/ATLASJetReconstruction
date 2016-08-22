@@ -109,10 +109,12 @@ localSetupRucioClients
 localSetupPandaClient
 voms-proxy-init -voms atlas
 
-rucio get mc15_13TeV.301256.Pythia8EvtGen_A14NNPDF23LO_Wprime_WZqqqq_m800.merge.DAOD_JETM8.e3743_s2608_s2183_r7772_r7676_p2613
+rucio get --nrandom 1 mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528
 ```
 
 ## Run locally
+You will first need to modify the ```Run_local.sh``` script to point to the directory where you downloaded the file from the grid previously
+
 ```
 source Run_local.sh
 ```
@@ -130,8 +132,3 @@ Run an example on the grid by:
 source Run_grid_zprime_list.sh
 ```
 
-## ToDo List For Future:
-- Make the jet grooming in JetRec
-- Make jet moment calculation in JetRec using JetSubstructureUtils but keep one example with fastjet directly and/or fastjet/contrib so that someone can see how to use that
-- **new xAH algorithm** for calculation of MET
-- **new xAH algorithm** to show how to do jet input modifications
