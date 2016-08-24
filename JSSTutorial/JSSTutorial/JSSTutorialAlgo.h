@@ -16,6 +16,10 @@
 #include "xAODJet/JetConstituentVector.h"
 #include "xAODBTagging/BTagging.h"
 
+// for retrieving of topocluster container
+#include "xAODCaloEvent/CaloCluster.h"
+#include "xAODCaloEvent/CaloClusterContainer.h"
+
 // Infrastructure include(s):
 #include <xAODRootAccess/Init.h>
 #include <xAODRootAccess/TEvent.h>
@@ -37,14 +41,8 @@
 // Subjet Calibration
 #include "JetCalibTools/JetCalibrationTool.h"
 
-#include "JetRec/JetRecTool.h"
-#include "JetRec/PseudoJetGetter.h"
-#include "JetRec/JetFromPseudojet.h"
-#include "JetRec/JetFinder.h"
-
 // for Soft Drop
 #include "fastjet/contrib/SoftDrop.hh"
-#include "JetEDM/JetConstituentFiller.h"
 #include "fastjet/ClusterSequence.hh"
 
 // for Trimming
@@ -59,7 +57,6 @@
 // for NSubjettiness
 #include <fastjet/contrib/Nsubjettiness.hh>
 
-
 // for Shower Deconstruction
 #include "ShowerDeconstruction/ShowerDeconstruction.h"
 
@@ -69,7 +66,8 @@
 #include "TH2D.h"
 #include "TProfile.h"
 #include "TTree.h"
-
+#include <TFile.h>
+#include <TLorentzVector.h>
 
 class JSSTutorialAlgo : public TreeAlgo
 {
@@ -133,25 +131,6 @@ private:
   double tvar_jet_SoftDrop_d2; //!
   double tvar_jet_SoftDrop_tau32; //!
 
-
-
-  ////////////////////////////
-  //For jet reconstruction
-  ////////////////////////////
-
-  //comment here
-  ToolHandleArray<IPseudoJetGetter> getterArray; //!
-  //comment here
-  PseudoJetGetter* lcgetter; //!
-  //comment here
-  JetFromPseudojet* jetFromPJ; //!
-  //comment here
-  JetFinder* finder; //!
-  //comment here
-  ToolHandleArray<IJetModifier> modArray; //!
-  //comment here
-  JetRecTool* s_simpleJetBuilder; //!
-
   // variables that don't get filled at submission time should be
   // protected from being send from the submission node to the worker
   // node (done by the //!)
@@ -175,20 +154,6 @@ public:
   virtual EL::StatusCode postExecute ();
   virtual EL::StatusCode finalize ();
   virtual EL::StatusCode histFinalize ();
-
-  // calo - TA  Mass combination
-//   void setResolHisto_Pt_M(std::string m_topo);
-//   float calculateCombinedMass_Pt_M(float mcalo,float mTA,float recopt,float absetadet);
-
-  // find and identify truth particles
-  const xAOD::TruthParticle* GetParticleAfterFSR(const xAOD::TruthParticle* inputParticle);
-  const xAOD::TruthParticle* GetHadronicTopParticle(const xAOD::TruthParticle* inputParticle);
-  const xAOD::TruthParticle* GetHadronicWParticle(const xAOD::TruthParticle* inputParticle);
-  const xAOD::TruthParticle* GetHadronicZParticle(const xAOD::TruthParticle* inputParticle);
-  int CharacterizeHadronicTopJet(const  xAOD::TruthParticle* truthtop, const xAOD::Jet* truthjet, double dRmax);
-  int QuarkGluonLabelJet(const xAOD::TruthParticleContainer* truthparticles, const xAOD::Jet* fatjet, double dRmax);
-
-
 
   // this is needed to distribute the algorithm to the workers
   ClassDef(JSSTutorialAlgo, 1);

@@ -16,6 +16,7 @@ svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/BoostedJetTaggers/
 # source subjet_calibration.sh
 
 #setup analysis base version and get packages consistent with that version
+setupATLAS
 Release=2.4.18
 rcSetup Base,$Release
 python xAODAnaHelpers/scripts/checkoutASGtags.py $Release

@@ -18,14 +18,8 @@
 #include <xAODAnaHelpers/tools/ReturnCheckConfig.h>
 #include <JSSTutorial/JSSTutorialAlgo.h>
 
-// ROOT include(s):
-#include <TFile.h>
-#include <TTree.h>
-#include <TLorentzVector.h>
-
 // c++ include(s)
 #include <stdexcept>
-
 
 // this is needed to distribute the algorithm to the workers
 ClassImp(JSSTutorialAlgo)
@@ -138,7 +132,6 @@ EL::StatusCode JSSTutorialAlgo :: histInitialize ()
 
   outTree = new TTree(m_TreeName.c_str(),m_TreeName.c_str());
 
-
   outTree->Branch("tvar_jet_Ungroomed_pt",    &tvar_jet_Ungroomed_pt);
   outTree->Branch("tvar_jet_Ungroomed_m",     &tvar_jet_Ungroomed_m);
   outTree->Branch("tvar_jet_Ungroomed_d2",    &tvar_jet_Ungroomed_d2);
@@ -156,10 +149,8 @@ EL::StatusCode JSSTutorialAlgo :: histInitialize ()
   outTree->Branch("tvar_jet_SoftDrop_d2",     &tvar_jet_SoftDrop_d2);
   outTree->Branch("tvar_jet_SoftDrop_tau32",  &tvar_jet_SoftDrop_tau32);
 
-
   //add the TTree to the output
   outTree->SetDirectory( treeFile->GetDirectory("TreeDirectory") );
-
 
   return EL::StatusCode::SUCCESS;
 
@@ -249,50 +240,6 @@ EL::StatusCode JSSTutorialAlgo :: initialize ()
   // count number of events
   m_eventCounter = 0;
 
-  ////////////////////////////////////////////////////
-  // Create/configure the input builder
-  ////////////////////////////////////////////////////
-  lcgetter = new PseudoJetGetter("lcget");
-  lcgetter->setProperty("InputContainer", "CaloCalTopoClusters");
-  lcgetter->setProperty("OutputContainer", "PseudoJetLCTopo");
-  lcgetter->setProperty("Label", "LCTopo");
-  lcgetter->setProperty("SkipNegativeEnergy", true);
-  lcgetter->setProperty("GhostScale", 0.0);
-  lcgetter->initialize();
-
-  getterArray.push_back( ToolHandle<IPseudoJetGetter>(lcgetter) );
-
-  ////////////////////////////////////////////////////
-  // Create/configure Jet Finder
-  // Technically we need this tool to translate fastjet to xAOD::Jet
-  ////////////////////////////////////////////////////
-  jetFromPJ = new JetFromPseudojet("jetbuild");
-  std::vector<std::string> areatts = {"ActiveArea", "ActiveAreaFourVector"};
-  jetFromPJ->setProperty("Attributes", areatts);
-  jetFromPJ->msg().setLevel(MSG::ERROR);
-  jetFromPJ->initialize();
-
-  finder = new JetFinder("AntiKt10Finder");
-  finder->setProperty("JetAlgorithm", "AntiKt");
-  finder->setProperty("JetRadius", 1.0);
-  finder->setProperty("PtMin", 2000.0);
-  finder->setProperty("GhostArea", 0.01); // if non-null will run ActiveArea calculation
-  finder->setProperty("RandomOption", 1);
-  finder->setProperty("JetBuilder", ToolHandle<IJetFromPseudojet>(jetFromPJ)); // associate
-  finder->msg().setLevel(MSG::INFO);
-  finder->initialize();
-
-  ////////////////////////////////////////////////////
-  // Create/configure Jet modifiers
-  ////////////////////////////////////////////////////
-  s_simpleJetBuilder = new JetRecTool("FullJetRecTool");
-  s_simpleJetBuilder->setProperty("OutputContainer", "AntiKt10LCTopoJetsSAM");
-  s_simpleJetBuilder->setProperty("PseudoJetGetters", getterArray);
-  s_simpleJetBuilder->setProperty("JetFinder", ToolHandle<IJetFinder>(finder));
-  s_simpleJetBuilder->setProperty("JetModifiers", modArray);
-  s_simpleJetBuilder->msg().setLevel(MSG::INFO);
-  s_simpleJetBuilder->initialize();
-
   Info("initialize()", "JSSTutorialAlgo Interface succesfully initialized!" );
   return EL::StatusCode::SUCCESS;
 }
@@ -315,25 +262,40 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
 
 
   ///////////////////////////
-  // Build jets
-  // this means that the container of jets specified
-  // with the "OutputContainer" parameter of the JetRecTool
-  // is now available for use in your analysis
+  // Build Jets
+  // In native fastjet this is done by passing a vector of PseudoJets to a ClusterSequence and
+  // retrieving from this a vector of PseudoJets which are themselves the jets
   ///////////////////////////
-  int i_jet_build_check = s_simpleJetBuilder->execute();
-  if(i_jet_build_check != 0 ){ // error
-    std::cout<<"JetBuildingFailed"<<std::endl;
+
+  // Obtain the set of clusters from StoreGate
+  const xAOD::CaloClusterContainer* clusters;
+  RETURN_CHECK("JSSTutorialAlgo::execute()", HelperFunctions::retrieve(clusters, "CaloCalTopoClusters", m_event, m_store,  m_verbose), "");
+  std::cout<<"NumClus: "<<clusters->size()<<std::endl;
+
+  //reformat the vector of clusters into a vector of fastjet::PseudoJets
+  std::vector<fastjet::PseudoJet> jet_inputs;
+  TLorentzVector temp_p4;
+  for (const xAOD::CaloCluster* clus : *clusters) {
+
+    std::cout<<"cluster(pt,m,eta,phi): pt="<<clus->pt()/1000.
+                                  <<"  m="<<clus->m()/1000.
+                                  <<"  eta="<<clus->eta()
+                                  <<"  phi="<<clus->phi()
+                                  <<std::endl;
+
+    temp_p4.SetPtEtaPhiM(clus->pt()/1000., clus->eta(), clus->phi(), clus->m()/1000.);
+
+    jet_inputs.push_back(fastjet::PseudoJet(temp_p4.Px(),temp_p4.Py(),temp_p4.Pz(),temp_p4.E()));
   }
 
+  //define the type of jets you will build (http://fastjet.fr/repo/doxygen-3.0.3/classfastjet_1_1JetDefinition.html)
+  fastjet::JetDefinition jet_def = fastjet::JetDefinition(fastjet::antikt_algorithm, 1.0, fastjet::E_scheme, fastjet::Best);
 
-  ///////////////////////////
-  // Get Jets for Use
-  // use the xAH helper functions
-  ///////////////////////////
-  const xAOD::JetContainer*      jetsSAM(nullptr);
-  RETURN_CHECK("JSSTutorialAlgo::execute()", HelperFunctions::retrieve(jetsSAM, "AntiKt10LCTopoJetsSAM", m_event, m_store,  m_verbose), "");
-  std::cout<<"jetsSAM size: "<<jetsSAM->size()<<std::endl;
+  //define the cluster sequence (http://fastjet.fr/repo/doxygen-3.0.0/classfastjet_1_1ClusterSequence.html)
+  fastjet::ClusterSequence clust_seq = fastjet::ClusterSequence(jet_inputs, jet_def);
 
+  //get the jets with some pt cut, in this case pt>0
+  std::vector<fastjet::PseudoJet> pjets = clust_seq.inclusive_jets(0.0);
 
   /////////////////////////////////////////
   // Loop over those jets and perform a few basic calculation
@@ -388,20 +350,14 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
   float d2    = 0.0;
   float tau32 = 0.0;
 
-  for(auto myJet : *jetsSAM){
+  //loop over the vector of jets
+  for(auto jet_Ungroomed : pjets){
 
     //only examine jets above 200 GeV
-    if(myJet->pt()<200000.0)
+    if(jet_Ungroomed.pt()<200.0)
       continue;
 
-    std::cout<<std::endl<<"JetPt : "<<myJet->pt()<<std::endl;
-
-    //Retrieve original jet
-    std::vector<fastjet::PseudoJet> constit_pseudojets = jet::JetConstituentFiller::constituentPseudoJets(*myJet);
-    fastjet::JetDefinition jet_def = fastjet::JetDefinition(fastjet::antikt_algorithm, 1.0, fastjet::E_scheme, fastjet::Best);
-    fastjet::ClusterSequence clust_seq = fastjet::ClusterSequence(constit_pseudojets, jet_def);
-    std::vector<fastjet::PseudoJet> pjets = clust_seq.inclusive_jets(0.0);
-    auto jet_Ungroomed = pjets[0];
+    std::cout<<std::endl<<"JetPt : "<<jet_Ungroomed.pt()<<std::endl;
 
     //Ungroomed
     std::cout<<"Ungroomed(mass):         "<<jet_Ungroomed.m()<<std::endl;
@@ -556,198 +512,5 @@ EL::StatusCode JSSTutorialAlgo :: histFinalize ()
 
   return EL::StatusCode::SUCCESS;
 
-}
-
-//=======================================================
-//
-//=======================================================
-const xAOD::TruthParticle* JSSTutorialAlgo::GetParticleAfterFSR(const xAOD::TruthParticle* inputParticle){
-  // follow decay chain along X -> X (+ Y) until X decays into something else, return last X
-  if( !inputParticle ) return inputParticle;
-
-  const xAOD::TruthParticle* after_fsr = inputParticle;
-  int pid = inputParticle->pdgId();
-
-  bool fsr_loop = true;
-  while(fsr_loop){
-    fsr_loop = false; // only continue loop if we find suitable child...
-    for(unsigned int i_child=0; i_child<after_fsr->nChildren(); i_child++){
-      if( after_fsr->child(i_child)->pdgId() == pid ){
-        // child of same type, continue fsr loop child
-        fsr_loop = true;
-        after_fsr = after_fsr->child(i_child);
-        break;
-      }
-    }
-  }
-
-  return after_fsr;
-}
-//=======================================================
-//
-//=======================================================
-const xAOD::TruthParticle* JSSTutorialAlgo::GetHadronicTopParticle(const xAOD::TruthParticle* inputParticle)
-{
-  // if input top: follow through FSR, test if decays hadronically, try to match
-  // if input W: test if decays hadronically and follow upwards to top
-  // return top after fsr or null if no top or no hadronic W
-  // FIXME: someone should check this and can one do this more elegantly?
-  if( !inputParticle ) return inputParticle;
-
-  const xAOD::TruthParticle* top_after_fsr = nullptr;
-  const xAOD::TruthParticle* W_after_fsr = nullptr;
-
-  // get top after FSR
-  if( inputParticle->absPdgId() == 6 ){
-    top_after_fsr = GetParticleAfterFSR(inputParticle);
-    // get W child
-    for(unsigned int i_child=0; i_child<top_after_fsr->nChildren(); i_child++){
-      if( top_after_fsr->child(i_child)->absPdgId() == 24 ){ // found W, stop
-        W_after_fsr = top_after_fsr->child(i_child);
-        break;
-      }
-    }
-  }
-  // check if W comes from top and get top parent
-  else if( inputParticle->absPdgId() == 24){
-    top_after_fsr = inputParticle;
-    W_after_fsr = inputParticle;
-    bool parent_loop = true;
-    bool found_top = false;
-    while(parent_loop){
-      parent_loop = false; // only continue loop if we find suitable parent.
-      for(unsigned int i_parent=0; i_parent<top_after_fsr->nParents(); i_parent++){
-        if( top_after_fsr->parent(i_parent)->absPdgId() == 6 ){ // found t parent
-          parent_loop = false;
-          found_top = true;
-          top_after_fsr = top_after_fsr->parent(i_parent);
-          break;
-        }
-        else if(  top_after_fsr->parent(i_parent)->absPdgId() == 24 ){ // found another W, continue
-          parent_loop = true;
-          top_after_fsr = top_after_fsr->parent(i_parent);
-          break;
-        }
-      }
-    }
-    if(!found_top) top_after_fsr = nullptr;
-  }
-
-  // no good top or W found, we can already abort
-  if( !top_after_fsr || !W_after_fsr ) return nullptr;
-
-  // check if W decays hadronically
-  if( GetHadronicWParticle(W_after_fsr) )
-    return top_after_fsr;
-  else
-    return nullptr;
-}
-//=======================================================
-//
-//=======================================================
-const xAOD::TruthParticle* JSSTutorialAlgo::GetHadronicWParticle(const xAOD::TruthParticle* inputParticle)
-{
-  if( !inputParticle || (inputParticle->absPdgId() != 24) ) return nullptr;
-
-  const xAOD::TruthParticle* W_after_fsr = GetParticleAfterFSR(inputParticle);
-  if(W_after_fsr->nChildren()>0 && W_after_fsr->child(0)->absPdgId() < 7)
-    return W_after_fsr;
-  else
-    return nullptr;
-}
-//=======================================================
-//
-//=======================================================
-const xAOD::TruthParticle* JSSTutorialAlgo::GetHadronicZParticle(const xAOD::TruthParticle* inputParticle)
-{
-  if( !inputParticle || (inputParticle->absPdgId() != 23) ) return nullptr;
-
-  const xAOD::TruthParticle* Z_after_fsr = GetParticleAfterFSR(inputParticle);
-  if(Z_after_fsr->nChildren()>0 && Z_after_fsr->child(0)->absPdgId() < 7)
-     return Z_after_fsr;
-  else
-    return nullptr;
-}
-//=======================================================
-//
-//=======================================================
-// characterize matching between truth jet and hadronic top particle
-// 1. is jet dR matched to truth top particle         x 100
-// 2. is jet dR matched to truth b particle           x  10
-// 3. is jet dR matched to n truth W daughter quarks  x   1
-// returns 100*1. + 10*2. + 3.
-// to decode: 1. = (returnCode/100)%10, 2. = (returnCode/10)%10, 3. = returnCode%10
-int JSSTutorialAlgo::CharacterizeHadronicTopJet(const  xAOD::TruthParticle* truthtop, const xAOD::Jet* fatjet, double dRmax)
-{
-  int isTopMatched=0;
-  int isBMatched=0;
-  int nMatchedWChildren = 0;
-  int returnCode = 0;
-
-  const xAOD::TruthParticle* truthtop_afterFSR = GetHadronicTopParticle(truthtop);
-  if(!truthtop_afterFSR) // not a hadronic top...
-    return 0;
-
-  const xAOD::TruthParticle* truthW_afterFSR = nullptr;
-  const xAOD::TruthParticle* truthB = nullptr;
-  for(unsigned int i_child=0; i_child<truthtop_afterFSR->nChildren(); i_child++)
-  {
-    if( truthtop_afterFSR->child(i_child)->absPdgId() == 24) // W
-      truthW_afterFSR = GetHadronicWParticle(truthtop_afterFSR->child(i_child));
-    else if( truthtop_afterFSR->child(i_child)->absPdgId() ==  5 ) // b
-      truthB = truthtop_afterFSR->child(i_child);
-  }
-
-  TLorentzVector fatjet_vector;
-  fatjet_vector.SetPtEtaPhiM(fatjet->pt(), fatjet->eta(), fatjet->phi(), fatjet->m());
-
-  TLorentzVector top_vector;
-  top_vector.SetPtEtaPhiM(truthtop_afterFSR->pt(), truthtop_afterFSR->eta(), truthtop_afterFSR->phi(), truthtop_afterFSR->m());
-  if( fatjet_vector.DeltaR(top_vector) < dRmax )
-    isTopMatched = 1;
-
-  if(truthB){ // FIXME: what to do about tops that don't decay into b but other quark (~5%?!) ?
-    TLorentzVector b_vector;
-    b_vector.SetPtEtaPhiM(truthB->pt(), truthB->eta(), truthB->phi(), truthB->m());
-    if( fatjet_vector.DeltaR(b_vector) < dRmax )
-      isBMatched = 1;
-  }
-
-  if(truthW_afterFSR){
-    for(unsigned int i_child=0; i_child<truthW_afterFSR->nChildren(); i_child++){
-      const xAOD::TruthParticle* truthWchild = truthW_afterFSR->child(i_child);
-      TLorentzVector WChild_vector;
-      WChild_vector.SetPtEtaPhiM(truthWchild->pt(), truthWchild->eta(), truthWchild->phi(), truthWchild->m());
-      if( truthWchild->absPdgId() < 7 && fatjet_vector.DeltaR(WChild_vector) < dRmax )
-        nMatchedWChildren += 1;
-    }
-  }
-
-  returnCode = 100*isTopMatched + 10*isBMatched + nMatchedWChildren;
-  return returnCode;
-}
-//=======================================================
-//
-//=======================================================
-// returns pdgid of highest energy parton the jet can be matched to
-int JSSTutorialAlgo::QuarkGluonLabelJet(const xAOD::TruthParticleContainer* truthparticles, const xAOD::Jet* fatjet, double dRmax)
-{
-  double Emax = 0;
-  TLorentzVector fatjet_vector;
-  fatjet_vector.SetPtEtaPhiM(fatjet->pt(), fatjet->eta(), fatjet->phi(), fatjet->m());
-  int label = 0;
-
-  for(auto parton : *truthparticles){
-    if( parton->pt() < 5000) continue; // avoid errors for pt = 0 particles
-    if( parton->absPdgId() > 9 && parton->absPdgId() != 21 ) continue; // not quark or gluon(9 or 21)
-    if( parton->e() < Emax) continue; // want the one with the highest energy
-    TLorentzVector parton_vector;
-    parton_vector.SetPtEtaPhiM(parton->pt(), parton->eta(), parton->phi(), parton->m());
-    if( fatjet_vector.DeltaR(parton_vector) < dRmax ){
-      label = parton->pdgId();
-      Emax = parton->e();
-    }
-  }
-  return label;
 }
 
