@@ -1,5 +1,6 @@
 # Authors : 
 Sam Meehan <samuel.meehan@cern.ch>
+Pierre-Antoine Delsart <delsart@in2p3.fr>
 
 # Description
 This package is intended to be used to perform jet reconstruction
@@ -112,12 +113,74 @@ voms-proxy-init -voms atlas
 rucio get --nrandom 1 mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528
 ```
 
-## Run locally
-You will first need to modify the ```Run_local.sh``` script to point to the directory where you downloaded the file from the grid previously
+## Tutorial 1 : Intro to native fastjet in ATLAS
+Being familiar with fastjet and learning how to use it in your analysis is important, 
+especially if you will be working in JetEtMiss (because your advisor said so)
+or because you want to be more creative than the ATLAS tools will allow.  
+Therefore, if you are not familiar with this set of tools please follow this tutorial.
+To simply execute the tutorial (after successfully compiling and getting the test file), 
+execute the following command :
 
 ```
-source Run_local.sh
+xAH_run.py --files /afs/cern.ch/work/m/meehan/public/JSSTutorial2016/mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528/DAOD_JETM8* \
+--nevents 1 \
+--config config_Tutorial1_fastjet.py \
+-v \
+--submitDir OutputDirectory_Tutorial1_fastjet \
+direct
 ```
+
+note that you will have to point to the local file that you downloaded and not Sam's public directory.  Next, go 
+ahead and read the source code and see if you can figure out how it works.
+
+```
+config_Tutorial1_fastjet.py
+JSSTutorial/JSSTutorial/JSSTutorialAlgo.h
+JSSTutorial/Root/JSSTutorialAlgo.cxx
+```
+
+Consider the following questions :
+- How does the command know to execute the EventLoop algorithm in ```JSSTutorialAlgo.cxx```?
+- What are the different components that I need to include in my header files and ```cmt/MakeFile.RootCore``` to allow me to have
+access to fastjet?
+- Where is jet finding done?  What if I only wanted to examine jets that have a minimum pT of 20 GeV when produced by fastjet?  How could I do that?
+- What do I need to do in particular to get access to the fastjet contrib packages (https://fastjet.hepforge.org/contrib/)?  Can you identify an example 
+of a fastjet contrib used here?  
+
+## Tutorial 2 : Intro to JetRec in ATLAS
+If you are already confident with using native fastjet then you've come to the right place.  The next step to being a jet expert is learning
+how to use *JetRec* (http://acode-browser.usatlas.bnl.gov/lxr/source/atlas/Reconstruction/Jet/JetRec/).  This is the software that is used to perform
+official ATLAS reconstruction, and once you come up with an amazing new idea, you will need to implement it here, if the functionality to execute it
+does not already exist.
+
+To get you started, this tutorial is intended to do *the exact same thing* as Tutorial 1, but using the official ATLAS tools.  Therefore, the task
+here is to read the code in parallel with the last tutorial and find the similarities and differences.  But first, execute this tutorial
+with the following command:
+
+```
+xAH_run.py --files /afs/cern.ch/work/m/meehan/public/JSSTutorial2016/mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528/DAOD_JETM8* \
+--nevents 1 \
+--config config_Tutorial2_JetRec.py \
+-v \
+--submitDir OutputDirectory_Tutorial2_JetRec \
+direct
+```
+
+note that you will have to point to the local file that you downloaded and not Sam's public directory.  Next, go 
+ahead and read the source code and see if you can figure out how it works.
+
+```
+config_Tutorial2_JetRec.py
+JSSTutorial/JSSTutorial/JSSTutorialJetRecAlgo.h
+JSSTutorial/Root/JSSTutorialJetRecAlgo.cxx
+```
+
+Consider the following questions :
+- How did you "get the clusters" from the xAOD::CalCaloTopoCluster container this time?
+- ...
+
+## Tutorial 3 : How to configure more extensive JetRec tools in jobOptions
+
 
 ## Run an example on the grid :
 NOT TESTED
@@ -131,4 +194,9 @@ Run an example on the grid by:
 ```
 source Run_grid_zprime_list.sh
 ```
+
+# ToDo (new examples):
+- [JET] how to write a simple modifier themselves
+- [JET] playing with variable-R jet reconstruction
+- [MET] example of how to use the custom jets output from the example to create a new set of MET maps and then use these for MET rebuilding
 
