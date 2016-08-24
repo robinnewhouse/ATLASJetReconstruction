@@ -135,29 +135,32 @@ def buildJetCalibModifiers(algName, isFastSim = False, **userOptions):
 
 
 
-def buildJetTrackVtxAssoc():
+def buildJetTrackVtxAssoc(tool=None):
     from ROOT import TrackVertexAssociationTool, CP__TightTrackVertexAssociationTool
     cpTVa = CP__TightTrackVertexAssociationTool("jetTighTVAtool", dzSinTheta_cut=3, doPV=True)
-    return  TrackVertexAssociationTool(
-        "tvassoc",
-        TrackParticleContainer  = "InDetTrackParticles",
-        TrackVertexAssociation  = "JetTrackVtxAssoc",
-        VertexContainer         = "PrimaryVertices",
-        TrackVertexAssoTool     = cpTVa,
-        )
+    if tool is None:
+        tool = TrackVertexAssociationTool("tvassoc")
+        
+    tool.TrackParticleContainer  = "InDetTrackParticles"
+    tool.TrackVertexAssociation  = "JetTrackVtxAssoc"
+    tool.VertexContainer         = "PrimaryVertices"
+    tool.TrackVertexAssoTool     = cpTVa
+    return tool
 
 
-def buildJetTrackSelection():
+def buildJetTrackSelection(tool=None):
     # for now we call our onw defined buildTrackSelectionTool (TrackSelecToolHelper.h) because there's no
     # dictionnary for InDet__InDetTrackSelectionTool.
-    ROOT.buildTrackSelectionTool("TrackSelForJet", "Loose")
+    inDetSel = ROOT.buildTrackSelectionTool("TrackSelForJet", "Loose")
 
-    return JetTrackSelectionTool(
-        "trackselloose_trackjets",
-        InputContainer  = "InDetTrackParticles",
-        OutputContainer = "JetSelectedTracks_LooseTrackJets",
-        Selector        = inDetSel,
-    )
+    if tool is None:
+        tool = JetTrackSelectionTool("trackselloose_trackjets")
+        
+    tool.InputContainer  = "InDetTrackParticles"
+    tool.OutputContainer = "JetSelectedTracks_LooseTrackJets"
+    tool.Selector        = inDetSel
+
+    return tool
 
 
 
