@@ -88,7 +88,7 @@ note that you will have to point to the local file that you downloaded and not S
 ahead and read the source code and see if you can figure out how it works.
 
 ```
-config_Tutorial1_fastjet.py
+config_Tutorial1.py
 JSSTutorial/JSSTutorial/JSSTutorialAlgo.h
 JSSTutorial/Root/JSSTutorialAlgo.cxx
 ```
@@ -114,7 +114,7 @@ with the following command:
 ```
 xAH_run.py --files /afs/cern.ch/work/m/meehan/public/JSSTutorial2016/mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528/DAOD_JETM8* \
 --nevents 1 \
---config config_Tutorial2_JetRec.py \
+--config config_Tutorial2.py \
 -v \
 --submitDir OutputDirectory_Tutorial2_JetRec \
 direct
@@ -164,8 +164,12 @@ and to associate them to a JetRecTool.
 
 ## Tutorial 3 : How to configure more extensive JetRec tools in jobOptions
 
+TO BE DONE
 
 ### Jet Reconstruction in this package
+
+WORK IN PROGRESS
+
 Here a jet building procedure is done by a JetRecToolAlgo (inherits
 xAH::Algorithm which inherits EL::Algorithm).
 JetRecToolAlgo holds a single instance of a JetRecTool and will call

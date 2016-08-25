@@ -24,4 +24,6 @@ rc clean
 rc find_packages
 rc compile
 
-
+mkdir run
+cd run
+cp ../JSSTutorial/scripts/config_Tutorial*.py .
