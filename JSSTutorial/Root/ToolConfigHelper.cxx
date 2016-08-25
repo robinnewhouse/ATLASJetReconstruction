@@ -6,6 +6,7 @@ IJetExecuteTool* ToolWrapper::init(const std::string & className, const std::str
 
     TPython p;
     p.Bind(this, "wrapper");
+    p.Exec("import ROOT");
     p.Exec("import JSSTutorial.RootCoreConfigInit");
     // Create the concrete instance on the python side
     std::string ctorCall = "tool=ROOT."+className;

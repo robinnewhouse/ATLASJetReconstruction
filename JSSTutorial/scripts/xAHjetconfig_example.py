@@ -1,7 +1,7 @@
 
 import ROOT
 from JSSTutorial.JetRecConfig import buildClusterGetter
-from JSSTutorial.JetRecConfig import buildJetTrackVtxAssoc , buildJetTrackSelection
+from JSSTutorial.JetRecConfig import buildJetTrackVtxAssoc , buildJetTrackSelection, buildJetInputTruthParticles
 
 if 'wrapper' in dir():
     jetTool = wrapper.m_tool
@@ -101,6 +101,18 @@ def minimalJetReco(jetTool, jetContName):
     jetTool.JetModifiers     = buildJetCalibModifiers(jetContName) + [ROOT.JetWidthTool("width")]
     jetTool.OutputContainer  = jetContName
 
+def minimalJetRecoWithGhosts(jetTool, jetContName):
+    """Demonstrate how to add ghosts objects
+    """
+    from JSSTutorial.JetRecConfig import buildClusterGetter, buildJetFinder, buildJetCalibModifiers, buildPseudoJetGetter
+
+    # first configure without ghosts
+    minimalJetReco(jetTool, jetContName)
+
+    
+    getters = jetTool.PseudoJetGetters
+    ghostTrackgetter = buildPseudoJetGetter(algname=None, input="Track", asGhost=True)
+    jetTool.PseudoJetGetters = getters+[ ghostTrackgetter]
 
 def minimalJetTrimming(jetTool, inputJets,rclus,ptfrac):
     from ROOT import JetPseudojetRetriever, JetTrimmer, JetFromPseudojet
