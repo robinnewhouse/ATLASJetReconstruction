@@ -88,7 +88,7 @@ note that you will have to point to the local file that you downloaded and not S
 ahead and read the source code and see if you can figure out how it works.
 
 ```
-config_Tutorial1.py
+JSSTutorial/scripts/config_Tutorial1.py
 JSSTutorial/JSSTutorial/JSSTutorialAlgo.h
 JSSTutorial/Root/JSSTutorialAlgo.cxx
 ```
@@ -124,7 +124,7 @@ note that you will have to point to the local file that you downloaded and not S
 ahead and read the source code and see if you can figure out how it works.
 
 ```
-config_Tutorial2_JetRec.py
+JSSTutorial/scripts/config_Tutorial2_JetRec.py
 JSSTutorial/JSSTutorial/JSSTutorialJetRecAlgo.h
 JSSTutorial/Root/JSSTutorialJetRecAlgo.cxx
 ```
@@ -160,28 +160,60 @@ tool runs the 3 steps and record the final JetContainer in the evt store.
 Running a jet alg requires to configure tools for the 3 steps
 and to associate them to a JetRecTool.
 
-## Tutorial implementation with JetRec, C++ only
 
 ## Tutorial 3 : How to configure more extensive JetRec tools in jobOptions
+Last step : we want maximal flexibility. For this we want to do all
+the configuration of same jet tools we used in tutorial 2 in
+python. This will allow us to change *any* jet rec parameters without
+re-compiling and to easily configure many jet algs. This also has the
+advantage of being very close to how configuration works in Athena. 
 
-TO BE DONE
+Let's run it : 
+
+```
+xAH_run.py --files /afs/cern.ch/work/m/meehan/public/JSSTutorial2016/mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528/DAOD_JETM8* \
+--nevents 1 \
+--config config_Tutorial3.py \
+-v \
+--submitDir OutputDirectory_Tutorial3_JetRec \
+direct
+```
+The source code is here 
+```
+JSSTutorial/scripts/config_Tutorial3_JetRec.py
+JSSTutorial/JSSTutorial/JSSTutorialPythonConfigAlgo.h
+JSSTutorial/Root/JSSTutorialPythonConfigAlgo.cxx
+```
+
+* Do you see any jet reconstruction related code in
+  JSSTutorialPythonConfigAlgo.cxx ? 
+* Can you find where the atlas jet tools are configured ? Can you make
+  the correspondance with the tutorial 2 ?
+* how would you add an other attribute calculation to the trimmed jets
+  ?
+* Try to play with the configuration functions (can you locate them ?) to change the
+  parameters : radius, alg, or input type.
+
+
 
 ### Jet Reconstruction in this package
 
-WORK IN PROGRESS
-
-Here a jet building procedure is done by a JetRecToolAlgo (inherits
+In this package a jet building procedure is done by a JetRecToolAlgo (inherits
 xAH::Algorithm which inherits EL::Algorithm).
 JetRecToolAlgo holds a single instance of a JetRecTool and will call
 it's execute() method once per event.
 
 The configuration is done through python scripts : during
 initialize(), JetRecToolAlgo will pass its JetRecTool instance into
-the python interpreter under the name "tool". It will then execute
-user given python script and function call. This script and function call
-are then expected to configure "tool" as required.
+the python interpreter under the name "tool". JetRecToolAlgo will then
+tell the interpreter to execute a user given python script and a user
+function call. 
+I this script and function the user has written python instructions to
+configure the variable "tool".
+Since "tool" in the python interpreter really is the JetRecTool
+c++ instance, it is effectively configured "in c++" too. 
 
-In the simplest scenario, the user writes a python script (say
+So, in the simplest scenario, the user writes a python script (say
 myjetscript.py) which sets the desired properties to "tool". ex :
 ```  
   tool.OutputContainer = "MyJetContainer"
@@ -189,7 +221,9 @@ myjetscript.py) which sets the desired properties to "tool". ex :
   tool.PseudoJetGetters = [ ... ] 
 ```  
 The user then configures a JetRecToolAlgo to use myjetscript.py (by
-setting its m_configScript member). Nothing else is needed.
+setting its m_configScript member). Nothing else is needed : on each
+event JetRecToolAlgo will call the configure JetRecTool and thus make
+its result available in the evt store.
 
 However when running with several jet algs in the same job, it will be
 painfull to maintain a version of myjetscript.py for each jet

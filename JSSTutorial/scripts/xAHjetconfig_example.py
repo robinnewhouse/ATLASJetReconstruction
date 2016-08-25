@@ -8,8 +8,16 @@ if 'wrapper' in dir():
 
 
 def simpleJetConfig(jetTool, output="AntiKt10LCTopoJets2"):
+    """This function demonstrate how to configure a JetRecTool expliciting each sub-tool.
+    jetTool : is an instance of a JetRecTpp;
+    output  : the final collection name.
+    """
+
+    # import atlas jet tools. 
+    # these imports are specific to RootCore. In Athena tools are imported differently.
     from ROOT import PseudoJetGetter, JetFinder, JetWidthTool, JetFromPseudojet, JetCalibrationTool
     from ROOT import JetSorter, JetFilterTool, JetPseudojetRetriever, JetTrimmer
+    from ROOT import EnergyCorrelatorTool, EnergyCorrelatorRatiosTool, NSubjettinessRatiosTool, NSubjettinessTool
 
     # *********************************************************
     # Step 1. Configure input
@@ -36,7 +44,7 @@ def simpleJetConfig(jetTool, output="AntiKt10LCTopoJets2"):
     finder = JetFinder("AntiKt10Finder"
                        ,JetAlgorithm = "AntiKt"
                        ,JetRadius = 1.0
-                       ,PtMin = 50000.0
+                       ,PtMin = 2000.0
                        ,GhostArea = 0.01 # if non-null will run ActiveArea calculation
                        ,RandomOption = 1 
                        ,JetBuilder = jetFromPJ )# associate
@@ -50,15 +58,12 @@ def simpleJetConfig(jetTool, output="AntiKt10LCTopoJets2"):
     widthT = JetWidthTool("Width")
     # or directly in a list :
     modifierList = [
-        JetCalibrationTool("Akt10Calib" # there's no AntiKt10 calib : use the trimmed one for this example.
-                           , JetCollection="AntiKt10LCTopoTrimmedPtFrac5SmallR20"
-                           , ConfigFile = "JES_MC15recommendation_FatJet_June2015.config"
-                           , CalibSequence = "EtaJES_JMS"
-                           , IsData = True
-                           ),
-        JetSorter("jetsorter"),
-        JetFilterTool("ptfilter",PtMin=15000),
+        JetFilterTool("ptfilter",PtMin=200000),
         widthT,
+        EnergyCorrelatorTool("ecorr", Beta=1.),
+        EnergyCorrelatorRatiosTool("ecorrR"),
+        NSubjettinessTool("nsubjettiness",Alpha=1.),
+        NSubjettinessRatiosTool("nsubjettinessR",),        
         ]
 
 
@@ -99,6 +104,8 @@ def minimalJetReco(jetTool, jetContName):
 
 def minimalJetTrimming(jetTool, inputJets,rclus,ptfrac):
     from ROOT import JetPseudojetRetriever, JetTrimmer, JetFromPseudojet
+    from ROOT import EnergyCorrelatorTool, EnergyCorrelatorRatiosTool, NSubjettinessRatiosTool, NSubjettinessTool
+
     from JSSTutorial.JetRecConfig import buildClusterGetter, buildJetFinder, buildJetCalibModifiers, buildPseudoJetGetter
 
     outputJets = inputJets.replace('Jets', 'TrimmedPtFrac'+str(int(ptfrac*100))+"SmallR"+str(int(rclus*100))+"Jets")
@@ -114,8 +121,14 @@ def minimalJetTrimming(jetTool, inputJets,rclus,ptfrac):
     jetTool.JetGroomer = groomer
     jetTool.InputContainer = inputJets
     jetTool.OutputContainer = outputJets
-    jetTool.JetModifiers = buildJetCalibModifiers(outputJets)
     jetTool.JetPseudojetRetriever = JetPseudojetRetriever("pjretriever")
+    jetTool.JetModifiers = [
+        # JetFilterTool("ptfilter",PtMin=200000), no need for filter : we just read input jets.
+        EnergyCorrelatorTool("ecorr", Beta=1.),
+        EnergyCorrelatorRatiosTool("ecorrR"),
+        NSubjettinessTool("nsubjettiness",Alpha=1.),
+        NSubjettinessRatiosTool("nsubjettinessR",),        
+        ]
 
 
     
