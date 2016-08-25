@@ -160,6 +160,7 @@ tool runs the 3 steps and record the final JetContainer in the evt store.
 Running a jet alg requires to configure tools for the 3 steps
 and to associate them to a JetRecTool.
 
+## Tutorial implementation with JetRec, C++ only
 
 ## Tutorial 3 : How to configure more extensive JetRec tools in jobOptions
 
