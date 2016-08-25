@@ -356,7 +356,7 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
   for(auto jet_Ungroomed : pjets){
 
     //only examine jets above 200 GeV
-    if(jet_Ungroomed.pt()<200.0)
+    if(jet_Ungroomed.pt()<200000.0)
       continue;
 
     std::cout<<std::endl<<"JetPt : "<<jet_Ungroomed.pt()<<std::endl;
