@@ -1,6 +1,7 @@
 
 import ROOT
 from JSSTutorial.JetRecConfig import buildClusterGetter
+from JSSTutorial.JetRecConfig import buildJetTrackVtxAssoc , buildJetTrackSelection
 
 if 'wrapper' in dir():
     jetTool = wrapper.m_tool
@@ -21,7 +22,6 @@ def simpleJetConfig(jetTool, output="AntiKt10LCTopoJets2"):
                                 , Label = "LCTopo"
                                 , SkipNegativeEnergy = True
                                 , GhostScale = 0.0 )
-    #lcgetter.initialize()
 
     getterList = [lcgetter]
 
@@ -40,8 +40,6 @@ def simpleJetConfig(jetTool, output="AntiKt10LCTopoJets2"):
                        ,GhostArea = 0.01 # if non-null will run ActiveArea calculation
                        ,RandomOption = 1 
                        ,JetBuilder = jetFromPJ )# associate
-    #finder.initialize()
-
 
 
     # *********************************************************
@@ -72,7 +70,6 @@ def simpleJetConfig(jetTool, output="AntiKt10LCTopoJets2"):
     jetTool.JetModifiers     = modifierList
     jetTool.OutputContainer  = output
 
-    #jetTool.initialize()
     # jetTool.OutputLevel = 2    
 
 

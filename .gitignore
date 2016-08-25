@@ -13,3 +13,5 @@ ShowerDeconstruction/
 TestPythonConfig/
 tmp/
 xAODAnaHelpers/
+rcSetup.csh
+rcSetup.sh

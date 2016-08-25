@@ -277,13 +277,15 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
   TLorentzVector temp_p4;
   for (const xAOD::CaloCluster* clus : *clusters) {
 
+    if(clus->e()<0) continue; // Remove neg energy clusters !
     std::cout<<"cluster(pt,m,eta,phi): pt="<<clus->pt()/1000.
                                   <<"  m="<<clus->m()/1000.
                                   <<"  eta="<<clus->eta()
                                   <<"  phi="<<clus->phi()
                                   <<std::endl;
 
-    temp_p4.SetPtEtaPhiM(clus->pt()/1000., clus->eta(), clus->phi(), clus->m()/1000.);
+    //temp_p4.SetPtEtaPhiM(clus->pt()/1000., clus->eta(), clus->phi(), clus->m()/1000.);
+    temp_p4.SetPtEtaPhiM(clus->pt(), clus->eta(), clus->phi(), clus->m());
 
     jet_inputs.push_back(fastjet::PseudoJet(temp_p4.Px(),temp_p4.Py(),temp_p4.Pz(),temp_p4.E()));
   }
@@ -354,7 +356,7 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
   for(auto jet_Ungroomed : pjets){
 
     //only examine jets above 200 GeV
-    if(jet_Ungroomed.pt()<200.0)
+    if(jet_Ungroomed.pt()<200000.0)
       continue;
 
     std::cout<<std::endl<<"JetPt : "<<jet_Ungroomed.pt()<<std::endl;
