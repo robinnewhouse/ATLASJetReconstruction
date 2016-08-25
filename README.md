@@ -38,80 +38,6 @@ at the cost of abstraction and knowledge of the Atlas classes.
 In EventLoop, tasks are implemented in c++ classes inheriting
 EL::Algorithm.
 
-# Tutorial implementation in pure c++ 
-
-# Using the Atlas JetRec classes
-
-## Jet Reconstruction overview
-In Atlas the jet reco code works in 3 distinct steps :
-1. Prepare input to jet finding. This means translating the
- clusters/tracks/truth particles from the xAOD format to the fastjet
- format. 
-2. Call fastjet using the input from 1. Translate final jets from
-fastjet to xAOD::Jet.
-3. Calculate additional quantities on final jets. Ex: calibration,
-filtering, sorting, substructure quantities.
-
-Each step are performed by dedicated dual-use tools (i.e tools which
-run in Athena and RootCore).
-
-1. PseudoJetGetter (and inherited)
-2. JetFinder (or JetTrimmer in the trimming case)
-3. Many tools, all inheriting IJetModifier : we call them
-JetModifiers.
-
-All these tools are driven by a top-level tool : JetRecTool. This last
-tool runs the 3 steps and record the final JetContainer in the evt store.
-
-Running a jet alg requires to configure tools for the 3 steps
-and to associate them to a JetRecTool.
-
-## Tutorial implementation with JetRec, C++ only
-
-## Tutorial implementation with JetRec, python config
-
-
-### Jet Reconstruction in this package
-Here a jet building procedure is done by a JetRecToolAlgo (inherits
-xAH::Algorithm which inherits EL::Algorithm).
-JetRecToolAlgo holds a single instance of a JetRecTool and will call
-it's execute() method once per event.
-
-The configuration is done through python scripts : during
-initialize(), JetRecToolAlgo will pass its JetRecTool instance into
-the python interpreter under the name "tool". It will then execute
-user given python script and function call. This script and function call
-are then expected to configure "tool" as required.
-
-In the simplest scenario, the user writes a python script (say
-myjetscript.py) which sets the desired properties to "tool". ex :
-```  
-  tool.OutputContainer = "MyJetContainer"
-  tool.JetFinder = JetFinder("AntiKt12", Radius=0.12, ... )
-  tool.PseudoJetGetters = [ ... ] 
-```  
-The user then configures a JetRecToolAlgo to use myjetscript.py (by
-setting its m_configScript member). Nothing else is needed.
-
-However when running with several jet algs in the same job, it will be
-painfull to maintain a version of myjetscript.py for each jet
-alg. An other workflow is to define configuration functions in the
-script and then configure JetRecToolAlgo to also call one of this
-function. Ex :
-```  
-  def configMyJet(tool, R):
-      # configure tool to run a jet alg with radius R
-      tool.JetFinder = JetFinder("somname", Radius = R, ...)
-      ... other configs ....
-```  
-
-Then all JetRecToolAlgo instance will use the same m_configScript, but
-they can have different m_configCall to configure various jet
-algs. Typically : m_configCall="configMyJet(tool, 0.9)"
-
-## Jet reco example
-
-
 
 ## Quick Setup :
 
@@ -203,11 +129,79 @@ JSSTutorial/JSSTutorial/JSSTutorialJetRecAlgo.h
 JSSTutorial/Root/JSSTutorialJetRecAlgo.cxx
 ```
 
-Consider the following questions :
+In order to help you answering the following questions you can read
+the jet reco overview below.
+
 - How did you "get the clusters" from the xAOD::CalCaloTopoCluster container this time?
 - ...
 
+
+### Jet Reconstruction overview
+In Atlas the jet reco code works in 3 distinct steps :
+1. Prepare input to jet finding. This means translating the
+ clusters/tracks/truth particles from the xAOD format to the fastjet
+ format. 
+2. Call fastjet using the input from 1. Translate final jets from
+fastjet to xAOD::Jet.
+3. Calculate additional quantities on final jets. Ex: calibration,
+filtering, sorting, substructure quantities.
+
+Each step are performed by dedicated dual-use tools (i.e tools which
+run in Athena and RootCore).
+
+1. PseudoJetGetter (and inherited)
+2. JetFinder (or JetTrimmer in the trimming case)
+3. Many tools, all inheriting IJetModifier : we call them
+JetModifiers.
+
+All these tools are driven by a top-level tool : JetRecTool. This last
+tool runs the 3 steps and record the final JetContainer in the evt store.
+
+Running a jet alg requires to configure tools for the 3 steps
+and to associate them to a JetRecTool.
+
+
 ## Tutorial 3 : How to configure more extensive JetRec tools in jobOptions
+
+
+### Jet Reconstruction in this package
+Here a jet building procedure is done by a JetRecToolAlgo (inherits
+xAH::Algorithm which inherits EL::Algorithm).
+JetRecToolAlgo holds a single instance of a JetRecTool and will call
+it's execute() method once per event.
+
+The configuration is done through python scripts : during
+initialize(), JetRecToolAlgo will pass its JetRecTool instance into
+the python interpreter under the name "tool". It will then execute
+user given python script and function call. This script and function call
+are then expected to configure "tool" as required.
+
+In the simplest scenario, the user writes a python script (say
+myjetscript.py) which sets the desired properties to "tool". ex :
+```  
+  tool.OutputContainer = "MyJetContainer"
+  tool.JetFinder = JetFinder("AntiKt12", Radius=0.12, ... )
+  tool.PseudoJetGetters = [ ... ] 
+```  
+The user then configures a JetRecToolAlgo to use myjetscript.py (by
+setting its m_configScript member). Nothing else is needed.
+
+However when running with several jet algs in the same job, it will be
+painfull to maintain a version of myjetscript.py for each jet
+alg. An other workflow is to define configuration functions in the
+script and then configure JetRecToolAlgo to also call one of this
+function. Ex :
+```  
+  def configMyJet(tool, R):
+      # configure tool to run a jet alg with radius R
+      tool.JetFinder = JetFinder("somname", Radius = R, ...)
+      ... other configs ....
+```  
+
+Then all JetRecToolAlgo instance will use the same m_configScript, but
+they can have different m_configCall to configure various jet
+algs. Typically : m_configCall="configMyJet(tool, 0.9)"
+
 
 
 ## Run an example on the grid :
