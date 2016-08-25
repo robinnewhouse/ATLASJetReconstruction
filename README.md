@@ -15,6 +15,31 @@ link to the example that this package is based on found
 xAODAnaHelpers is essentially a set of scripts and a few convenience
 c++ classes based on the official EventLoop framework.
 
+## Tutorial organisation
+
+This tutorial shows how to run jet finding, grooming and calculating
+substructure.
+This task is done in 3 different ways giving identical results.
+
+1. JSSTutorialAlgo implements the task using only C++ and calls to
+fastjet. It is straightforward readable but rather monolithic.
+2. JSSTutorialJetToolsAlgo implements the task using the Atlas JetRec
+C++ classes. It shows how to configure these various classes and put
+them together to perform the tasks. Most of the complexity is moved to
+the initialization step, but then the execution code becomes much
+simple :just a call to the 'excecute()' method of the top-level tools.
+3. JSSTutorialPythonConfigAlgo implements the task using the same
+Atlas JetRec classes as in 2, but configuring them entireley from
+python scripts. This offers maximal flexibility and good readability
+at the cost of abstraction and knowledge of the Atlas classes.
+
+## basics on EventLoop and xAODAnaHelpers
+In EventLoop, tasks are implemented in c++ classes inheriting
+EL::Algorithm.
+
+# Tutorial implementation in pure c++ 
+
+# Using the Atlas JetRec classes
 
 ## Jet Reconstruction overview
 In Atlas the jet reco code works in 3 distinct steps :
@@ -40,11 +65,13 @@ tool runs the 3 steps and record the final JetContainer in the evt store.
 Running a jet alg requires to configure tools for the 3 steps
 and to associate them to a JetRecTool.
 
+## Tutorial implementation with JetRec, C++ only
 
-## Jet Reconstruction in this package
-In EventLoop, tasks are implemented in c++ classes inheriting
-EL::Algorithm.
-So here a jet building procedure is done by a JetRecToolAlgo (inherits
+## Tutorial implementation with JetRec, python config
+
+
+### Jet Reconstruction in this package
+Here a jet building procedure is done by a JetRecToolAlgo (inherits
 xAH::Algorithm which inherits EL::Algorithm).
 JetRecToolAlgo holds a single instance of a JetRecTool and will call
 it's execute() method once per event.
@@ -57,11 +84,11 @@ are then expected to configure "tool" as required.
 
 In the simplest scenario, the user writes a python script (say
 myjetscript.py) which sets the desired properties to "tool". ex :
-  
+```  
   tool.OutputContainer = "MyJetContainer"
   tool.JetFinder = JetFinder("AntiKt12", Radius=0.12, ... )
   tool.PseudoJetGetters = [ ... ] 
-
+```  
 The user then configures a JetRecToolAlgo to use myjetscript.py (by
 setting its m_configScript member). Nothing else is needed.
 
@@ -70,11 +97,12 @@ painfull to maintain a version of myjetscript.py for each jet
 alg. An other workflow is to define configuration functions in the
 script and then configure JetRecToolAlgo to also call one of this
 function. Ex :
-
+```  
   def configMyJet(tool, R):
       # configure tool to run a jet alg with radius R
       tool.JetFinder = JetFinder("somname", Radius = R, ...)
       ... other configs ....
+```  
 
 Then all JetRecToolAlgo instance will use the same m_configScript, but
 they can have different m_configCall to configure various jet
