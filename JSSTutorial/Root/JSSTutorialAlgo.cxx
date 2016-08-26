@@ -33,8 +33,9 @@ JSSTutorialAlgo :: JSSTutorialAlgo ()
   // called on both the submission and the worker node.  Most of your
   // initialization code will go into histInitialize() and
   // initialize().
+  msg().setName( "JSSTutorialAlgo" );
 
-  Info("JSSTutorialAlgo()", "Calling constructor");
+  ATH_MSG_INFO( "Calling constructor");
 
   m_MyNewVariable = "";
   m_TreeName = "";
@@ -67,7 +68,7 @@ EL::StatusCode JSSTutorialAlgo :: histInitialize ()
   // beginning on each worker node, e.g. create histograms and output
   // trees.  This method gets called before any input files are
   // connected.
-  Info("histInitialize()", "Calling histInitialize");
+  ATH_MSG_INFO( "Calling histInitialize");
 
   std::cout<<"Printing the observable you loaded in (m_MyNewVariable) : "<<m_MyNewVariable<<std::endl;
 
@@ -166,7 +167,7 @@ EL::StatusCode JSSTutorialAlgo :: fileExecute ()
   // get the MetaData tree once a new file is opened, with
   TTree *MetaData = dynamic_cast<TTree*>(wk()->inputFile()->Get("MetaData"));
   if (!MetaData) {
-    Error("fileExecute()", "MetaData not found! Exiting.");
+    ATH_MSG_ERROR( "MetaData not found! Exiting.");
     return EL::StatusCode::FAILURE;
   }
   MetaData->LoadTree(0);
@@ -177,18 +178,18 @@ EL::StatusCode JSSTutorialAlgo :: fileExecute ()
     // check for corruption
     const xAOD::CutBookkeeperContainer* incompleteCBC = nullptr;
     if(!m_event->retrieveMetaInput(incompleteCBC, "IncompleteCutBookkeepers").isSuccess()){
-      Warning("initializeEvent()","Failed to retrieve IncompleteCutBookkeepers from MetaData! Exiting.");
+      ATH_MSG_WARNING("Failed to retrieve IncompleteCutBookkeepers from MetaData! Exiting.");
       //return EL::StatusCode::FAILURE;
     }
     if ( incompleteCBC->size() != 0 ) {
-      Warning("initializeEvent()","Found incomplete Bookkeepers! Check file for corruption.");
+      ATH_MSG_WARNING("Found incomplete Bookkeepers! Check file for corruption.");
       //return EL::StatusCode::FAILURE;
     }
 
     // Now, let's find the actual information
     const xAOD::CutBookkeeperContainer* completeCBC = 0;
     if(!m_event->retrieveMetaInput(completeCBC, "CutBookkeepers").isSuccess()){
-      Warning("initializeEvent()","Failed to retrieve CutBookkeepers from MetaData! Exiting.");
+      ATH_MSG_WARNING("Failed to retrieve CutBookkeepers from MetaData! Exiting.");
       //return EL::StatusCode::FAILURE;
     }
     // Now, let's actually find the right one that contains all the needed info...
@@ -233,14 +234,14 @@ EL::StatusCode JSSTutorialAlgo :: initialize ()
   // you create here won't be available in the outputif you have no
   // input events.
 
-  Info("initialize()", m_name.c_str());
+  ATH_MSG_INFO( m_name.c_str());
   m_event = wk()->xaodEvent();
   m_store = wk()->xaodStore();
 
   // count number of events
   m_eventCounter = 0;
 
-  Info("initialize()", "JSSTutorialAlgo Interface succesfully initialized!" );
+  ATH_MSG_INFO( "JSSTutorialAlgo Interface succesfully initialized!" );
   return EL::StatusCode::SUCCESS;
 }
 
@@ -252,10 +253,10 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
   // histograms and trees.  This is where most of your actual analysis
   // code will go.
 
-  if ( m_debug ) { Info("execute()", "Executing JSSTutorialAlgo..."); }
+  if ( m_debug ) { ATH_MSG_INFO( "Executing JSSTutorialAlgo..."); }
 
   if ( (m_eventCounter % 5000) == 0 ) {
-    Info("execute()", "processed %i events", m_eventCounter);
+    ATH_MSG_INFO( m_eventCounter);
   }
 
   ++m_eventCounter;
@@ -493,7 +494,7 @@ EL::StatusCode JSSTutorialAlgo :: finalize ()
   // merged.  This is different from histFinalize() in that it only
   // gets called on worker nodes that processed input events.
 
-  Info("finalize()", "Deleting tool instances...");
+  ATH_MSG_INFO( "Deleting tool instances...");
 
   return EL::StatusCode::SUCCESS;
 
