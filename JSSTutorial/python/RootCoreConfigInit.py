@@ -99,14 +99,18 @@ def pythonize_tool(toolClass):
     def py_subTools(self):
         """returns all sub-tools owned by this tool, including self. Recursive."""
         tools = []
-        for prop_name in self._py_subTools:
-            toolList=getattr(self, prop_name)
-            if isinstance(toolList,list):
-                pass
-            elif toolList is not None:
-                toolList = [toolList]            
-            for t in toolList:
-                tools.extend( t.py_subTools() )
+        if hasattr(self, '_py_subTools'):
+            for prop_name in self._py_subTools:
+                toolList=getattr(self, prop_name)
+                #print self, prop_name, toolList
+                if isinstance(toolList,list):
+                    pass
+                elif toolList is not None:
+                    toolList = [toolList]            
+                for t in toolList:
+                    tools.extend( t.py_subTools() )
+        else:
+            print "RootCoreConfigInit :  WARNING this tool is not properly pythonized :",self
         tools.append(self)
         return tools
     
@@ -151,5 +155,11 @@ AsgTool.__new__ = _new
 ###################################################
 
 
-def buildPseudoJetGetter(name, **args):
-    pass
+
+
+## This is needed to avoid dictionnary issue at load time.
+## No idea why CopyTruthJetParticles causes troubles...
+import ROOT
+__dumm=ROOT.CopyTruthParticles#("__dmmy__")
+__dumm=ROOT.CopyTruthJetParticles("__dmmy__")
+

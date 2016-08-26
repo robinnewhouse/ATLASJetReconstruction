@@ -25,16 +25,23 @@ def buildPseudoJetGetter(algName=None, **userOptions):
     # set some default for our options
     theOptions = dict( SkipNegativeEnergy=True, GhostScale=0.0 )
 
+    if userOptions.get("asGhost", False):
+        theOptions["GhostScale"] = 1e-40
+
+    from ROOT import PseudoJetGetter, TrackPseudoJetGetter
+
     if algName is not None:
         alg, R, input = interpretJetName(algName)
     else:
         input = userOptions['input']
-
+    
 
     # prepare a mapping of default arguments to  known inputs
     optionsDict = dict( LCTopo = dict(InputContainer="CaloCalTopoClusters", Label="LCTopo"),
                         EMTopo = dict(InputContainer="CaloCalTopoClusters", Label="EMTopo"),
                         Track  = dict(InputContainer="JetSelectedTracks_LooseTrackJets", Label="Track", TrackVertexAssociation  = "JetTrackVtxAssoc"),
+                        PV0Track  = dict(InputContainer="JetSelectedTracks_LooseTrackJets", Label="Track", TrackVertexAssociation  = "JetTrackVtxAssoc"),
+                        Truth  = dict(InputContainer="JetInputTruthParticles", Label="Truth"),
                       )
 
 
@@ -42,15 +49,18 @@ def buildPseudoJetGetter(algName=None, **userOptions):
     getterOptions.update(theOptions)
     getterOptions.update(userOptions)
 
-    toolName = algName+input+"get"
+    toolName = input+"getter"
     if getterOptions["GhostScale"] > 0. :
         toolName = 'g'+toolName
         
-    if input == "Track" :
+    if "Track" in input :
         return TrackPseudoJetGetter(toolName, **getterOptions)
     elif "Topo" in input:
         return PseudoJetGetter(toolName, **getterOptions)
-
+    elif "Truth" == input:
+        return PseudoJetGetter(toolName, **getterOptions)
+    print "buildPseudoJetGetter ERROR can't interpret ",input
+    return None
 
 
 def buildJetFinder(algName=None,**userOptions):
@@ -64,7 +74,7 @@ def buildJetFinder(algName=None,**userOptions):
     if algName is None:
         algName = buildJetAlgName(userOptions["JetAlgorithm"],userOptions[JetRadius])
     else:
-        alg, R, i = interpretJetName( algName , input="anything")
+        alg, R, input = interpretJetName( algName , input="anything")
         userOptions.update( JetAlgorithm=alg, JetRadius= R)
     toolName = algName+"Finder"
 
@@ -77,7 +87,19 @@ def buildJetFinder(algName=None,**userOptions):
     theOptions.update(userOptions)
 
     # pass all the options to the constructor :
-    return JetFinder(toolName, **theOptions)
+    finder = JetFinder(toolName, **theOptions)
+
+    # incase of track jet, the finder is a bit more complex
+    # we used a dedicated one which will build jets per vertex
+    if "Track" in input:
+        from ROOT import JetByVertexFinder
+        vfinder = JetByVertexFinder(toolName + "ByVertex",
+                                    JetFinder = finder,
+                                    Vertex = 0 ) # configure it to use ONLY PV0
+        finder = vfinder
+
+    return finder
+
 
 
 def buildJetCalibModifiers(algName, isFastSim = False, **userOptions):
@@ -113,19 +135,22 @@ def buildJetCalibModifiers(algName, isFastSim = False, **userOptions):
     theOptions.update(userOptions)
     ptMin = theOptions.pop("PtMin") # removes it
 
+    modifierList = []
     # use all info to build the proper calib tag :
     alg, R, input = interpretJetName( algName )
-    calOptTag = buildJetAlgName(alg,R)+input
-    calOptTag = calOptTag+ ( "_data" if theOptions["IsData"] else ( "_FastS" if isFastSim else "_FullS" ) )
-    # now get the relevant options from the dict :
-    calOptions = calibDic.get(calOptTag, None)
-    
-    if calOptions is None :
-        print " Config  ERROR : can't retrieve calibration for ",algName," with IsData=",theOptions["IsData"], "and isFastSim=",isFastSim
-        return None
-    
 
-    modifierList = [JetCalibrationTool(algName+"Calib", **calOptions),
+    if "Topo" in  input :
+        calOptTag = buildJetAlgName(alg,R)+input
+        calOptTag = calOptTag+ ( "_data" if theOptions["IsData"] else ( "_FastS" if isFastSim else "_FullS" ) )
+        # now get the relevant options from the dict :
+        calOptions = calibDic.get(calOptTag, None)
+
+        if calOptions is None:
+            print " Config  ERROR : can't retrieve calibration for ",algName," with IsData=",theOptions["IsData"], "and isFastSim=",isFastSim
+            return None
+        modifierList += [ JetCalibrationTool(algName+"Calib", **calOptions), ]
+        
+    modifierList += [
                     JetSorter("jetsorter"),
                     JetFilterTool("ptfilter",PtMin=ptMin),
                     ]
@@ -134,10 +159,19 @@ def buildJetCalibModifiers(algName, isFastSim = False, **userOptions):
 
 
 
+def buildJetInputTruthParticles(tool=None):
+    from ROOT import CopyTruthParticles, CopyTruthJetParticles, MCTruthClassifier
+    if tool is None:
+        tool = CopyTruthJetParticles("truthpartcopy")
 
+    tool.OutputName = "JetInputTruthParticles"
+    tool.BarCodeFromMetadata = False # !!! not sure what this implies !
+    tool.MCTruthClassifier  = MCTruthClassifier("jettruthclassifier")
+    return tool
+    
 def buildJetTrackVtxAssoc(tool=None):
-    from ROOT import TrackVertexAssociationTool, CP__TightTrackVertexAssociationTool
-    cpTVa = CP__TightTrackVertexAssociationTool("jetTighTVAtool", dzSinTheta_cut=3, doPV=True)
+    from ROOT import TrackVertexAssociationTool, buildTightTrackVertexAssociationTool
+    cpTVa = buildTightTrackVertexAssociationTool("jetTighTVAtool")
     if tool is None:
         tool = TrackVertexAssociationTool("tvassoc")
         
@@ -151,7 +185,8 @@ def buildJetTrackVtxAssoc(tool=None):
 def buildJetTrackSelection(tool=None):
     # for now we call our onw defined buildTrackSelectionTool (TrackSelecToolHelper.h) because there's no
     # dictionnary for InDet__InDetTrackSelectionTool.
-    inDetSel = ROOT.buildTrackSelectionTool("TrackSelForJet", "Loose")
+    from ROOT import buildTrackSelectionTool
+    inDetSel = buildTrackSelectionTool("TrackSelForJet", "Loose")
 
     if tool is None:
         tool = JetTrackSelectionTool("trackselloose_trackjets")
@@ -185,11 +220,12 @@ def interpretJetName(jetcollName,  finder = None,input=None, mainParam=None):
                 finder = a
                 break
         if finder is None:
-            jetrec.info( "Error could not guess jet finder type in ",jetcollName )
+            print "interpretJetName Error could not guess jet finder type in ", jetcollName
             return 
 
     if input is None:
-        for i in ['LCTopo','Tower','EMTopo', "Truth", "ZTrack", 'PV0Track']:
+        knownInput = ['LCTopo','Tower','EMTopo', "Truth", "ZTrack", 'PV0Track']
+        for i in knownInput:
             if i in jetcollName:
                 input = i
                 if i== "Tower":
@@ -199,7 +235,8 @@ def interpretJetName(jetcollName,  finder = None,input=None, mainParam=None):
                         input = "TopoTower"
                 break
         if input is None:
-            jetrec.info( "Error could not guess input type in ",jetcollName )
+            print "interpretJetName ERROR could not guess input type in ",jetcollName
+            print " Known input :", knownInput
             return
         
     if mainParam is None:
@@ -209,7 +246,9 @@ def interpretJetName(jetcollName,  finder = None,input=None, mainParam=None):
         try :
             mainParam = float(mp)/10.
         except ValueError :
-            jetrec.info( "Error could not guess main parameter in ",jetcollName )
+            print "interpretJetName Error could not guess main parameter in ",jetcollName 
             return
 
     return finder, mainParam, input
+
+

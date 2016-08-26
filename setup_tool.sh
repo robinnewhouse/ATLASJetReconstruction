@@ -27,3 +27,4 @@ rc compile
 mkdir run
 cd run
 cp ../JSSTutorial/scripts/config_Tutorial*.py .
+cp ../JSSTutorial/scripts/xAHjetconfig_example.py .
