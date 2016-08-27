@@ -472,6 +472,8 @@ class JetConfigurator(object):
 
 jetConfig = JetConfigurator()
 
+
+
 ## ********************************************************
 ## List of standard configuration aliases
 ## ********************************************************
@@ -481,11 +483,12 @@ jetConfig = JetConfigurator()
 ## ********************************************************
 ## knownJetBuilders has the form
 ##  JetContName : ( 'alias_for_input' , alias_for_modifier )
-## where 'alias_for_input' refer to an entry in inputList below
-## and alias_for_modifier is either a string or a list :
-##  'alias' -> refer to an entry in knownModifierList
-##  'alias1_alias2' -> refer to 2 entries in knownModifierList to be concatenated
-## ['alias1', 'alias2,' , tool ] -> strings refer to entries in knownModifierTools, tool is a configured tool instance.
+## where
+##  * 'alias_for_input' refer to an entry in knownInputLists.
+##  *  alias_for_modifier is either a string or a list :
+##     'alias' -> refer to an entry in knownModifierList
+##     'alias1_alias2' -> refer to 2 entries in knownModifierList to be concatenated
+##     ['alias1', 'alias2,' , tool ] -> strings refer to entries in knownModifierTools, tool is a configured tool instance.
 ##
 jetConfig.knownJetBuilders = dict( 
     AntiKt4EMTopo   = ( 'emtopo', 'calib' ),
