@@ -12,6 +12,11 @@ export USER=`whoami`
 svn co svn+ssh://$USER@svn.cern.ch/reps/atlas-dferreir/dferreir/ShowerDeconstruction/tags/ShowerDeconstruction-01-00-00 ShowerDeconstruction
 svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/BoostedJetTaggers/trunk BoostedJetTaggers
 
+# trunk of these packages needed in 2.4.18 
+svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetMomentTools/trunk JetMomentTools
+svn co svn+ssh://svn.cern.ch/reps/atlasoff/PhysicsAnalysis/AnalysisCommon/ParticleJetTools/trunk ParticleJetTools
+svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetSubStructureMomentTools/trunk JetSubStructureMomentTools
+
 #if you want the subjet calibration:
 # source subjet_calibration.sh
 
