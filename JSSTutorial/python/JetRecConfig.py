@@ -397,7 +397,7 @@ class JetConfigurator(object):
         toolList = []
         for a in aliasList:            
             if isinstance(a, str):
-                t = self.getModifTool(a, context)
+                t = self.getModifTool(a, context=context)
             else: # assume a is alaready a tool:
                 t=a
             toolList.append( t )
@@ -453,12 +453,17 @@ class JetConfigurator(object):
                 if inputAlias is None:
                     print "JetConfigurator.jetBuildSequence ERROR can't retrieve input tools for ", output , " interpreted as ",alg, r, input
                     return None
-                inputList = self.getInputList( inputAlias )
+            else:
+                inputAlias = inputList # then the user given inputList is an alias 
+            inputList = self.getInputList( inputAlias )
+
             if modifierList is None :
                 if modifAlias is None:
                     print "JetConfigurator.jetBuildSequence ERROR can't retrieve modifier tools for ", output , " interpreted as ",alg, r, input
                     return
-                modifierList = self.getModifList( modifAlias, context)
+            else:
+                modifAlias = modifierList
+            modifierList = self.getModifList( modifAlias, context)
 
         if finder is None:
             finder = self.getJetFinderTool(algName=algName )
@@ -468,6 +473,18 @@ class JetConfigurator(object):
         jetTool.JetModifiers = modifierList
         jetTool.OutputContainer = output
 
+        print " *********************************** "
+        print " JetConfigurator : Configured jet for ",output
+        print "   --> alg name : ",algName
+        print "   --> inputs   : ", inputAlias
+        if inputAlias in self.knownInputLists:
+            print "   -->    alias to ", self.knownInputLists[inputAlias]
+        print "   --> modifiers   : ", modifAlias
+        if inputAlias in self.knownModifierList:
+            print "   -->    alias to ", self.knownModifierList[modifAlias]
+        print " *********************************** "
+        
+                
         return jetTool
 
 jetConfig = JetConfigurator()
@@ -545,8 +562,9 @@ jetConfig.knownModifierTools = dict(
     sort  = ( JetSorter, {} ),
     ptMin5GeV = ( JetFilterTool, dict(PtMin= 5000) ), 
 
-    # calib tool
-    calib = ( jetConfig.getCalibTool, dict(context=None) ), # context will be set by the helper functions in jetConfig according to jet alg being configured
+    # calib tool : there is no default properties for calibration since it depends on the jet alg
+    # being calibrated. The relevant info will be passed through the 'context' argument (which will be set accordingly by the helper functions)
+    calib = ( jetConfig.getCalibTool, dict(context=None) ), 
 
     # substructure tools
     encorr   = (EnergyCorrelatorTool, dict(Beta=1) ),
