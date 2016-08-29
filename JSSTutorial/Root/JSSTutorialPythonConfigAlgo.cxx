@@ -280,6 +280,9 @@ EL::StatusCode JSSTutorialPythonConfigAlgo :: execute ()
 
   const xAOD::JetContainer* trimmedJets;
   RETURN_CHECK("JSSTutorialAlgo::execute()", HelperFunctions::retrieve(trimmedJets, "AntiKt10LCTopoTrimmedPtFrac5SmallR20Jets2", m_event, m_store,  m_verbose), "");
+
+  const xAOD::JetContainer* prunedJets;
+  RETURN_CHECK("JSSTutorialAlgo::execute()", HelperFunctions::retrieve(prunedJets, "AntiKt10LCTopoPrunedZcut1Rcut5Jets2", m_event, m_store,  m_verbose), "");
   
 
 
@@ -342,6 +345,36 @@ EL::StatusCode JSSTutorialPythonConfigAlgo :: execute ()
     
   }
 
+  //loop over the runed  jets
+  for(const xAOD::Jet* jet : * prunedJets ){
+
+    // //only examine jets above 200 GeV
+    // if(jet->pt()<200000.0)
+    //  continue;
+    // NOT necessary since we configured a pt filter in the jet rec sequence above
+    
+    std::cout<<"Pruned(mass):         "<<jet->m()<<std::endl;
+
+    float d2 = D2_acc(*jet);
+    float tau32 = tau32_acc(*jet);
+
+    h_jet_pyconfig_Pruned_pt   ->Fill(jet->pt()/1000.0);
+    h_jet_pyconfig_Pruned_m    ->Fill(jet->m()/1000.0);
+    h_jet_pyconfig_Pruned_d2   ->Fill(d2);
+    h_jet_pyconfig_Pruned_tau32->Fill(tau32);
+    
+    tvar_jet_Pruned_pt    = jet->pt()/1000.0;
+    tvar_jet_Pruned_m     = jet->m()/1000.0;
+    tvar_jet_Pruned_d2    = d2;
+    tvar_jet_Pruned_tau32 = tau32;
+    
+    // if needed, we could retrieve the parent jet of this pruned 
+    // jet by :
+    // const xAOD::Jet* parent = jet->getAssociatedObject<xAOD::Jet>("Parent");
+
+    
+  }
+
   
 
 
@@ -371,29 +404,6 @@ EL::StatusCode JSSTutorialPythonConfigAlgo :: execute ()
   //   tvar_jet_SoftDrop_tau32 = tau32;
 
 
-  //   //Pruned
-  //   fastjet::PseudoJet jet_Pruned;
-  //   jet_Pruned = tool_Pruning(jet_Ungroomed);
-  //   std::cout<<"Pruned(mass):         "<<jet_Pruned.m()<<std::endl;
-  //   std::cout<<"ECF1:      "<<ECF1(jet_Pruned)<<std::endl;
-  //   std::cout<<"ECF2:      "<<ECF2(jet_Pruned)<<std::endl;
-  //   std::cout<<"ECF3:      "<<ECF3(jet_Pruned)<<std::endl;
-  //   std::cout<<"Tau1WTA:   "<<nSub1_beta1(jet_Pruned)<<std::endl;
-  //   std::cout<<"Tau2WTA:   "<<nSub2_beta1(jet_Pruned)<<std::endl;
-  //   std::cout<<"Tau3WTA:   "<<nSub3_beta1(jet_Pruned)<<std::endl;
-
-  //   d2    = ECF3(jet_Pruned) * pow(ECF1(jet_Pruned),3) / pow(ECF2(jet_Pruned),3);
-  //   tau32 = nSub3_beta1(jet_Pruned)/nSub2_beta1(jet_Pruned);
-
-  //   h_jet_pyconfig_Pruned_pt   ->Fill(jet_Pruned.pt()/1000.0);
-  //   h_jet_pyconfig_Pruned_m    ->Fill(jet_Pruned.m()/1000.0);
-  //   h_jet_pyconfig_Pruned_d2   ->Fill(d2);
-  //   h_jet_pyconfig_Pruned_tau32->Fill(tau32);
-
-  //   tvar_jet_Pruned_pt    = jet_Pruned.pt()/1000.0;
-  //   tvar_jet_Pruned_m     = jet_Pruned.m()/1000.0;
-  //   tvar_jet_Pruned_d2    = d2;
-  //   tvar_jet_Pruned_tau32 = tau32;
 
 
   //   //////////////////////////////

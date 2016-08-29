@@ -297,8 +297,8 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
   //define the cluster sequence (http://fastjet.fr/repo/doxygen-3.0.0/classfastjet_1_1ClusterSequence.html)
   fastjet::ClusterSequence clust_seq = fastjet::ClusterSequence(jet_inputs, jet_def);
 
-  //get the jets with some pt cut, in this case pt>0
-  std::vector<fastjet::PseudoJet> pjets = clust_seq.inclusive_jets(0.0);
+  //get the jets with some pt cut, in this case pt>0 and sorted by pt
+  std::vector<fastjet::PseudoJet> pjets =  fastjet::sorted_by_pt(clust_seq.inclusive_jets(0.0) );
 
   /////////////////////////////////////////
   // Loop over those jets and perform a few basic calculation
