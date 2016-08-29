@@ -1,8 +1,30 @@
+Table of Contents
+=========================
+
+**[Description](#description)**
+
+
+**[Quick Setup](#quick-setup)**
+
+**[Tutorial 1](#tutorial-1-intro-to-native-fastjet-in-atlas)**
+
+**[Tutorial 2](#tutorial-2-intro-to-jetrec-in-atlas)**
+
+**[Tutorial 3](#tutorial-3-how-to-configure-more-extensive-jetrec-tools-in-joboptions)**
+
+**[Tutorials explained](#tutorials-explained)**
+
+**[TO DO](#todo-new-examples)**
+
+**[Run an example on the grid](#run-an-example-on-the-grid)**
+
 # Authors : 
 Sam Meehan <samuel.meehan@cern.ch>
 Pierre-Antoine Delsart <delsart@in2p3.fr>
 
-# Description
+
+Description
+=======================
 This package is intended to be used to perform jet reconstruction
 starting from a DAOD with clusters.  It should be transparent, so that
 a newcomer has examples and a good starting point for working on an
@@ -39,7 +61,8 @@ In EventLoop, tasks are implemented in c++ classes inheriting
 EL::Algorithm.
 
 
-## Quick Setup :
+Quick Setup
+=====================================
 
 If you don't already have [kerberos](http://linux.web.cern.ch/linux/docs/kerberos-access.shtml) authentication set up, do that first -- this is important if you want to develop code from the copy of the code you check out:
 
@@ -57,6 +80,27 @@ source setup_tool.sh
 
 note that the choice of the URL depends on the authentication method you are using.  Since we guided you to set up kerberos, it is the KRB5 url from the above dropdown menu.
 
+## Additionnal steps with AnalysisBase 2.4.18
+Some packages are too old in this release. More recent tags must be
+checked out and compiled :
+``` 
+svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetRec/tags/JetRec-03-00-83 JetRec
+svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetMomentTools/trunk JetMomentTools
+svn co svn+ssh://svn.cern.ch/reps/atlasoff/PhysicsAnalysis/AnalysisCommon/ParticleJetTools/trunk ParticleJetTools
+svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetSubStructureMomentTools/trunk JetSubStructureMomentTools
+patch -p0 -i utils/JetMomentTools_patch_2.4.18.txt
+
+# if needed (not sure... ) :
+#svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/PFlow/PFlowUtils/trunk PFlowUtils
+#svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetInterface/trunk JetInterface
+#svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetRecTools/trunk JetRecTools
+
+# IMPORTANT !!! don't forget :
+rc find_packages
+rc compile
+```
+
+
 ## Get the test file :
 ```
 setupATLAS
@@ -67,7 +111,9 @@ voms-proxy-init -voms atlas
 rucio get --nrandom 1 mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528
 ```
 
-## Tutorial 1 : Intro to native fastjet in ATLAS
+Tutorial 1 : Intro to native fastjet in ATLAS
+=====================================
+
 Being familiar with fastjet and learning how to use it in your analysis is important, 
 especially if you will be working in JetEtMiss (because your advisor said so)
 or because you want to be more creative than the ATLAS tools will allow.  
@@ -93,7 +139,7 @@ JSSTutorial/JSSTutorial/JSSTutorialAlgo.h
 JSSTutorial/Root/JSSTutorialAlgo.cxx
 ```
 
-Consider the following questions :
+Check you understanding of the tutorial by answering these questions :
 - How does the command know to execute the EventLoop algorithm in ```JSSTutorialAlgo.cxx```?
 - What are the different components that I need to include in my header files and ```cmt/MakeFile.RootCore``` to allow me to have
 access to fastjet?
@@ -101,7 +147,8 @@ access to fastjet?
 - What do I need to do in particular to get access to the fastjet contrib packages (https://fastjet.hepforge.org/contrib/)?  Can you identify an example 
 of a fastjet contrib used here?  
 
-## Tutorial 2 : Intro to JetRec in ATLAS
+Tutorial 2 : Intro to JetRec in ATLAS
+=====================================
 If you are already confident with using native fastjet then you've come to the right place.  The next step to being a jet expert is learning
 how to use *JetRec* (http://acode-browser.usatlas.bnl.gov/lxr/source/atlas/Reconstruction/Jet/JetRec/).  This is the software that is used to perform
 official ATLAS reconstruction, and once you come up with an amazing new idea, you will need to implement it here, if the functionality to execute it
@@ -129,14 +176,70 @@ JSSTutorial/JSSTutorial/JSSTutorialJetRecAlgo.h
 JSSTutorial/Root/JSSTutorialJetRecAlgo.cxx
 ```
 
-In order to help you answering the following questions you can read
-the jet reco overview below.
 
+Check you understanding of the tutorial by answering these questions
+(you might find help in the "Tutorials explained" section below):
+
+- Which are the Atlas jet classes used in this tutorial ? 
+- Where are they used in the execute() step ? 
+- What header files need to be included ? What dependency do they
+  impliy (check Makefile.RootCore)
 - How did you "get the clusters" from the xAOD::CalCaloTopoCluster container this time?
-- ...
+- More generally make the correspondances between Tutorial1 and this one
+   * how/where clusters are retrieved & prepared for fastjet ?
+   * how/where is fastjet called ?
+   * how/where substructure variables are calculated ?
+- Compare how the final jets and the substrucure info is retrieved
+  here w.r.t tutorial 1.
+- How would you add a new variable calculation here ?
 
 
-### Jet Reconstruction overview
+
+
+Tutorial 3 : How to configure more extensive JetRec tools in jobOptions
+=====================================
+Last step : we want maximal flexibility. For this we want to do all
+the configuration of same jet tools we used in tutorial 2 in
+python. This will allow us to change *any* jet rec parameters without
+re-compiling and to easily configure many jet algs. This also has the
+advantage of being very close to how configuration works in Athena. 
+
+Let's run it : 
+
+```
+xAH_run.py --files /afs/cern.ch/work/m/meehan/public/JSSTutorial2016/mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528/DAOD_JETM8* \
+--nevents 1 \
+--config config_Tutorial3.py \
+-v \
+--submitDir OutputDirectory_Tutorial3_JetRec \
+direct
+```
+The source code is here 
+```
+JSSTutorial/scripts/config_Tutorial3_JetRec.py
+JSSTutorial/JSSTutorial/JSSTutorialPythonConfigAlgo.h
+JSSTutorial/Root/JSSTutorialPythonConfigAlgo.cxx
+```
+Check you understanding of the tutorial by answering these questions
+(you might find help in the "Tutorials explained" section below):
+
+* Do you see any jet reconstruction related code in
+  JSSTutorialPythonConfigAlgo.cxx ? 
+* Can you find where the atlas jet tools are configured ? Can you make
+  the correspondance with the tutorial 2 ?
+* how would you add an other attribute calculation to the trimmed jets
+  ?
+* Try to play with the configuration functions (can you locate them ?) to change the
+  parameters : radius, alg, or input type.
+
+
+
+
+
+Tutorials explained
+=====================================
+
+## Jet Reconstruction overview
 In Atlas the jet reco code works in 3 distinct steps :
 1. Prepare input to jet finding. This means translating the
  clusters/tracks/truth particles from the xAOD format to the fastjet
@@ -161,68 +264,36 @@ Running a jet alg requires to configure tools for the 3 steps
 and to associate them to a JetRecTool.
 
 
-## Tutorial 3 : How to configure more extensive JetRec tools in jobOptions
-Last step : we want maximal flexibility. For this we want to do all
-the configuration of same jet tools we used in tutorial 2 in
-python. This will allow us to change *any* jet rec parameters without
-re-compiling and to easily configure many jet algs. This also has the
-advantage of being very close to how configuration works in Athena. 
-
-Let's run it : 
-
-```
-xAH_run.py --files /afs/cern.ch/work/m/meehan/public/JSSTutorial2016/mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528/DAOD_JETM8* \
---nevents 1 \
---config config_Tutorial3.py \
--v \
---submitDir OutputDirectory_Tutorial3_JetRec \
-direct
-```
-The source code is here 
-```
-JSSTutorial/scripts/config_Tutorial3_JetRec.py
-JSSTutorial/JSSTutorial/JSSTutorialPythonConfigAlgo.h
-JSSTutorial/Root/JSSTutorialPythonConfigAlgo.cxx
-```
-
-* Do you see any jet reconstruction related code in
-  JSSTutorialPythonConfigAlgo.cxx ? 
-* Can you find where the atlas jet tools are configured ? Can you make
-  the correspondance with the tutorial 2 ?
-* how would you add an other attribute calculation to the trimmed jets
-  ?
-* Try to play with the configuration functions (can you locate them ?) to change the
-  parameters : radius, alg, or input type.
-
-
-
-### Jet Reconstruction in this package
+## Jet Reconstruction in this package
 
 In this package a jet building procedure is done by a JetRecToolAlgo (inherits
 xAH::Algorithm which inherits EL::Algorithm).
 JetRecToolAlgo holds a single instance of a JetRecTool and will call
 it's execute() method once per event.
 
-The configuration is done through python scripts : during
-initialize(), JetRecToolAlgo will pass its JetRecTool instance into
-the python interpreter under the name "tool". JetRecToolAlgo will then
-tell the interpreter to execute a user given python script and a user
+The configuration is done through python scripts which contain
+configuration instructions. These scripts are interpreted during
+JetRecToolAlgo::initialize(). 
+
+During the initialize() JetRecToolAlgo passes its JetRecTool instance into
+the python interpreter under the name "tool". JetRecToolAlgo  then
+tells the interpreter to execute a user given python script and a user
 function call. 
-I this script and function the user has written python instructions to
+In this script and function the user has written python instructions to
 configure the variable "tool".
 Since "tool" in the python interpreter really is the JetRecTool
 c++ instance, it is effectively configured "in c++" too. 
 
 So, in the simplest scenario, the user writes a python script (say
 myjetscript.py) which sets the desired properties to "tool". ex :
-```  
+```python
   tool.OutputContainer = "MyJetContainer"
   tool.JetFinder = JetFinder("AntiKt12", Radius=0.12, ... )
   tool.PseudoJetGetters = [ ... ] 
 ```  
 The user then configures a JetRecToolAlgo to use myjetscript.py (by
 setting its m_configScript member). Nothing else is needed : on each
-event JetRecToolAlgo will call the configure JetRecTool and thus make
+event JetRecToolAlgo will call the configured JetRecTool and thus make
 its result available in the evt store.
 
 However when running with several jet algs in the same job, it will be
@@ -230,7 +301,7 @@ painfull to maintain a version of myjetscript.py for each jet
 alg. An other workflow is to define configuration functions in the
 script and then configure JetRecToolAlgo to also call one of this
 function. Ex :
-```  
+```python
   def configMyJet(tool, R):
       # configure tool to run a jet alg with radius R
       tool.JetFinder = JetFinder("somname", Radius = R, ...)
@@ -239,11 +310,11 @@ function. Ex :
 
 Then all JetRecToolAlgo instance will use the same m_configScript, but
 they can have different m_configCall to configure various jet
-algs. Typically : m_configCall="configMyJet(tool, 0.9)"
+algs. Typically : `m_configCall="configMyJet(tool, 0.9)"`
 
 
-
-## Run an example on the grid :
+Run an example on the grid
+=====================================
 NOT TESTED
 
 Open a fresh session, go to the working directory and setup the environment for the grid:
@@ -256,7 +327,8 @@ Run an example on the grid by:
 source Run_grid_zprime_list.sh
 ```
 
-# ToDo (new examples):
+ToDo (new examples)
+=====================================
 - [JET] how to write a simple modifier themselves
 - [JET] playing with variable-R jet reconstruction
 - [MET] example of how to use the custom jets output from the example to create a new set of MET maps and then use these for MET rebuilding
