@@ -1,14 +1,20 @@
 Table of Contents
+=========================
 
 **[Description](#description)**
 
 **[Quick Setup](#quick-setup)**
 
 **[Tutorial 1](#tutorial-1-intro-to-native-fastjet-in-atlas)**
+
 **[Tutorial 2](#tutorial-2-intro-to-jetrec-in-atlas#)**
+
 **[Tutorial 3](#tutorial-3-how-to-configure-more-extensive-jetrec-tools-in-joboptions#)**
+
 **[Tutorials explained](#tutorials-explained#)**
+
 **[TO DO](#todo-new-examples#)**
+
 **[Run an example on the grid](#run-an-example-on-the-grid)**
 
 # Authors : 
