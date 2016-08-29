@@ -3,17 +3,18 @@ Table of Contents
 
 **[Description](#description)**
 
+
 **[Quick Setup](#quick-setup)**
 
 **[Tutorial 1](#tutorial-1-intro-to-native-fastjet-in-atlas)**
 
-**[Tutorial 2](#tutorial-2-intro-to-jetrec-in-atlas#)**
+**[Tutorial 2](#tutorial-2-intro-to-jetrec-in-atlas)**
 
-**[Tutorial 3](#tutorial-3-how-to-configure-more-extensive-jetrec-tools-in-joboptions#)**
+**[Tutorial 3](#tutorial-3-how-to-configure-more-extensive-jetrec-tools-in-joboptions)**
 
-**[Tutorials explained](#tutorials-explained#)**
+**[Tutorials explained](#tutorials-explained)**
 
-**[TO DO](#todo-new-examples#)**
+**[TO DO](#todo-new-examples)**
 
 **[Run an example on the grid](#run-an-example-on-the-grid)**
 
@@ -60,7 +61,7 @@ In EventLoop, tasks are implemented in c++ classes inheriting
 EL::Algorithm.
 
 
-Quick Setup :
+Quick Setup
 =====================================
 
 If you don't already have [kerberos](http://linux.web.cern.ch/linux/docs/kerberos-access.shtml) authentication set up, do that first -- this is important if you want to develop code from the copy of the code you check out:
