@@ -57,8 +57,9 @@ def simpleJetConfig(jetTool, output="AntiKt10LCTopoJets2"):
     # we can create modifiers like this :
     widthT = JetWidthTool("Width")
     # or directly in a list :
-    modifierList = [
+    modifierList = [        
         JetFilterTool("ptfilter",PtMin=200000),
+        JetSorter("jetsorter"), # sorts by pT
         widthT,
         EnergyCorrelatorTool("ecorr", Beta=1.),
         EnergyCorrelatorRatiosTool("ecorrR"),
@@ -114,7 +115,10 @@ def minimalJetRecoWithGhosts(jetTool, jetContName):
     ghostTrackgetter = buildPseudoJetGetter(algname=None, input="Track", asGhost=True)
     jetTool.PseudoJetGetters = getters+[ ghostTrackgetter]
 
+
+
 def minimalJetTrimming(jetTool, inputJets,rclus,ptfrac):
+    """configures jetTool (a JetRecTool instance) to run trimming on inputJets """
     from ROOT import JetPseudojetRetriever, JetTrimmer, JetFromPseudojet
     from ROOT import EnergyCorrelatorTool, EnergyCorrelatorRatiosTool, NSubjettinessRatiosTool, NSubjettinessTool
 
@@ -128,6 +132,36 @@ def minimalJetTrimming(jetTool, inputJets,rclus,ptfrac):
                          ,PtFrac = ptfrac
                          ,JetBuilder=     JetFromPseudojet(outputJets+"jetbuild",
                                                            Attributes = [] )
+                         )
+
+    jetTool.JetGroomer = groomer
+    jetTool.InputContainer = inputJets
+    jetTool.OutputContainer = outputJets
+    jetTool.JetPseudojetRetriever = JetPseudojetRetriever("pjretriever")
+    jetTool.JetModifiers = [
+        # JetFilterTool("ptfilter",PtMin=200000), no need for filter : we just read input jets.
+        EnergyCorrelatorTool("ecorr", Beta=1.),
+        EnergyCorrelatorRatiosTool("ecorrR"),
+        NSubjettinessTool("nsubjettiness",Alpha=1.),
+        NSubjettinessRatiosTool("nsubjettinessR",),        
+        ]
+
+def minimalJetPruning(jetTool, inputJets,zcut,rcut):
+    """configures jetTool (a JetRecTool instance) to run pruning on inputJets """
+    from ROOT import JetPseudojetRetriever, JetPruner, JetFromPseudojet
+    from ROOT import EnergyCorrelatorTool, EnergyCorrelatorRatiosTool, NSubjettinessRatiosTool, NSubjettinessTool
+
+    from JSSTutorial.JetRecConfig import buildClusterGetter, buildJetFinder, buildJetCalibModifiers, buildPseudoJetGetter
+
+    outputJets = inputJets.replace('Jets', 'PrunedZcut'+str(int(zcut*10))+"Rcut"+str(int(rcut*10))+"Jets")
+
+
+    groomer = JetPruner(outputJets + "Tool"
+                        ,RCut = rcut
+                        ,ZCut = zcut
+                        ,JetAlgorithm = "CamKt"
+                        ,JetBuilder=     JetFromPseudojet(outputJets+"jetbuild",
+                                                          Attributes = [] )
                          )
 
     jetTool.JetGroomer = groomer

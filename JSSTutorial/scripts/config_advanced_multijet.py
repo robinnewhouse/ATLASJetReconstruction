@@ -11,7 +11,7 @@ c.setalg("JetExecuteToolAlgo", dict(m_configScript='xAHjetconfig_example.py',
                                     m_configCall="buildJetTrackVtxAssoc(tool)")
          )
 
-# Schedule Track filtering : the standard is to keep loose track. This created a dedicated track container.
+# Schedule Track filtering : the standard is to keep loose track. This creates a dedicated track container.
 c.setalg("JetExecuteToolAlgo", dict(m_configScript='xAHjetconfig_example.py',                                    
                                     m_className="JetTrackSelectionTool", m_name="JetTrkSelec",
                                     m_configCall="buildJetTrackSelection(tool)")

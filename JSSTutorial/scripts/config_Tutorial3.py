@@ -23,6 +23,12 @@ c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
                                 m_configCall="minimalJetTrimming(tool, 'AntiKt10LCTopoJets2', 0.2, 0.05)",
                                 m_name="buildtrimm" ))
 
+# prune the  AntiKt10LCTopoJets  we just build :
+c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
+                                m_configCall="minimalJetPruning(tool, 'AntiKt10LCTopoJets2', 0.1, 0.5)",
+                                m_name="buildprun" ))
+
+
 c.setalg("JSSTutorialPythonConfigAlgo", {"m_debug": True,
     "m_name": "JSSTutorialPythonConfigAlgo",
     "m_MyNewVariable" : "ThisGotLoadedIn",
