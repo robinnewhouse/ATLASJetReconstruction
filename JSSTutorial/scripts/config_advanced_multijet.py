@@ -1,5 +1,6 @@
 from xAH_config import xAH_config
-    
+import ROOT
+
 c = xAH_config()
 c.setalg("BasicEventSelection", {"m_name": "test", "m_useMetaData": False, "m_derivationName": "JETM8"})
 
@@ -71,5 +72,24 @@ c.setalg("IParticleHistsAlgo", dict(m_debug= False,
                                     m_detailStr= "kinematic",
                                     m_histPrefix="Jet2_",
                                     )
+         )
+
+# *******************************************************
+# Write out a Mini xAOD
+# -------------------------------
+
+# prepare a vector of string.
+selectedVars = ROOT.vector('string')()
+# each entry specify which entry we keep in the xAOD (one can instead veto variables by appending a - before each var)
+selectedVars.push_back('AntiKt10LCTopoJets2Aux.pt.eta.phi.m.Width.Tau32_wta')
+
+c.setalg("JSSMinixAOD", dict(m_debug= False,
+                             m_outputFileName="JSSxAOD.root",
+                             m_createOutputFile=True,
+                             m_copyFileMetaData=True,m_copyCutBookkeeper=True,
+                             m_storeCopyKeys="AntiKt10LCTopoJets2 AntiKt10TruthJets2", # list of container to dump.
+                             m_selectedAuxVars= selectedVars,
+                             #m_deepCopyKeys
+                             )
          )
 
