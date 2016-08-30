@@ -1,6 +1,8 @@
 import JSSTutorial.RootCoreConfigInit
 from ROOT import PseudoJetGetter, JetFinder, JetWidthTool, JetFromPseudojet, JetCalibrationTool
-from ROOT import JetSorter, JetFilterTool
+from ROOT import JetSorter, JetFilterTool, PseudoJetGetter, TrackPseudoJetGetter
+from ROOT import EnergyCorrelatorTool, EnergyCorrelatorRatiosTool, NSubjettinessRatiosTool, NSubjettinessTool
+
 
 
 def buildClusterGetter():
@@ -28,7 +30,6 @@ def buildPseudoJetGetter(algName=None, **userOptions):
     if userOptions.get("asGhost", False):
         theOptions["GhostScale"] = 1e-40
 
-    from ROOT import PseudoJetGetter, TrackPseudoJetGetter
 
     if algName is not None:
         alg, R, input = interpretJetName(algName)
@@ -263,12 +264,14 @@ def interpretJetName(jetcollName,  finder = None,input=None, mainParam=None):
 
 
 
-_ghostScale = 1e-40    
 from collections import namedtuple
-JetConfigContext = namedtuple( 'JetConfigContext', 'algName, alg, R, input, dataType' )
+JetConfigContext  = namedtuple( 'JetConfigContext', 'algName, alg, R, input, dataType, output' )
 
 class JetConfigurator(object):
-
+    
+    
+    
+    dataType = 'FullS'
     ## ********************************************************
     ## Inputs
     ## ********************************************************
@@ -279,9 +282,10 @@ class JetConfigurator(object):
     knownInputTools = dict( )
 
     knownInputLists = dict()
+    # These dicts are populated below
 
 
-
+    
 
     def addKnownInput(self, alias, klass, **properties):
         if alias in self.knownInputTools:
@@ -289,64 +293,64 @@ class JetConfigurator(object):
             return
         self.knownInputTools[alias] = (klass, properties)
             
-    def getInputTool(self, alias, **userProp):
-        klass, defaultProp = self.knownInputTools.get(alias, (None,None) )
-        if klass is None:
-            print "ERROR. unknown getter ",alias
+    def getInputTool(self, alias,context=None, **userProp):
+        tool = self.aliasToTool( alias, self.knownInputTools, context = context, **userProp)
+        if tool is None:
+            print "ERROR. JetConfigurator.getInputTool unknown modifer  ",alias
             return None
-        if userProp != {} :
-            finalProp = dict(defaultProp)
-            finalProp.update(userProp)
-        else:
-            finalProp = defaultProp
-        getter = klass(alias+'pjGetter', **finalProp)
-        return getter
+        return tool
 
     def getInputToolFromAlgName(self, algname, **userProp):
         alg, R, input = interpretJetName(algName)
         if 'Track' in input:
             input='Track' # (because 'PV0Track' is the same input as 'Track')
-        return self.get(alias, **userProp)
+        return self.getInputTool(input.lower(), **userProp)
 
-    def getInputList(self, alias):
-        if isinstance(alias, list):
-            aliasList = alias
-        else:
-            aliasList=self.knownInputLists.get(alias, None)
-            if aliasList is None:
-                print "ERROR PseudoJetGetter.getList unknown alias", alias
-                return
+    def getInputList(self, alias, context=None):
+        aliasList, failed = self.aliasToListOfAliases(alias, self.knownInputLists)
+        if aliasList is None:
+            print "ERROR JetConfigurator.getInputList unknown alias", failed
+            print "            --> add it to JetConfigurator.knownInputLists ? "
+            return
+
         toolList = []
+        aliasList_str = []
         for a in aliasList:            
             if isinstance(a, str):
-                t = self.getInputTool(a)
+                t = self.getInputTool(a, context=context)
             else: # assume a is alaready a tool:
                 t=a
+                a = t.name()
             toolList.append( t )
-        return toolList
+            aliasList_str.append( a )            
+        return toolList, aliasList_str
 
     ## ********************************************************
     ## Jet finding
     ## ********************************************************
 
-    def getJetFinderTool(self, alg="AntiKt", R=0.4, input="LCTopo", algName=None, doArea=True, **userProp):
+    def getJetFinderTool(self, alg="AntiKt", R=0.4, input="LCTopo", algName=None, doArea=True, context=None, **userProp):
         defaultProps = dict( PtMin = 5000, GhostArea = 0.01 if doArea else 0., RandomOption = 1, )
 
         if algName is not None:
             alg, R, input = interpretJetName( algName )
 
-        toolName = algName+"Finder"
+        if context:
+            toolName = context.output+'.Finder'
+        else:
+            toolName = algName+"Finder"
 
         # Technically we need this tool to translate fastjet to xAOD::Jet
-        jetFromPJ = JetFromPseudojet(toolName+"jetbuild",
+        jetFromPJ = JetFromPseudojet(toolName.replace('Finder',"jetbuild"),
                                      Attributes = ["ActiveArea", "ActiveAreaFourVector"] )
-        userOptions['JetBuilder'] = jetFromPJ
+        defaultProps['JetBuilder'] = jetFromPJ
 
-        # overwrite with userOptions
-        theOptions.update(userOptions)
+        # overwrite with userProp
+        defaultProps.update(userProp)
+        defaultProps.update( JetAlgorithm =  alg, JetRadius = R )
 
         # pass all the options to the constructor :
-        finder = JetFinder(toolName, **theOptions)
+        finder = JetFinder(toolName, **defaultProps)
 
         # incase of track jet, the finder is a bit more complex
         # we used a dedicated one which will build jets per vertex
@@ -370,38 +374,33 @@ class JetConfigurator(object):
     knownModifierTools = dict( )
     ## knownModifierList : maps an alias to a list of alias for individual modifier tool as defined in knownModifierTools.
     knownModifierList = dict( )
+    # These dicts are populated below
 
-    def getModifTool(self, alias, context=None ):
-        klass, defaultProp = self.knownModifierList.get(alias, (None,None) )
-        if klass is None:
-            print "ERROR. unknown modifer ",alias
+    def getModifTool(self, alias, context=None, **userProp ):
+        tool = self.aliasToTool( alias, self.knownModifierTools, context = context, **userProp)
+        if tool is None:
+            print "ERROR. JetConfigurator.getModifTool unknown modifer  ",alias
             return None
-        if userProp != {} :
-            finalProp = dict(defaultProp)
-            finalProp.update(userProp)
-        else:
-            finalProp = defaultProp
-        if 'context' in finalProp:
-            finalProp['context'] = context 
-        modif = klass(alias+'Tool', **finalProp)
-        return modif
+        return tool
 
     def getModifList(self, alias, context=None):
-        if isinstance(alias, list):
-            aliasList = alias
-        else:
-            aliasList=self.knownModifierList.get(alias, None)
-            if aliasList is None:
-                print "ERROR JetConfigurator.getModifList unknown alias", alias
-                return
+        aliasList, failed = self.aliasToListOfAliases(alias, self.knownModifierList)
+        if aliasList is None:
+            print "ERROR JetConfigurator.getModifList unknown alias", failed
+            print "            --> add it to JetConfigurator.knownModifierList ? "
+            return
+
         toolList = []
+        aliasList_str = []
         for a in aliasList:            
             if isinstance(a, str):
                 t = self.getModifTool(a, context=context)
             else: # assume a is alaready a tool:
                 t=a
+                a=t.name()
+            aliasList_str.append( a )
             toolList.append( t )
-        return toolList
+        return toolList, aliasList_str
 
 
     ## ********************************************************
@@ -414,59 +413,88 @@ class JetConfigurator(object):
     # calibOptions is populated below
 
 
-    def getCalibTool(self, algName="AntiKt4EMTopo", dataType='FullS', context=None, **userOptions):
+    def getCalibTool(self, algName="AntiKt4EMTopo", dataType='FullS', context=None, **userProp):
 
         if context is not None:
             # take algName and dataType from context and ignore other algs
             algName, dataType = context.algName, context.dataType
 
-        if (algName,dataType) not in calibOptions:
-            print "ERROR JetConfigurator.getCalibTool  can't retrieve calib config for ",algname, dataType
+        if (algName,dataType) not in self.calibOptions:
+            print "ERROR JetConfigurator.getCalibTool  can't retrieve calib config for ",algName, dataType
             return None
         
-        confFile, seq = calibOptions[ (algName,dataType) ]
+        confFile, seq = self.calibOptions[ (algName,dataType) ]
         tool=JetCalibrationTool(algName+"calib", IsData= (dataType=='data') , ConfigFile=confFile, CalibSequence=seq, JetCollection=algName)
 
         return tool
 
     ## ********************************************************
-    ## top level tool
+    ## top level tools
     ## ********************************************************
     ## knownJetBuilders maps a string (an jet container name) to an alias for input and an alias (or list of aliases) for JetModifiers
     ## knownJetBuilders thus maps standard collection names to their configuration (in the form of alias to input and modifiers).
     knownJetBuilders = dict( )
     # knownJetBuilders is populated below
 
-    def jetBuildSequence(self, output, inputList=None, finder=None, modifierList=None, jetTool=None, **userProp):
+
+    def jetFindingSequence(self, output, inputList=None, finder=None, modifierList=None, jetTool=None, ):
+        """jetFindingSequence returns a JetRecTool (or configure jetTool if given) to run a full jet finding sequence.
+        output is the final jet container name.
+        output will be used to retrieve the full configuration from the alias dictionnary knownJetBuilders.
+        If given, the other arguments will be use to overwrite default config as retrieved from knownJetBuilders.
+
+        output : str (key in knownJetBuilders or something interpretable as alg,radius, input type like 'CamKt11PV0TrackJets')
+        optional arguments :
+        inputList : str (key in knownInputLists) or a list (str as in knownInputTools or configured PseudoJetGetter instance)
+        modifierList :str (key in knownModifierList) or list (str as in knownModifierTools or configured JetModifier instance)        
+        finder : a configured JetFinder instance
+        jetTool : a JetRecTool instance : will be configured by this function
+            
+
+        Examples :
+        # re-create AntiKt10LCTopoJets exactly as the standard ones :
+        jetConfig.jetFindingSequence('AntiKt10LCTopoJets2', jetTool=jetTool)
+        # re-create AntiKt10LCTopoJets exactly as the standard ones but a special list of modifier
+        jetConfig.jetFindingSequence('AntiKt10LCTopoJets2', modifierList=['ptMin50GeV','sort','width'],jetTool=jetTool)
+
+        # create AntiKt12LCTopoJets. As this key is not in knownJetBuilders, specify alias for input and modifiers.
+        jetConfig.jetFindingSequence('AntiKt12LCTopoJets', inputList='lctopo', modifierList='cut50+substr',jetTool=jetTool)
+
+        # create AntiKt12LCTopoJets. same as above, but no ghosts (as implied by the  'lctopo' input list alias)
+        jetConfig.jetFindingSequence('AntiKt12LCTopoJets', inputList=['lctopo'], modifierList='cut50+substr',jetTool=jetTool)
+        #    -----> in this case the 'lctopo' is in the list, so it refers to the PseudoJetGetter tool directly
+
+        """
         alg, R, input = interpretJetName(output)
         algName = buildJetAlgName( alg, R)+ input 
 
+        context = JetConfigContext(algName, alg, R, input, self.dataType, output)
+
         if jetTool is None:
-            jetTool = JetRecTool(algName+"seq")
+            jetTool = JetRecTool(output )
+        else:
+            jetTool.setName( output )
 
-        context = JetConfigContext(algName, alg, R, input, self.dataType)
-        if inputList is None or modifierList is None:
-            # retrieve  standard one
-            inputAlias, modifAlias = self.knownJetBuilders.get( algName, (None,None) )
+        inputAlias, modifAlias = self.knownJetBuilders.get( algName, (None,None) )
 
-            if inputList is None:
-                if inputAlias is None:
-                    print "JetConfigurator.jetBuildSequence ERROR can't retrieve input tools for ", output , " interpreted as ",alg, r, input
-                    return None
-            else:
-                inputAlias = inputList # then the user given inputList is an alias 
-            inputList = self.getInputList( inputAlias )
+        if inputList is None:
+            if inputAlias is None:
+                print "JetConfigurator.jetFindingSequence ERROR can't retrieve input tools for ", output , " interpreted as ",alg, r, input
+                return None
+        else:
+            inputAlias = inputList # then the user given inputList is an alias 
+        inputList, inputAliasList = self.getInputList( inputAlias ,context=context)
 
-            if modifierList is None :
-                if modifAlias is None:
-                    print "JetConfigurator.jetBuildSequence ERROR can't retrieve modifier tools for ", output , " interpreted as ",alg, r, input
-                    return
-            else:
-                modifAlias = modifierList
-            modifierList = self.getModifList( modifAlias, context)
+        if modifierList is None :
+            if modifAlias is None:
+                print "JetConfigurator.jetFindingSequence ERROR can't retrieve modifier tools for ", output , " interpreted as ",alg, r, input
+                return
+        else:
+            modifAlias = modifierList
+        modifierList, modifAliasList = self.getModifList( modifAlias, context)
 
         if finder is None:
-            finder = self.getJetFinderTool(algName=algName )
+            finder = self.getJetFinderTool(algName=algName, context=context )
 
         jetTool.PseudoJetGetters = inputList
         jetTool.JetFinder = finder
@@ -475,21 +503,68 @@ class JetConfigurator(object):
 
         print " *********************************** "
         print " JetConfigurator : Configured jet for ",output
-        print "   --> alg name : ",algName
-        print "   --> inputs   : ", inputAlias
-        if inputAlias in self.knownInputLists:
-            print "   -->    alias to ", self.knownInputLists[inputAlias]
-        print "   --> modifiers   : ", modifAlias
-        if inputAlias in self.knownModifierList:
-            print "   -->    alias to ", self.knownModifierList[modifAlias]
+        print "   --> alg name    : ",algName.ljust(20) , '(',alg,R,input,')'
+        print "   --> inputs      : ", inputAlias.ljust(20), '=',inputAliasList
+        print "   --> modifiers   : ", modifAlias.ljust(20), '=', modifAliasList
         print " *********************************** "
         
                 
         return jetTool
 
+
+    ## ********************************************************
+    ## Helpers
+    ## ********************************************************
+    def aliasToListOfAliases(self, alias, aliasDict):
+        """ Given alias (a string or a list of strings), returns a list of aliases as defined by those mapped in aliasDict.
+            The following forms are allowed for alias :
+            'alias'  --> aliasDict['alias']
+            ['alias0','alias1',...] --> ['alias0','alias1',...] (same list)
+            'aliasX+aliasY+aliasZ'  --> aliasDict['aliasX']+aliasDict['aliasY']+aliasDict['aliasZ']
+        """
+        if isinstance(alias, list):
+            return alias
+        aL = alias.split('+')
+        finalAliases = []
+        for a in aL :
+            a_list = aliasDict.get(a,None)
+            if a_list is None:
+                return None, a # return no list and the offender
+            finalAliases += a_list
+        return finalAliases, ''
+
+    def aliasToTool(self, alias,  aliasDict, context=None, **userProp ):
+        klass, defaultProp = aliasDict.get(alias, (None,None) )
+        tname = alias
+        if klass is None:
+            return None,
+        if userProp != {} :
+            finalProp = dict(defaultProp)
+            finalProp.update(userProp)
+        else:
+            finalProp = defaultProp
+        if 'context' in finalProp:
+            finalProp['context'] = context
+        if context:
+            tname = context.output+'.'+alias
+        print '***',klass
+        modif = klass(tname, **finalProp)
+        return modif
+
+
+
 jetConfig = JetConfigurator()
 
 
+class ConfigConstants(object):
+    """Simply put all config constants in a common place """
+    ghostScale = 1e-40
+
+    vtxContainer = "PrimaryVertices"
+    trkContainer = "InDetTrackParticles"
+
+cst = ConfigConstants()
+    
 
 ## ********************************************************
 ## List of standard configuration aliases
@@ -499,24 +574,26 @@ jetConfig = JetConfigurator()
 ## top level tool
 ## ********************************************************
 ## knownJetBuilders has the form
-##  JetContName : ( 'alias_for_input' , alias_for_modifier )
+##  JetContName : ( alias_for_input , alias_for_modifier )
 ## where
-##  * 'alias_for_input' refer to an entry in knownInputLists.
-##  *  alias_for_modifier is either a string or a list :
+##  * alias_for_input  is a string or a list :
+##      'alias'  -> refers to an entry in knownInputLists
+##       ['alias1','alias2', tool] -> strings refer to entries in knownInputTools, tool are configured PseudoJetGetter instance. 
+##  * alias_for_modifier is  string or a list :
 ##     'alias' -> refer to an entry in knownModifierList
-##     'alias1_alias2' -> refer to 2 entries in knownModifierList to be concatenated
+##     'alias1+alias2' -> refer to 2 entries in knownModifierList to be concatenated
 ##     ['alias1', 'alias2,' , tool ] -> strings refer to entries in knownModifierTools, tool is a configured tool instance.
 ##
-jetConfig.knownJetBuilders = dict( 
-    AntiKt4EMTopo   = ( 'emtopo', 'calib' ),
-    AntiKt4LCTopo   = ( 'lctopo', 'calib' ),
-    AntiKt4PV0Track = ( 'track', ['ptMin5GeV','width'] ),
-    AntiKt4Truth    = ( 'truth',  ['ptMin5GeV','width'] ),
-    
-    AntiKt10LCTopo = ( 'lctopo', 'calib_substr' ),
-    AntiKt10PV0Track = ( 'track', ['ptMin5GeV','width'] ),
-    AntiKt10Truth = ( 'truth', ['ptMin5GeV','width'] ),        
-    )
+jetConfig.knownJetBuilders = { 
+    'AntiKt4EMTopo'    : ( 'emtopo', 'calib' ),
+    'AntiKt4LCTopo'    : ( 'lctopo', 'calib+cut5' ),
+    'AntiKt4PV0Track'  : ( 'track', ['ptMin5GeV','width'] ),
+    'AntiKt4Truth'     : ( 'truth',  ['ptMin5GeV','width'] ),    
+
+    'AntiKt10LCTopo'   : ( 'lctopo', 'cut50+substr' ),
+    'AntiKt10PV0Track' : ( 'track', ['ptMin5GeV','width'] ),
+    'AntiKt10Truth'    : ( 'truth', ['ptMin5GeV','width'] ),        
+    }
 
 
 ## ********************************************************
@@ -526,24 +603,24 @@ jetConfig.knownJetBuilders = dict(
 ## knownInputTools : The map of known/standard PseudoJetGetter tools.
 ## This a simple python dict whicg format is  :
 ##   alias : ( class , dict_of_properties )  
-knownInputTools = dict( 
-    lctopo = (PseudoJetGetter, dict(InputContainer="CaloCalTopoClusters",Label="LCTopo") ),
-    emtopo = (PseudoJetGetter, dict(InputContainer="CaloCalTopoClusters",Label="EMTopo") ),
-
-    track  = (TrackPseudoJetGetter, dict(InputContainer="JetSelectedTracks_LooseTrackJets", Label="Track",TrackVertexAssociation  = "JetTrackVtxAssoc") ),
-    gtrack = (TrackPseudoJetGetter, dict(InputContainer="JetSelectedTracks_LooseTrackJets", Label="Track",TrackVertexAssociation  = "JetTrackVtxAssoc") , GhostScale=_ghostScale),
-
-    truth  = (PseudoJetGetter, dict(InputContainer="JetInputTruthParticles",Label="Truth") ),
-    gtruth = (PseudoJetGetter, dict(InputContainer="JetInputTruthParticles",Label="Truth") , GhostScale=_ghostScale),
-    )
+jetConfig.knownInputTools = {
+    'lctopo' : (PseudoJetGetter, dict(InputContainer="CaloCalTopoClusters",Label="LCTopo") ),
+    'emtopo' : (PseudoJetGetter, dict(InputContainer="CaloCalTopoClusters",Label="EMTopo") ),
+    'track'  : (TrackPseudoJetGetter, dict(InputContainer="JetSelectedTracks_LooseTrackJets", Label="Track",
+                                           TrackVertexAssociation  = "JetTrackVtxAssoc") ),
+    'gtrack' : (TrackPseudoJetGetter, dict(InputContainer="JetSelectedTracks_LooseTrackJets", Label="Track",
+                                           TrackVertexAssociation  = "JetTrackVtxAssoc" , GhostScale=cst.ghostScale) ),
+    'truth'  : (PseudoJetGetter, dict(InputContainer="JetInputTruthParticles",Label="Truth") ),
+    'gtruth' : (PseudoJetGetter, dict(InputContainer="JetInputTruthParticles",Label="Truth" , GhostScale=cst.ghostScale) ), 
+    }
 
 ## knownInputLists : maps an alias to a list of alias for individual input tool as defined in knownInputTools.
 ## format is 'alias' : [ 'alias1', 'alias2',...] where strings in the list are keys in knownInputTools
-knownInputLists = dict(
-    lctopo = [ 'lctopo', 'gtrack', 'gtruth' ] ,
-    emtopo = [ 'lctopo', 'gtrack', 'gtruth' ] ,
-    track = ['track']
-    )
+jetConfig.knownInputLists = {
+    'lctopo' : [ 'lctopo', 'gtrack', 'gtruth' ] ,
+    'emtopo' : [ 'lctopo', 'gtrack', 'gtruth' ] ,
+    'track'  : ['track']
+    }
 
 
 
@@ -556,30 +633,33 @@ knownInputLists = dict(
 ## class is expected to be a JetModifierBase class
 ## callable is a function returning a JetModifierBase instance. if 'context' is part of its dict_of_properties, this means
 ##  a JetConfigContext object will be passed to the call as the 'context' argument.
-jetConfig.knownModifierTools = dict(
+jetConfig.knownModifierTools = {
     # standard modifier tools
-    width = ( JetWidthTool, {}),
-    sort  = ( JetSorter, {} ),
-    ptMin5GeV = ( JetFilterTool, dict(PtMin= 5000) ), 
+    'width'      : ( JetWidthTool, {}),
+    'sort'       : ( JetSorter, {} ),
+    'ptMin5GeV'  : ( JetFilterTool, dict(PtMin= 5000) ), 
+    'ptMin50GeV' : ( JetFilterTool, dict(PtMin= 50000) ), 
 
     # calib tool : there is no default properties for calibration since it depends on the jet alg
     # being calibrated. The relevant info will be passed through the 'context' argument (which will be set accordingly by the helper functions)
-    calib = ( jetConfig.getCalibTool, dict(context=None) ), 
+    'calib' : ( jetConfig.getCalibTool, dict(context=None) ), 
 
     # substructure tools
-    encorr   = (EnergyCorrelatorTool, dict(Beta=1) ),
-    encorrR  = (EnergyCorrelatorRatiosTool, {} ),
-    nsubjet  = (NSubjettinessTool, dict(Alpha=1) ),
-    nsubjetR = (NSubjettinessRatiosTool, {} ),
-    )
+    'encorr'   : (EnergyCorrelatorTool, dict(Beta=1) ),
+    'encorrR'  : (EnergyCorrelatorRatiosTool, dict() ),
+    'nsubjet'  : (NSubjettinessTool, dict(Alpha=1) ),
+    'nsubjetR' : (NSubjettinessRatiosTool, dict() ),
+    }
 
 ## knownModifierList : maps an alias to a list of alias for individual modifier tool as defined in knownModifierTools.
 ## format is 'alias' : [ 'alias1', 'alias2',...] where strings in the list are keys in knownModifierTools
-jetConfig.knownModifierList = dict(
-    calibL = ["calib", "ptMin5GeV", "sort"],
-    substr = ["encorr", "encorrR", "nsubjet", "nsubjetR"],
+jetConfig.knownModifierList = {
+    'calib'  : ["calib",] ,
+    'cut5'   : ["ptMin5GeV", "sort"],
+    'cut50'  : ["ptMin50GeV", "sort"],
+    'substr' : ["encorr", "encorrR", "nsubjet", "nsubjetR"],
     # ... etc ...
-    )
+    }
 
 
 ## ********************************************************
@@ -588,12 +668,12 @@ jetConfig.knownModifierList = dict(
 ## calibOptions format is in the form
 ##  ('JetAlgName', 'dataType') : ('calib_config_file','calib_sequence')
 jetConfig.calibOptions = { 
-        ("AntiKt10LCTopoTrimmedPtFrac5SmallR20", 'FullS') = ("JES_MC15recommendation_FatJet_track_assisted_January2016.config", "EtaJES_JMS"),
-        ("AntiKt10LCTopoTrimmedPtFrac5SmallR20", 'FastS') = ("JES_MC15recommendation_FatJet_track_assisted_January2016.config", "EtaJES_JMS"),
-        ("AntiKt10LCTopoTrimmedPtFrac5SmallR20", 'data')  = ("JES_MC15recommendation_FatJet_track_assisted_January2016.config", "EtaJES_JMS"),
+        ("AntiKt10LCTopoTrimmedPtFrac5SmallR20", 'FullS') : ("JES_MC15recommendation_FatJet_track_assisted_January2016.config", "EtaJES_JMS"),
+        ("AntiKt10LCTopoTrimmedPtFrac5SmallR20", 'FastS') : ("JES_MC15recommendation_FatJet_track_assisted_January2016.config", "EtaJES_JMS"),
+        ("AntiKt10LCTopoTrimmedPtFrac5SmallR20", 'data')  : ("JES_MC15recommendation_FatJet_track_assisted_January2016.config", "EtaJES_JMS"),
     
-        ("AntiKt4EMTopo",'FullS') = ( "JES_MC15cRecommendation_May2016.config",  "JetArea_Residual_Origin_EtaJES_GSC")  ,
-        ("AntiKt4EMTopo",'FastS') = ( "JES_MC15Prerecommendation_AFII_June2015.config",  "JetArea_Residual_Origin_EtaJES_GSC")  ,
-        ("AntiKt4EMTopo",'data' )=  ( "JES_MC15cRecommendation_May2016.config", "JetArea_Residual_Origin_EtaJES_GSC_Insitu")  ,
+        ("AntiKt4EMTopo",'FullS') : ( "JES_MC15cRecommendation_May2016.config",  "JetArea_Residual_Origin_EtaJES_GSC")  ,
+        ("AntiKt4EMTopo",'FastS') : ( "JES_MC15Prerecommendation_AFII_June2015.config",  "JetArea_Residual_Origin_EtaJES_GSC")  ,
+        ("AntiKt4EMTopo",'data' ) : ( "JES_MC15cRecommendation_May2016.config", "JetArea_Residual_Origin_EtaJES_GSC_Insitu")  ,
 
         }
