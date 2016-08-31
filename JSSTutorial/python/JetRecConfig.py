@@ -170,8 +170,11 @@ def buildJetInputTruthParticles(tool=None):
     return tool
     
 def buildJetTrackVtxAssoc(tool=None):
+    # for now we call our onw defined buildTightTrackVertexAssociationTool() (TrackSelecToolHelper.h) because there's no
+    # dictionnary for TightTrackVertexAssociationTool
     from ROOT import TrackVertexAssociationTool, buildTightTrackVertexAssociationTool
     cpTVa = buildTightTrackVertexAssociationTool("jetTighTVAtool")
+
     if tool is None:
         tool = TrackVertexAssociationTool("tvassoc")
         
@@ -183,7 +186,7 @@ def buildJetTrackVtxAssoc(tool=None):
 
 
 def buildJetTrackSelection(tool=None):
-    # for now we call our onw defined buildTrackSelectionTool (TrackSelecToolHelper.h) because there's no
+    # for now we call our onw defined buildTrackSelectionTool() (TrackSelecToolHelper.h) because there's no
     # dictionnary for InDet__InDetTrackSelectionTool.
     from ROOT import buildTrackSelectionTool
     inDetSel = buildTrackSelectionTool("TrackSelForJet", "Loose")
