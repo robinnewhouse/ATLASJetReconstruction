@@ -30,7 +30,7 @@ EL::StatusCode JSSMinixAOD :: initialize ()
   
   for( std::string & varSpec : m_selectedAuxVars){
     size_t pos =varSpec.find_first_of('.');
-    if (pos == std::string::npos ) {ATH_MSG_ERROR(" initialize() : can interpert variable specification : "<< varSpec);}
+    if (pos == std::string::npos ) {ATH_MSG_ERROR(" initialize() : can't interpert variable specification : "<< varSpec);}
     m_event->setAuxItemList( varSpec.substr(0,pos+1), varSpec.substr(pos) ); // include the '.' in the first arg
   }
   
