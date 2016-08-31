@@ -81,24 +81,8 @@ source setup_tool.sh
 note that the choice of the URL depends on the authentication method you are using.  Since we guided you to set up kerberos, it is the KRB5 url from the above dropdown menu.
 
 ## Additionnal steps with AnalysisBase 2.4.18
-Some packages are too old in this release. More recent tags must be
-checked out and compiled :
-``` 
-svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetRec/tags/JetRec-03-00-83 JetRec
-svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetMomentTools/trunk JetMomentTools
-svn co svn+ssh://svn.cern.ch/reps/atlasoff/PhysicsAnalysis/AnalysisCommon/ParticleJetTools/trunk ParticleJetTools
-svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetSubStructureMomentTools/trunk JetSubStructureMomentTools
-patch -p0 -i utils/JetMomentTools_patch_2.4.18.txt
 
-# if needed (not sure... ) :
-#svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/PFlow/PFlowUtils/trunk PFlowUtils
-#svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetInterface/trunk JetInterface
-#svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetRecTools/trunk JetRecTools
-
-# IMPORTANT !!! don't forget :
-rc find_packages
-rc compile
-```
+NOT NEEDED anymore every needed package should be in setup_tool.sh
 
 
 ## Get the test file :
