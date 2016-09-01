@@ -50,6 +50,8 @@ def generate_setter(prop_name,prop):
         interface = handle.__class__.__name__[16:-1] # extract XXX from "ToolHandleArray<XXX>"
         def set_prop(self, listOfTools):
             handle=self.getPropertyMgr().getProperty(prop_name).pointer() # handle for the actual tool
+            # IMPORTANT : we're setting from a list, so clean the handle first !
+            handle.clear()
             for t in listOfTools:
                 handle.push_back(ROOT.ToolHandle(interface)(t) )
             setattr(self,"_py"+prop_name, listOfTools) # save python pointers in the instance
@@ -75,7 +77,7 @@ def generate_setter(prop_name,prop):
 
 def pythonize_tool(toolClass):
     """Pythonize an ASG dual-use toolClass"""
-    if hasattr(toolClass, '_isPythonized') : return
+    if  '_isPythonized' in toolClass.__dict__ : return # NOT hasattr(toolClass, '_isPythonized')
     toolClass._isPythonized = True
     dummy = toolClass("_dummy_")
     pm = dummy.getPropertyMgr()
@@ -145,7 +147,7 @@ def pythonize_tool(toolClass):
         
 @classmethod
 def _new(cls, *l,**d):
-    self = AsgTool.__new__orig__(cls,l,d)
+    self = AsgTool.__new__orig__(cls,*l,**d)
     #print "new ",cls, self, self.__class__
     pythonize_tool(self.__class__)
     return self

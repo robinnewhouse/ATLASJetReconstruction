@@ -1,7 +1,10 @@
 #include <EventLoop/Job.h>
 #include <EventLoop/Worker.h>
+
 #include "JSSTutorial/JetBuildingAlgs.h"
 #include "JSSTutorial/ToolConfigHelper.h"
+
+#include "AsgTools/MsgStream.h" // needed for ATH_MSG_XXX
 
 // this is needed to distribute the algorithm to the workers
 ClassImp(JetExecuteToolAlgo)
@@ -16,7 +19,9 @@ JetExecuteToolAlgo :: JetExecuteToolAlgo  () : m_jetRecTool(NULL)
   // initialization code will go into histInitialize() and
   // initialize().
 
-  Info("JetExecuteToolAlgo()", "Calling constructor");
+  msg().setName( "JetExecuteToolAlgo" );
+
+  ATH_MSG_INFO( "Calling constructor");
 
 }
 
@@ -84,7 +89,10 @@ EL::StatusCode JetExecuteToolAlgo :: initialize ()
 
   ToolWrapper w;
   m_jetRecTool = w.init(m_className, m_name, m_configScript, m_configCall); 
-
+  if(m_jetRecTool==NULL) {
+    ATH_MSG_ERROR(" initialization error in python ");
+    return EL::StatusCode::FAILURE;
+  }
   std::cout<< this  << " ____ "<< m_jetRecTool<< std::endl;
   //  m_jetRecTool->initialize();
   m_event = wk()->xaodEvent();

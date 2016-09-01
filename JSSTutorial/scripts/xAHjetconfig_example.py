@@ -110,7 +110,6 @@ def minimalJetRecoWithGhosts(jetTool, jetContName):
     # first configure without ghosts
     minimalJetReco(jetTool, jetContName)
 
-    
     getters = jetTool.PseudoJetGetters
     ghostTrackgetter = buildPseudoJetGetter(algname=None, input="Track", asGhost=True)
     jetTool.PseudoJetGetters = getters+[ ghostTrackgetter]

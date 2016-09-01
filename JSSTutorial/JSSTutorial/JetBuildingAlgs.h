@@ -24,12 +24,12 @@ class JetExecuteToolAlgo : public xAH::Algorithm
 
 public:
 
-  IJetExecuteTool * m_jetRecTool; //!
+  IJetExecuteTool * m_jetRecTool=NULL; //!
   std::string m_className;      /// the type of the tool to be excecuted
   std::string m_configScript;   /// a python script to be executed to configure the JetRecTool
   std::string m_configCall;     /// a python expression (expected to be a function call like "myconfig(wrapper.jetRecTool, ...)") 
                                 /// will be executed after m_configScript
-
+  ~JetExecuteToolAlgo(){ if(m_jetRecTool) delete m_jetRecTool;}
 private:
 
 //FUNCTION DECLARATIONS
