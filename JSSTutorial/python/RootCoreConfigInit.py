@@ -147,7 +147,7 @@ def pythonize_tool(toolClass):
         
 @classmethod
 def _new(cls, *l,**d):
-    self = AsgTool.__new__orig__(cls,l,d)
+    self = AsgTool.__new__orig__(cls,*l,**d)
     #print "new ",cls, self, self.__class__
     pythonize_tool(self.__class__)
     return self
