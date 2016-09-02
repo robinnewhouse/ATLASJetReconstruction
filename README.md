@@ -297,6 +297,81 @@ they can have different m_configCall to configure various jet
 algs. Typically : `m_configCall="configMyJet(tool, 0.9)"`
 
 
+## Answers
+
+### Tutorial 1
+- How does the command know to execute the EventLoop algorithm in
+```JSSTutorialAlgo.cxx```?
+  * in the driving script config_Tutorial1.py, we add an giving the
+  class name : `c.setalg("JSSTutorialAlgo",...`
+- What are the different components that I need to include in my header files and ```cmt/MakeFile.RootCore``` to allow me to have
+access to fastjet?
+   * see all the `#include "fastjet/XXX.h"` in the .h files and the
+   PACKAGE_DEP line in cmt/Makefile.RootCore must contain Asg_FastJet
+- Where is jet finding done?  What if I only wanted to examine jets
+that have a minimum pT of 20 GeV when produced by fastjet?  How could
+I do that?
+  * jet finding call : `fastjet::ClusterSequence(jet_inputs,
+  jet_def);`, change 0.0 in 
+  `fastjet::sorted_by_pt(clust_seq.inclusive_jets(0.0) )`  to 20000.
+- What do I need to do in particular to get access to the fastjet
+contrib packages (https://fastjet.hepforge.org/contrib/)?  Can you
+identify an example of a fastjet contrib used here?  
+  * fastjet-contrib is included in the Asg_FastJet package. Make sure
+  you have the latest one. Then you need to add links instructions on
+  PACKAGE_LDFLAGS in the Makefile.RootCore. Example : EnergyCorrelator
+
+
+### Tutorial 2
+
+- Which are the Atlas jet classes used in this tutorial ? 
+  * all the classes included from JetRec/ JetSubStructureMomentTools/
+  and JetCalibTools/ there are > 10 such classes.
+- Where are they used in the execute() step ? 
+  * within  `JetRecTool::execute()` : this driving tool is in charge
+  of calling all its sub-tools in the right sequence.
+- What header files need to be included ? What dependency do they
+  impliy (check Makefile.RootCore)
+  * JetRec JetSubStructureMomentTools   JetCalibTools, add them to the
+  PACKAGE_DEP line in Makefile.RootCore
+- How did you "get the clusters" from the xAOD::CalCaloTopoCluster
+container this time?
+  * this is the job of the PseudoJetGetter tool (see the initialize()
+  part). The actual retieval and conversion to fastjet::PseudoJet is
+  done within `JetRecTool::execute()`. 
+- More generally make the correspondances between Tutorial1 and this one
+   * how/where clusters are retrieved & prepared for fastjet ?
+     + PseudoJetGetter
+   * how/where is fastjet called ?
+     + By the JetFinderTool called within  `JetRecTool::execute()`. 
+   * how/where substructure variables are calculated ?
+     + by the various JetModifierTools
+- Compare how the final jets and the substrucure info is retrieved
+  here w.r.t tutorial 1.
+  * in tutorial 1 we use directly the output final
+  fastjet::PseudoJet. Here we retrieve the xAOD::JetContainer produced
+  by the JetRecTool
+- How would you add a new variable calculation here ?
+  * Instanciate a new JetModifier (ex: JetWidthTool), configure it,
+  and append it to the list of modifiers : ` modArray.push_back(ToolHandle<IJetModifier>(myTool) )`
+
+
+### Tutorial 3
+* Do you see any jet reconstruction related code in
+  JSSTutorialPythonConfigAlgo.cxx ? 
+  - There is none, only a call to the evt store to retrieve the final
+  jets. Everything is done in other algs scheduled before the JSSTutorialPythonConfigAlgo.
+* Can you find where the atlas jet tools are configured ? Can you make
+  the correspondance with the tutorial 2 ?
+  - all is done in JSSTutorial/scripts/xAHjetconfig_example.py, see
+  the simpleJetConfig() function, there's almost 1-by-1 correspondence
+  with the c++ config.
+* how would you add an other attribute calculation to the trimmed jets
+  ?
+* Try to play with the configuration functions (can you locate them ?) to change the
+  parameters : radius, alg, or input type.
+
+
 Run an example on the grid
 =====================================
 NOT TESTED
