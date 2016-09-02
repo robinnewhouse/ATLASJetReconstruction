@@ -308,6 +308,14 @@ class JetConfigurator(object):
         return self.getInputTool(input.lower(), **userProp)
 
     def getInputList(self, alias, context=None):
+        """Interpret the given alias and returns (toolList, aliasList).
+        input :
+        alias : str (key in knownInputLists) or a list of (key in knownInputTools or configured PseudoJetGetter instance)
+
+        returns 
+          - toolList : a list of configured instances
+          - aliasList : a list of strings (alias or tool names)
+          """
         aliasList, failed = self.aliasToListOfAliases(alias, self.knownInputLists)
         if aliasList is None:
             print "ERROR JetConfigurator.getInputList unknown alias", failed
@@ -331,17 +339,26 @@ class JetConfigurator(object):
     ## ********************************************************
 
     def getJetFinderTool(self, alg="AntiKt", R=0.4, input="LCTopo", algName=None, doArea=True, context=None, **userProp):
+        """returns a configured JetFinder tool.
+
+        The JetFinderTool is configured according to the input arguments.
+        if algName is not None, it is interpreted and OVERWRITES alg,R and input.
+        
+        """
+        # Use some default properties
         defaultProps = dict( PtMin = 5000, GhostArea = 0.01 if doArea else 0., RandomOption = 1, )
 
-        if algName is not None:
+        if algName is None:
+            algName = buildJetAlgName(alg,R)
+        else:
             alg, R, input = interpretJetName( algName )
-
+            
         if context:
             toolName = context.output+'.Finder'
         else:
             toolName = algName+"Finder"
 
-        # Technically we need this tool to translate fastjet to xAOD::Jet
+        # Technically we need this tool to translate fastjet to xAOD::Jet 
         jetFromPJ = JetFromPseudojet(toolName.replace('Finder',"jetbuild"),
                                      Attributes = ["ActiveArea", "ActiveAreaFourVector"] )
         defaultProps['JetBuilder'] = jetFromPJ
@@ -357,9 +374,10 @@ class JetConfigurator(object):
         # we used a dedicated one which will build jets per vertex
         if "Track" in input:
             from ROOT import JetByVertexFinder
+            vertexIndex = 0 # configure it to use PV0 (we could interpret input)
             vfinder = JetByVertexFinder(toolName + "ByVertex",
                                         JetFinder = finder,
-                                        Vertex = 0 ) # configure it to use ONLY PV0
+                                        Vertex =  vertexIndex) 
             finder = vfinder
 
         return finder
@@ -432,7 +450,7 @@ class JetConfigurator(object):
     ## ********************************************************
     ## top level tools
     ## ********************************************************
-    ## knownJetBuilders maps a string (an jet container name) to an alias for input and an alias (or list of aliases) for JetModifiers
+    ## knownJetBuilders maps a string (a jet container name) to an alias for input and an alias (or list of aliases) for JetModifiers
     ## knownJetBuilders thus maps standard collection names to their configuration (in the form of alias to input and modifiers).
     knownJetBuilders = dict( )
     # knownJetBuilders is populated below
@@ -483,7 +501,8 @@ class JetConfigurator(object):
                 print "JetConfigurator.jetFindingSequence ERROR can't retrieve input tools for ", output , " interpreted as ",alg, r, input
                 return None
         else:
-            inputAlias = inputList # then the user given inputList is an alias 
+            inputAlias = inputList # consider the user given inputList as an alias 
+        # interpret the inputAlias :
         inputList, inputAliasList = self.getInputList( inputAlias ,context=context)
 
         if modifierList is None :
@@ -513,15 +532,62 @@ class JetConfigurator(object):
         return jetTool
 
 
+    ## knownJetGroomers maps a string (groomer alias) to (klass, dict_of_properties)
+    knownJetGroomers = dict( )
+    # knownJetGroomers is populated below
+
+    def jetGroomingSequence(self, inputJets, groomAlias,  modifierList=None, jetTool=None, outputJets=None, **userParams ):
+        """ """
+
+        # retrieve class, parameters and name from the dict :
+        groomerKlass, groomerParams, nameBuildingFunc = self.knownJetGroomers.get( groomAlias, (None,None,None) )
+
+        if groomerKlass is None :
+            print "JetConfigurator.jetGroomingSequence ERROR can't retrieve groomer for " groomAlias
+            return
+
+        # take user parameters into account
+        if userParams != {}:
+            groomerParams = dict(groomerParams) # copy
+            groomerParams.update(userParams)
+
+        algName = nameBuildingFunc(**userParams)
+        if outputJets is None:
+            outputJets = algName + "Jets"
+
+        context = JetConfigContext(algName, groomAlias, -1, inputJets, self.dataType, outputJets)
+
+        if jetTool is None:
+            jetTool = JetRecTool(algName )
+        else:
+            jetTool.setName( algName )
+        
+        if modifierList is None :
+            if modifAlias is None:
+                print "JetConfigurator.jetGroomingSequence ERROR can't retrieve modifier tools for ", groomAlias
+                return
+        else:
+            modifAlias = modifierList
+        modifierList, modifAliasList = self.getModifList( modifAlias, context)
+
+        jetTool.JetGroomer = groomerKlass( algName, **groomerParams)
+        jetTool.InputContainer = inputJets
+        jetTool.OutputContainer = outputJets
+        jetTool.JetPseudojetRetriever = JetPseudojetRetriever("pjretriever")
+        jetTool.JetModifiers = modifierList        
+
+        return jetTool
+
+
     ## ********************************************************
     ## Helpers
     ## ********************************************************
     def aliasToListOfAliases(self, alias, aliasDict):
         """ Given alias (a string or a list of strings), returns a list of aliases as defined by those mapped in aliasDict.
             The following forms are allowed for alias :
-            'alias'  --> aliasDict['alias']
-            ['alias0','alias1',...] --> ['alias0','alias1',...] (same list)
-            'aliasX+aliasY+aliasZ'  --> aliasDict['aliasX']+aliasDict['aliasY']+aliasDict['aliasZ']
+             * 'alias'                 --> aliasDict['alias']
+             * ['alias0','alias1',...] --> ['alias0','alias1',...] (same list)
+             * 'aliasX+aliasY+aliasZ'  --> aliasDict['aliasX']+aliasDict['aliasY']+aliasDict['aliasZ']
         """
         if isinstance(alias, list):
             return alias
@@ -539,12 +605,13 @@ class JetConfigurator(object):
         tname = alias
         if klass is None:
             return None,
-        if userProp != {} :
+        if userProp != {} : # copy default and update
             finalProp = dict(defaultProp)
             finalProp.update(userProp)
         else:
             finalProp = defaultProp
-        if 'context' in finalProp:
+
+        if 'context' in finalProp: # then klass is actually a function which needs a context
             finalProp['context'] = context
         if context:
             tname = context.output+'.'+alias
@@ -677,6 +744,16 @@ jetConfig.knownModifierTools = {
     }
 
 
+## ********************************************************
+## Jet groomers
+## ********************************************************
+def _buildTrimName(RClus, PtFrac):
+    return "TrimPtFrac%sSmallR%s"%( str(int(PtFrac*100), str(int(RClus*10)) ) )
+                                    
+jetchargetool.knownJetGroomers = {
+    "Trim" : (JetTrimmer, dict(RClus=0.2, PtFrac=0.05), _buildTrimName ),
+    
+    }
 
 ## ********************************************************
 ## Jet Calibration options
