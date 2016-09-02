@@ -1,8 +1,9 @@
 import JSSTutorial.RootCoreConfigInit
 from ROOT import PseudoJetGetter, JetFinder, JetWidthTool, JetFromPseudojet, JetCalibrationTool
 from ROOT import JetSorter, JetFilterTool, PseudoJetGetter, TrackPseudoJetGetter
-from ROOT import EnergyCorrelatorTool, EnergyCorrelatorRatiosTool, NSubjettinessRatiosTool, NSubjettinessTool
 
+from ROOT import EnergyCorrelatorTool, EnergyCorrelatorRatiosTool, NSubjettinessRatiosTool, NSubjettinessTool, KtMassDropTool
+from ROOT import JetChargeTool, KTSplittingScaleTool, CenterOfMassShapesTool, JetPullTool, DipolarityTool, AngularityTool, PlanarFlowTool
 
 
 def buildClusterGetter():
@@ -445,8 +446,8 @@ class JetConfigurator(object):
 
         output : str (key in knownJetBuilders or something interpretable as alg,radius, input type like 'CamKt11PV0TrackJets')
         optional arguments :
-        inputList : str (key in knownInputLists) or a list (str as in knownInputTools or configured PseudoJetGetter instance)
-        modifierList :str (key in knownModifierList) or list (str as in knownModifierTools or configured JetModifier instance)        
+        inputList : str (key in knownInputLists) or a list of (key in knownInputTools or configured PseudoJetGetter instance)
+        modifierList :str (key in knownModifierList) or list of (key in knownModifierTools or configured JetModifier instance)        
         finder : a configured JetFinder instance
         jetTool : a JetRecTool instance : will be configured by this function
             
@@ -454,11 +455,11 @@ class JetConfigurator(object):
         Examples :
         # re-create AntiKt10LCTopoJets exactly as the standard ones :
         jetConfig.jetFindingSequence('AntiKt10LCTopoJets2', jetTool=jetTool)
-        # re-create AntiKt10LCTopoJets exactly as the standard ones but a special list of modifier
+        # re-create AntiKt10LCTopoJets exactly as the standard ones but a special list of modifiers
         jetConfig.jetFindingSequence('AntiKt10LCTopoJets2', modifierList=['ptMin50GeV','sort','width'],jetTool=jetTool)
 
-        # create AntiKt12LCTopoJets. As this key is not in knownJetBuilders, specify alias for input and modifiers.
-        jetConfig.jetFindingSequence('AntiKt12LCTopoJets', inputList='lctopo', modifierList='cut50+substr',jetTool=jetTool)
+        # create AntiKt12LCTopoJets. As this key is not in knownJetBuilders, specify aliases for input and modifiers.
+        jetConfig.jetFindingSequence('AntiKt12LCTopoJets', inputList='lctopoInputs', modifierList='cut50+substr',jetTool=jetTool)
 
         # create AntiKt12LCTopoJets. same as above, but no ghosts (as implied by the  'lctopo' input list alias)
         jetConfig.jetFindingSequence('AntiKt12LCTopoJets', inputList=['lctopo'], modifierList='cut50+substr',jetTool=jetTool)
@@ -577,28 +578,37 @@ cst = ConfigConstants()
 ##  JetContName : ( alias_for_input , alias_for_modifier )
 ## where
 ##  * alias_for_input  is a string or a list :
-##      'alias'  -> refers to an entry in knownInputLists
-##       ['alias1','alias2', tool] -> strings refer to entries in knownInputTools, tool are configured PseudoJetGetter instance. 
+##      'alias'  -> refers to an entry in *knownInputLists*
+##       ['alias1','alias2', tool] -> strings refer to entries in knownInputTools, tool is a configured PseudoJetGetter instance. 
 ##  * alias_for_modifier is  string or a list :
-##     'alias' -> refer to an entry in knownModifierList
+##     'alias' -> refer to an entry in *knownModifierList*
 ##     'alias1+alias2' -> refer to 2 entries in knownModifierList to be concatenated
 ##     ['alias1', 'alias2,' , tool ] -> strings refer to entries in knownModifierTools, tool is a configured tool instance.
 ##
 jetConfig.knownJetBuilders = { 
-    'AntiKt4EMTopo'    : ( 'emtopo', 'calib' ),
-    'AntiKt4LCTopo'    : ( 'lctopo', 'calib+cut5' ),
-    'AntiKt4PV0Track'  : ( 'track', ['ptMin5GeV','width'] ),
+    'AntiKt4EMTopo'    : ( 'emtopoInputs', 'calib+cut5' ),
+    'AntiKt4LCTopo'    : ( 'lctopoInputs', 'calib+cut5' ),
+    'AntiKt4PV0Track'  : ( 'trackInputs', ['ptMin5GeV','width'] ),
     'AntiKt4Truth'     : ( 'truth',  ['ptMin5GeV','width'] ),    
 
-    'AntiKt10LCTopo'   : ( 'lctopo', 'cut50+substr' ),
-    'AntiKt10PV0Track' : ( 'track', ['ptMin5GeV','width'] ),
-    'AntiKt10Truth'    : ( 'truth', ['ptMin5GeV','width'] ),        
+    'AntiKt10LCTopo'   : ( 'lctopoInputs', 'cut50+substr' ),
+    'AntiKt10PV0Track' : ( 'trackInputs', ['ptMin5GeV','width'] ),
+    'AntiKt10Truth'    : ( 'truthInputs', ['ptMin5GeV','width'] ),        
     }
 
 
 ## ********************************************************
 ## Inputs
 ## ********************************************************
+## knownInputLists : maps an alias to a list of alias for individual input tool as defined in knownInputTools.
+## format is 'alias' : [ 'alias1', 'alias2',...] where strings in the list are keys in knownInputTools
+jetConfig.knownInputLists = {
+    'lctopoInputs' : [ 'lctopo', 'gtrack', 'gtruth' ] ,
+    'emtopoInputs' : [ 'lctopo', 'gtrack', 'gtruth' ] ,
+    'trackInputs'  : ['track'],
+    'truthInputs'  : ['truth'],   
+    }
+
 
 ## knownInputTools : The map of known/standard PseudoJetGetter tools.
 ## This a simple python dict whicg format is  :
@@ -606,21 +616,16 @@ jetConfig.knownJetBuilders = {
 jetConfig.knownInputTools = {
     'lctopo' : (PseudoJetGetter, dict(InputContainer="CaloCalTopoClusters",Label="LCTopo") ),
     'emtopo' : (PseudoJetGetter, dict(InputContainer="CaloCalTopoClusters",Label="EMTopo") ),
+
     'track'  : (TrackPseudoJetGetter, dict(InputContainer="JetSelectedTracks_LooseTrackJets", Label="Track",
                                            TrackVertexAssociation  = "JetTrackVtxAssoc") ),
     'gtrack' : (TrackPseudoJetGetter, dict(InputContainer="JetSelectedTracks_LooseTrackJets", Label="Track",
                                            TrackVertexAssociation  = "JetTrackVtxAssoc" , GhostScale=cst.ghostScale) ),
-    'truth'  : (PseudoJetGetter, dict(InputContainer="JetInputTruthParticles",Label="Truth") ),
+
+    'truth'  : (PseudoJetGetter, dict(InputContainer="JetInputTruthParticles",Label="Truth")a ),
     'gtruth' : (PseudoJetGetter, dict(InputContainer="JetInputTruthParticles",Label="Truth" , GhostScale=cst.ghostScale) ), 
     }
 
-## knownInputLists : maps an alias to a list of alias for individual input tool as defined in knownInputTools.
-## format is 'alias' : [ 'alias1', 'alias2',...] where strings in the list are keys in knownInputTools
-jetConfig.knownInputLists = {
-    'lctopo' : [ 'lctopo', 'gtrack', 'gtruth' ] ,
-    'emtopo' : [ 'lctopo', 'gtrack', 'gtruth' ] ,
-    'track'  : ['track']
-    }
 
 
 
@@ -628,6 +633,16 @@ jetConfig.knownInputLists = {
 ## ********************************************************
 ## Jet Modifiers
 ## ********************************************************
+## knownModifierList : maps an alias to a list of alias for individual modifier tool as defined in knownModifierTools.
+## format is 'alias' : [ 'alias1', 'alias2',...] where strings in the list are keys in knownModifierTools
+jetConfig.knownModifierList = {
+    'calib'  : ["calib",] ,
+    'cut5'   : ["ptMin5GeV", "sort"],
+    'cut50'  : ["ptMin50GeV", "sort"],
+    'substr' : ["encorr", "encorrR", "nsubjet", "nsubjetR"],
+    # ... etc ...
+    }
+
 ## knownModifierTools format  :
 ##   alias : ( class/callable , dict_of_properties )
 ## class is expected to be a JetModifierBase class
@@ -649,17 +664,18 @@ jetConfig.knownModifierTools = {
     'encorrR'  : (EnergyCorrelatorRatiosTool, dict() ),
     'nsubjet'  : (NSubjettinessTool, dict(Alpha=1) ),
     'nsubjetR' : (NSubjettinessRatiosTool, dict() ),
+    'ktsplit'  : (KTSplittingScaleTool, dict() ),
+    
+    'angularity': (AngularityTool, dict() ),
+    'dipolarity': (DipolarityTool, dict( SubJetRadius = 0.3) ),
+    'planarflow': (PlanarFlowTool, dict() ),
+    'ktmdrop'   : (KtMassDropTool, dict() ),
+    'comshapes' : (CenterOfMassShapesTool, dict() ),
+    'pull'      : (JetPullTool( UseEtaInsteadOfY = False, IncludeTensorMoments = True) ),
+    'charge'    : (JetChargeTool, dict( K=1.0) ),
+
     }
 
-## knownModifierList : maps an alias to a list of alias for individual modifier tool as defined in knownModifierTools.
-## format is 'alias' : [ 'alias1', 'alias2',...] where strings in the list are keys in knownModifierTools
-jetConfig.knownModifierList = {
-    'calib'  : ["calib",] ,
-    'cut5'   : ["ptMin5GeV", "sort"],
-    'cut50'  : ["ptMin50GeV", "sort"],
-    'substr' : ["encorr", "encorrR", "nsubjet", "nsubjetR"],
-    # ... etc ...
-    }
 
 
 ## ********************************************************
