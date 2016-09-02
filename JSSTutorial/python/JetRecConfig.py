@@ -487,6 +487,7 @@ class JetConfigurator(object):
         alg, R, input = interpretJetName(output)
         algName = buildJetAlgName( alg, R)+ input 
 
+        # context is used to pass around usefull information to sub-tools configuration 
         context = JetConfigContext(algName, alg, R, input, self.dataType, output)
 
         if jetTool is None:
@@ -496,6 +497,7 @@ class JetConfigurator(object):
 
         inputAlias, modifAlias = self.knownJetBuilders.get( algName, (None,None) )
 
+        # prepare the inputs --------------
         if inputList is None:
             if inputAlias is None:
                 print "JetConfigurator.jetFindingSequence ERROR can't retrieve input tools for ", output , " interpreted as ",alg, r, input
@@ -505,6 +507,7 @@ class JetConfigurator(object):
         # interpret the inputAlias :
         inputList, inputAliasList = self.getInputList( inputAlias ,context=context)
 
+        # prepare the modifiers --------------
         if modifierList is None :
             if modifAlias is None:
                 print "JetConfigurator.jetFindingSequence ERROR can't retrieve modifier tools for ", output , " interpreted as ",alg, r, input
@@ -513,6 +516,7 @@ class JetConfigurator(object):
             modifAlias = modifierList
         modifierList, modifAliasList = self.getModifList( modifAlias, context)
 
+        # prepare the finder --------------
         if finder is None:
             finder = self.getJetFinderTool(algName=algName, context=context )
 
@@ -522,7 +526,7 @@ class JetConfigurator(object):
         jetTool.OutputContainer = output
 
         print " *********************************** "
-        print " JetConfigurator : Configured jet for ",output
+        print " JetConfigurator : Configured jet finder for ",output
         print "   --> alg name    : ",algName.ljust(20) , '(',alg,R,input,')'
         print "   --> inputs      : ", inputAlias.ljust(20), '=',inputAliasList
         print "   --> modifiers   : ", modifAlias.ljust(20), '=', modifAliasList
@@ -563,8 +567,10 @@ class JetConfigurator(object):
             jetTool.setName( algName )
         
         if modifierList is None :
-            if modifAlias is None:
-                print "JetConfigurator.jetGroomingSequence ERROR can't retrieve modifier tools for ", groomAlias
+            # use the same as for input :
+            inputAlias, modifAlias = self.knownJetBuilders.get( inputJets, (None,None) )
+            if modifAlias is None :
+                print "ERROR JetConfigurator.jetGroomingSequence : can't guess a modifier list from ",inputJets
                 return
         else:
             modifAlias = modifierList
@@ -575,6 +581,13 @@ class JetConfigurator(object):
         jetTool.OutputContainer = outputJets
         jetTool.JetPseudojetRetriever = JetPseudojetRetriever("pjretriever")
         jetTool.JetModifiers = modifierList        
+
+        print " *********************************** "
+        print " JetConfigurator : Configured jet groomer for ", groomAlias, " from ", inputJets, "to", outputJets
+        print "   --> groom class : ", groomerKlass
+        print "   --> groom params: ", groomerParams
+        print "   --> modifiers   : ", modifAlias.ljust(20), '=', modifAliasList
+        print " *********************************** "
 
         return jetTool
 
@@ -706,7 +719,7 @@ jetConfig.knownModifierList = {
     'calib'  : ["calib",] ,
     'cut5'   : ["ptMin5GeV", "sort"],
     'cut50'  : ["ptMin50GeV", "sort"],
-    'substr' : ["encorr", "encorrR", "nsubjet", "nsubjetR"],
+    'substr' : ["encorr", "encorrR", "nsubjet", "nsubjetR", "ktsplit"],
     # ... etc ...
     }
 
@@ -749,10 +762,12 @@ jetConfig.knownModifierTools = {
 ## ********************************************************
 def _buildTrimName(RClus, PtFrac):
     return "TrimPtFrac%sSmallR%s"%( str(int(PtFrac*100), str(int(RClus*10)) ) )
+def _buildPrunName(ZCut, RCut):
+    return "PrunZCut%sRCut%s"%(str(int(ZCut*100)), str(int(RCut*10)) )
                                     
-jetchargetool.knownJetGroomers = {
+jetConfig.knownJetGroomers = {
     "Trim" : (JetTrimmer, dict(RClus=0.2, PtFrac=0.05), _buildTrimName ),
-    
+    "Prun" : (JetPruner, dict(ZCut = 0.1, RCut=0.5), _buildPrunName), 
     }
 
 ## ********************************************************
