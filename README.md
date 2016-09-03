@@ -303,7 +303,8 @@ algs. Typically : `m_configCall="configMyJet(tool, 0.9)"`
 - How does the command know to execute the EventLoop algorithm in
 ```JSSTutorialAlgo.cxx```?
   * in the driving script config_Tutorial1.py, we add an giving the
-  class name : `c.setalg("JSSTutorialAlgo",...`
+  class name : `c.setalg("JSSTutorialAlgo",...)`
+
 - What are the different components that I need to include in my header files and ```cmt/MakeFile.RootCore``` to allow me to have
 access to fastjet?
    * see all the `#include "fastjet/XXX.h"` in the .h files and the
@@ -314,6 +315,7 @@ I do that?
   * jet finding call : `fastjet::ClusterSequence(jet_inputs,
   jet_def);`, change 0.0 in 
   `fastjet::sorted_by_pt(clust_seq.inclusive_jets(0.0) )`  to 20000.
+
 - What do I need to do in particular to get access to the fastjet
 contrib packages (https://fastjet.hepforge.org/contrib/)?  Can you
 identify an example of a fastjet contrib used here?  

@@ -298,10 +298,10 @@ EL::StatusCode JSSTutorialPythonConfigAlgo :: execute ()
     //  continue;
     // NOT necessary since we configured a pt filter in the jet rec sequence above
     
-    std::cout<<std::endl<<"JetPt : "<<jet->pt()<<std::endl;
+    //std::cout<<std::endl<<"JetPt : "<<jet->pt()<<std::endl;
     
     // Ungroomed
-    std::cout<<"Ungroomed(mass):         "<<jet->m()<<std::endl;
+    //    std::cout<<"Ungroomed(mass):         "<<jet->m()<<std::endl;
     
     h_jet_pyconfig_Ungroomed_pt   ->Fill(jet->pt()/1000.0);
     h_jet_pyconfig_Ungroomed_m    ->Fill(jet->m()/1000.0);
@@ -323,7 +323,7 @@ EL::StatusCode JSSTutorialPythonConfigAlgo :: execute ()
     //  continue;
     // NOT necessary since we configured a pt filter in the jet rec sequence above
     
-    std::cout<<"Trimmed(mass):         "<<jet->m()<<std::endl;
+    //std::cout<<"Trimmed(mass):         "<<jet->m()<<std::endl;
 
     float d2 = D2_acc(*jet);
     float tau32 = tau32_acc(*jet);
@@ -353,7 +353,7 @@ EL::StatusCode JSSTutorialPythonConfigAlgo :: execute ()
     //  continue;
     // NOT necessary since we configured a pt filter in the jet rec sequence above
     
-    std::cout<<"Pruned(mass):         "<<jet->m()<<std::endl;
+    //    std::cout<<"Pruned(mass):         "<<jet->m()<<std::endl;
 
     float d2 = D2_acc(*jet);
     float tau32 = tau32_acc(*jet);
