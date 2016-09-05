@@ -83,11 +83,12 @@ def simpleJetConfigWithGhosts(jetTool, output):
     """Demonstrate how to add ghosts objects
     """
     from JSSTutorial.JetRecConfig import buildClusterGetter, buildJetFinder, buildJetCalibModifiers, buildPseudoJetGetter
+    from ROOT import TrackPseudoJetGetter
 
     # the idea is to add a PseudoJetGetter configured to produce ghost to the PseudoJetGetters list.
     # We could re-copy everything from above simpleJetConfig, just adding a new PseudoJetGetter,
     # instead we avoid config duplication by re-invoking the function :
-    simpleJetConfig(jetTool, jetContName)
+    simpleJetConfig(jetTool, output)
 
     # we  then extend the list of PseudoJetGetter.
 
@@ -96,7 +97,7 @@ def simpleJetConfigWithGhosts(jetTool, output):
 
     # create a new PseudoJetGetter for ghost track.
     # Beware, all properties are important !
-    ghostTrackgetter = TrackPseudoJetGetter(InputContainer="JetSelectedTracks_LooseTrackJets", Label="GhostTrack",
+    ghostTrackgetter = TrackPseudoJetGetter(output+".gtracks",InputContainer="JetSelectedTracks_LooseTrackJets", Label="GhostTrack",
                                             TrackVertexAssociation  = "JetTrackVtxAssoc",OutputContainer="GTrackPseudoJetVec",GhostScale=1e-40) 
 
     # extend the list and reset it to the tool :

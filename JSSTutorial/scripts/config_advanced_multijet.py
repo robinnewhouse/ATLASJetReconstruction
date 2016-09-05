@@ -47,8 +47,8 @@ c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
 # -------------------------------
 # rebuild cluster jets, ghost-associating tracks.
 c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py", 
-                                 m_configCall="jetConfig.jetFindingSequence('AntiKt10LCTopo_full',outputName='AntiKt10LCTopoJets2', jetTool=tool)",
-                                 m_name="buildfull" ))
+                                m_configCall="jetConfig.jetFindingSequence('AntiKt10LCTopo_full',outputName='AntiKt10LCTopoJets2', jetTool=tool)",
+                                m_name="buildfull" ))
 
 # -------------------------------
 # trimm the LCTopo jets  we just build :
@@ -67,18 +67,18 @@ c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
 # plot some of the containers we build.
 # -------------------------------
 
-c.setalg("IParticleHistsAlgo", dict(m_debug= False,
-                                    m_inContainerName= "AntiKt10TruthJets",
-                                    m_detailStr= "kinematic",
-                                    m_histPrefix="Jet_",
-                                    )
-         )
-c.setalg("IParticleHistsAlgo", dict(m_debug= False,
-                                    m_inContainerName= "AntiKt10TruthJets2",
-                                    m_detailStr= "kinematic",
-                                    m_histPrefix="Jet2_",
-                                    )
-         )
+## c.setalg("IParticleHistsAlgo", dict(m_debug= False,
+##                                     m_inContainerName= "AntiKt10TruthJets",
+##                                     m_detailStr= "kinematic",
+##                                     m_histPrefix="Jet_",
+##                                     )
+##          )
+## c.setalg("IParticleHistsAlgo", dict(m_debug= False,
+##                                     m_inContainerName= "AntiKt10TruthJets2",
+##                                     m_detailStr= "kinematic",
+##                                     m_histPrefix="Jet2_",
+##                                     )
+##          )
 
 # *******************************************************
 # Write out a Mini xAOD
@@ -104,8 +104,5 @@ c.setalg("JSSMinixAOD", dict(m_debug= False,
                              m_copyFileMetaData=True,m_copyCutBookkeeper=True,
                              m_simpleCopyKeys = ' '.join(containers),
                              m_storeCopyKeys=  ' '.join(containers2),
-                             m_selectedAuxVars= selectedVars,
-                             #m_deepCopyKeys
-                             )
-         )
+                             ) )
 
