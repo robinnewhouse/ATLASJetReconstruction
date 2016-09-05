@@ -3,14 +3,13 @@ import ROOT
 from JSSTutorial.JetRecConfig import buildClusterGetter
 from JSSTutorial.JetRecConfig import buildJetTrackVtxAssoc , buildJetTrackSelection, buildJetInputTruthParticles
 
-## this is for debugging only. ignore.
 if 'wrapper' in dir():
     jetTool = wrapper.m_tool
 
 
 def simpleJetConfig(jetTool, output="AntiKt10LCTopoJets2"):
-    """This function demonstrates how to configure a JetRecTool expliciting each sub-tool.
-    jetTool : is an instance of a JetRecTool;
+    """This function demonstrate how to configure a JetRecTool expliciting each sub-tool.
+    jetTool : is an instance of a JetRecTpp;
     output  : the final collection name.
     """
 
@@ -80,6 +79,30 @@ def simpleJetConfig(jetTool, output="AntiKt10LCTopoJets2"):
     # jetTool.OutputLevel = 2    
 
 
+def simpleJetConfigWithGhosts(jetTool, output):
+    """Demonstrate how to add ghosts objects
+    """
+    from JSSTutorial.JetRecConfig import buildClusterGetter, buildJetFinder, buildJetCalibModifiers, buildPseudoJetGetter
+
+    # the idea is to add a PseudoJetGetter configured to produce ghost to the PseudoJetGetters list.
+    # We could re-copy everything from above simpleJetConfig, just adding a new PseudoJetGetter,
+    # instead we avoid config duplication by re-invoking the function :
+    simpleJetConfig(jetTool, jetContName)
+
+    # we  then extend the list of PseudoJetGetter.
+
+    # Get it : 
+    getters = jetTool.PseudoJetGetters
+
+    # create a new PseudoJetGetter for ghost track.
+    # Beware, all properties are important !
+    ghostTrackgetter = TrackPseudoJetGetter(InputContainer="JetSelectedTracks_LooseTrackJets", Label="GhostTrack",
+                                            TrackVertexAssociation  = "JetTrackVtxAssoc",OutputContainer="GTrackPseudoJetVec",GhostScale=1e-40) 
+
+    # extend the list and reset it to the tool :
+    jetTool.PseudoJetGetters = getters+[ ghostTrackgetter]
+
+
 
 def minimalJetTrimming(jetTool, inputJets,rclus,ptfrac):
     """configures jetTool (a JetRecTool instance) to run trimming on inputJets """
@@ -137,54 +160,6 @@ def minimalJetPruning(jetTool, inputJets,zcut,rcut):
         NSubjettinessTool("nsubjettiness",Alpha=1.),
         NSubjettinessRatiosTool("nsubjettinessR",),        
         ]
-
-
-
-
-
-
-
-
-
-
-
-
-def simpleJetConfig2(jetTool, output="AntiKt10LCTopoJets2"):
-    """Exactly as simpleJetConfig above but making use of some helper functions.
-    Shorter to write/read."""
-    from JSSTutorial.JetRecConfig import buildClusterGetter, buildJetFinder, buildJetCalibModifiers
-
-    jetTool.PseudoJetGetters = [ buildClusterGetter() ] # (this property is a list)
-    jetTool.JetFinder        = buildJetFinder("AntiKt10")
-    jetTool.JetModifiers     = buildJetCalibModifiers("AntiKt10LCTopo") + [ROOT.JetWidthTool("width")]
-    jetTool.OutputContainer  = output
-    
-
-def minimalJetReco(jetTool, jetContName):
-    """Almost as above. Will configure jetTool so it builds jetContName.
-    jetContName must be a standard-like name (ex : 'AntKt5EMTopoJets').
-    """
-
-    from JSSTutorial.JetRecConfig import buildClusterGetter, buildJetFinder, buildJetCalibModifiers, buildPseudoJetGetter
-
-    jetTool.PseudoJetGetters = [ buildPseudoJetGetter(jetContName) ] # (this property is a list)
-    jetTool.JetFinder        = buildJetFinder(jetContName)
-    jetTool.JetModifiers     = buildJetCalibModifiers(jetContName) + [ROOT.JetWidthTool("width")]
-    jetTool.OutputContainer  = jetContName
-
-def minimalJetRecoWithGhosts(jetTool, jetContName):
-    """Demonstrate how to add ghosts objects
-    """
-    from JSSTutorial.JetRecConfig import buildClusterGetter, buildJetFinder, buildJetCalibModifiers, buildPseudoJetGetter
-
-    # first configure without ghosts
-    minimalJetReco(jetTool, jetContName)
-
-    getters = jetTool.PseudoJetGetters
-    ghostTrackgetter = buildPseudoJetGetter(algname=None, input="Track", asGhost=True)
-    jetTool.PseudoJetGetters = getters+[ ghostTrackgetter]
-
-
 
 
     
