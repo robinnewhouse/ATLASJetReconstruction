@@ -44,7 +44,6 @@ JSSTutorialPythonConfigAlgo :: JSSTutorialPythonConfigAlgo ()
 
   ATH_MSG_INFO("Calling constructor");
 
-  m_MyNewVariable = "";
   m_TreeName = "";
 }
 
@@ -76,7 +75,6 @@ EL::StatusCode JSSTutorialPythonConfigAlgo :: histInitialize ()
   // connected.
   ATH_MSG_INFO( "Calling histInitialize");
 
-  std::cout<<"Printing the observable you loaded in (m_MyNewVariable) : "<<m_MyNewVariable<<std::endl;
 
   // Number of events
   h_EventCounter = new TH1D("h_EventCounter","h_EventCounter",10,0,10);
@@ -279,10 +277,10 @@ EL::StatusCode JSSTutorialPythonConfigAlgo :: execute ()
   RETURN_CHECK("JSSTutorialAlgo::execute()", HelperFunctions::retrieve(ungroomedJets, "AntiKt10LCTopoJets2", m_event, m_store,  m_verbose), "");
 
   const xAOD::JetContainer* trimmedJets;
-  RETURN_CHECK("JSSTutorialAlgo::execute()", HelperFunctions::retrieve(trimmedJets, "AntiKt10LCTopoTrimmedPtFrac5SmallR20Jets2", m_event, m_store,  m_verbose), "");
+  RETURN_CHECK("JSSTutorialAlgo::execute()", HelperFunctions::retrieve(trimmedJets,m_trimmedContName, m_event, m_store,  m_verbose), "");
 
   const xAOD::JetContainer* prunedJets;
-  RETURN_CHECK("JSSTutorialAlgo::execute()", HelperFunctions::retrieve(prunedJets, "AntiKt10LCTopoPrunedZcut1Rcut5Jets2", m_event, m_store,  m_verbose), "");
+  RETURN_CHECK("JSSTutorialAlgo::execute()", HelperFunctions::retrieve(prunedJets, m_prunedContName, m_event, m_store,  m_verbose), "");
   
 
 

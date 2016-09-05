@@ -1,4 +1,6 @@
 ### Setup Tool and Compile: ###
+
+
 git clone https://github.com/UCATLAS/xAODAnaHelpers.git
 cd xAODAnaHelpers
 
@@ -34,6 +36,7 @@ setupATLAS
 Release=2.4.18
 rcSetup Base,$Release
 python xAODAnaHelpers/scripts/checkoutASGtags.py $Release
+
 rc clean
 rc find_packages
 rc compile

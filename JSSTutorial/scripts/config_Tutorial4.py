@@ -16,23 +16,25 @@ c.setalg("BasicEventSelection", {"m_debug": False,
 # -------------------------------
 # re-build a AntiKt10LCTopoJets : 
 c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py", 
-                                 m_configCall="simpleJetConfig(tool, 'AntiKt10LCTopoJets2')",
+                                 m_configCall="jetConfig.jetFindingSequence('AntiKt10LCTopo',outputName='AntiKt10LCTopoJets2', jetTool=tool)",
                                  m_name="buildalg" ))
 # trimm the  AntiKt10LCTopoJets  we just build :
 c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
-                                m_configCall="minimalJetTrimming(tool, 'AntiKt10LCTopoJets2', 0.2, 0.05)",
+                                m_configCall="jetConfig.jetGroomingSequence('AntiKt10LCTopoJets2', 'Trim', modifierList='substr',jetTool=tool)",
                                 m_name="buildtrimm" ))
 
 # prune the  AntiKt10LCTopoJets  we just build :
 c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
-                                m_configCall="minimalJetPruning(tool, 'AntiKt10LCTopoJets2', 0.1, 0.5)",
+                                m_configCall="jetConfig.jetGroomingSequence('AntiKt10LCTopoJets2', 'Prun', modifierList='substr',jetTool=tool)",                                
                                 m_name="buildprun" ))
 
 
 c.setalg("JSSTutorialPythonConfigAlgo", {"m_debug": True,
-    "m_name": "JSSTutorialPythonConfigAlgo",
-    "m_TreeName" : "JetTree_pyconfig"
-})
+                                         "m_name": "JSSTutorialPythonConfigAlgo",
+                                         "m_trimmedContName" : "AntiKt10LCTopoTrimPtFrac5SmallR2Jets2",
+                                         "m_prunedContName" : "AntiKt10LCTopoPrunZCut10RCut5Jets2",
+                                         "m_TreeName" : "JetTree_pyconfig"
+                                         })
 
 # -------------------------------
 # plot containers we build.

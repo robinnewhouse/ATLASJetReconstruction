@@ -33,7 +33,9 @@ IJetExecuteTool* ToolWrapper::init(const std::string & className, const std::str
     if( !res) return NULL;
 
     // initialize the top tool and it's subtools :
-    res = p.Exec("tool.py_initialize()");
+    res = p.Exec("sc=tool.py_initialize()");
+    if( !res) return NULL;
+    res = p.Exec("if sc.isFailure(): raise Exception('py_initialize failed on '+str(tool))");
     if( !res) return NULL;
 
     std::cout << " ToolWrapper done for "<< m_tool << std::endl;

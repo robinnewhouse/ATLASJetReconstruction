@@ -29,8 +29,9 @@ class JSSTutorialPythonConfigAlgo : public TreeAlgo
 public:
 
   // configuration variables
-  std::string m_MyNewVariable;
   std::string m_TreeName;
+  std::string m_trimmedContName="AntiKt10LCTopoTrimmedPtFrac5SmallR20Jets2";
+  std::string m_prunedContName="AntiKt10LCTopoPrunedZcut1Rcut5Jets2";
   
 
 private:

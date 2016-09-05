@@ -35,26 +35,32 @@ c.setalg("JetExecuteToolAlgo", dict(m_configScript='xAHjetconfig_example.py',
 # -------------------------------
 # Track jets
 c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py", 
-                                 m_configCall="minimalJetReco(tool, 'AntiKt10PV0TrackJets2')",
-                                 m_name="buildTrkJet" ))
+                                m_configCall="jetConfig.jetFindingSequence('AntiKt10PV0Track',outputName='AntiKt10PV0TrackJets2',jetTool=tool)",
+                                m_name="buildTrkJet" ))
+
 # -------------------------------
 # trimm the Track jets  we just build :
 c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
-                                m_configCall="minimalJetTrimming(tool, 'AntiKt10PV0TrackJets2', 0.2, 0.05)",
+                                m_configCall="jetConfig.jetGroomingSequence('AntiKt10PV0TrackJets2', 'Trim', modifierList='cut50+substr',jetTool=tool)",
                                 m_name="buildtrkTrim" ))
 
 # -------------------------------
 # rebuild cluster jets, ghost-associating tracks.
-#  (read how this is done in minimalJetRecoWithGhosts() from xAHjetconfig_example
 c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py", 
-                                 m_configCall="minimalJetRecoWithGhosts(tool, 'AntiKt10LCTopoJets2')",
-                                 m_name="buildLCwithghosts" ))
+                                 m_configCall="jetConfig.jetFindingSequence('AntiKt10LCTopo_full',outputName='AntiKt10LCTopoJets2', jetTool=tool)",
+                                 m_name="buildfull" ))
+
+# -------------------------------
+# trimm the LCTopo jets  we just build :
+c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
+                                m_configCall="jetConfig.jetGroomingSequence('AntiKt10LCTopoJets2', 'Trim', modifierList='cut50+substr',jetTool=tool)",
+                                m_name="buildlctopTrim" ))
 
 # -------------------------------
 # build truth jets.
 c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py", 
-                                 m_configCall="minimalJetReco(tool, 'AntiKt10TruthJets2');tool.JetModifiers[1].PtMin =40000",
-                                 m_name="buildTruth" ))
+                                m_configCall="jetConfig.jetFindingSequence('AntiKt10Truth', jetTool=tool,outputName='AntiKt10TruthJets2')",
+                                m_name="buildTruth" ))
 
 
 # *******************************************************
@@ -80,14 +86,24 @@ c.setalg("IParticleHistsAlgo", dict(m_debug= False,
 
 # prepare a vector of string.
 selectedVars = ROOT.vector('string')()
+containers = [ "AntiKt10LCTopoJets","AntiKt10TruthJets" , ] 
+containers2 = [jc+"2" for jc in containers] + [ "AntiKt10PV0TrackJets2"]
+containers += [ "AntiKt10LCTopoTrimmedPtFrac5SmallR20Jets", "AntiKt10PV0TrackTrimmedPtFrac5SmallR20Jets"]
+containers2 += ["AntiKt10LCTopoTrimPtFrac5SmallR2Jets2","AntiKt10PV0TrackTrimPtFrac5SmallR2Jets2"]
+
 # each entry specify which entry we keep in the xAOD (one can instead veto variables by appending a - before each var)
-selectedVars.push_back('AntiKt10LCTopoJets2Aux.pt.eta.phi.m.Width.Tau32_wta')
+def selectJV(cont,vect):
+    vect.push_back(cont+"Aux.pt.eta.phi.m.Width.Tau32_wta")
+
+for jc in containers+containers2:
+    selectJV(jc,selectedVars)
 
 c.setalg("JSSMinixAOD", dict(m_debug= False,
                              m_outputFileName="JSSxAOD.root",
                              m_createOutputFile=True,
                              m_copyFileMetaData=True,m_copyCutBookkeeper=True,
-                             m_storeCopyKeys="AntiKt10LCTopoJets2 AntiKt10TruthJets2", # list of container to dump.
+                             m_simpleCopyKeys = ' '.join(containers),
+                             m_storeCopyKeys=  ' '.join(containers2),
                              m_selectedAuxVars= selectedVars,
                              #m_deepCopyKeys
                              )
