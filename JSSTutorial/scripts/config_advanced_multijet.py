@@ -5,16 +5,19 @@ c = xAH_config()
 c.setalg("BasicEventSelection", {"m_name": "test", "m_useMetaData": False, "m_derivationName": "JETM8"})
 
 # *******************************************************
+# The algs below run the pre-selection tools for truth and track jet building
+# They MUST run before attempting to use tracks or truth with jets
+
 # Preparation for tracks
 # Schedule Track-Vertex association
 c.setalg("JetExecuteToolAlgo", dict(m_configScript='xAHjetconfig_example.py',                                    
-                                    m_className="TrackVertexAssociationTool", m_name="TrkVtxAssoc",
+                                    m_className="TrackVertexAssociationTool", m_name="TrkVtxAssoc", # give the actuall class and name of the tool we configure
                                     m_configCall="buildJetTrackVtxAssoc(tool)")
          )
 
 # Schedule Track filtering : the standard is to keep loose track. This creates a dedicated track container.
 c.setalg("JetExecuteToolAlgo", dict(m_configScript='xAHjetconfig_example.py',                                    
-                                    m_className="JetTrackSelectionTool", m_name="JetTrkSelec",
+                                    m_className="JetTrackSelectionTool", m_name="JetTrkSelec", # give the actuall class and name of the tool we configure
                                     m_configCall="buildJetTrackSelection(tool)")
          )
 
@@ -23,7 +26,7 @@ c.setalg("JetExecuteToolAlgo", dict(m_configScript='xAHjetconfig_example.py',
 # Schedule truth particle filtering : filter stable, non-neutrino particles into their own container
 
 c.setalg("JetExecuteToolAlgo", dict(m_configScript='xAHjetconfig_example.py',                                    
-                                    m_className="CopyTruthJetParticles", m_name="filtertruth",
+                                    m_className="CopyTruthJetParticles", m_name="filtertruth", # give the actuall class and name of the tool we configure
                                     m_configCall="buildJetInputTruthParticles(tool)")
          )
 # *******************************************************
@@ -45,7 +48,7 @@ c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
                                 m_name="buildtrkTrim" ))
 
 # -------------------------------
-# rebuild cluster jets, ghost-associating tracks.
+# rebuild cluster jets, ghost-associating tracks : the 'AntiKt10LCTopo_full' key word includes ghost tracks and truth
 c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py", 
                                 m_configCall="jetConfig.jetFindingSequence('AntiKt10LCTopo_full',outputName='AntiKt10LCTopoJets2', jetTool=tool)",
                                 m_name="buildfull" ))

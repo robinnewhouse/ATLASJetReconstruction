@@ -45,14 +45,14 @@ jetConfig.knownJetBuilders = {
     'AntiKt4EMTopo_full'    : ( 'emtopoInputs+ghosts', 'calib+cut5' ),
     'AntiKt4LCTopo_full'    : ( 'lctopoInputs+ghosts', 'calib+cut5' ),
 
-    'AntiKt4PV0Track'  : ( 'trackInputs', ['ptMin5GeV','width'] ),
-    'AntiKt4Truth'     : ( 'truth',  ['ptMin5GeV','width'] ),    
+    'AntiKt4PV0Track'       : ( 'trackInputs', ['ptMin5GeV','width'] ),
+    'AntiKt4Truth'          : ( 'truthInputs',  ['ptMin5GeV','width'] ),    
 
     'AntiKt10LCTopo'        : ( 'lctopoInputs', 'cut50+substr' ),
     'AntiKt10LCTopo_full'   : ( 'lctopoInputs+ghosts', 'cut50+substr' ),
 
-    'AntiKt10PV0Track' : ( 'trackInputs', ['ptMin5GeV','width'] ),
-    'AntiKt10Truth'    : ( 'truthInputs', ['ptMin5GeV','width'] ),        
+    'AntiKt10PV0Track'      : ( 'trackInputs', ['ptMin5GeV','width'] ),
+    'AntiKt10Truth'         : ( 'truthInputs', ['ptMin5GeV','width'] ),        
     }
 
 
@@ -145,6 +145,7 @@ jetConfig.knownModifierTools = {
 def _buildTrimName(RClus=0, PtFrac=0):
     print "RClus ",RClus, "PtFrac",PtFrac
     return "TrimmedPtFrac%sSmallR%s"%( str(int(PtFrac*100) ), str(int(RClus*100)) )
+
 def _buildPrunName(ZCut=0, RCut=0):
     return "PrunedZCut%sRCut%s"%(str(int(ZCut*100)), str(int(RCut*100)) )
                                     

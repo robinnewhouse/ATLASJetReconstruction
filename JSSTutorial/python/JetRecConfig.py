@@ -9,17 +9,24 @@
 ## An example of keyword hiearchy could be :
 ##  
 ## 'AntiKt4EMTopo'                       # a top-level keyword. Refers to :
-##    ('emtopoInputs', 'calib+cut5' )    # a pair (keyword for inputs, keyword(s) for modifiers). They refer to
+##    ('emtopoInputs', 'calib+cut5' )    # a pair (keyword for input list, keyword for modifier list). They refer to
 ##
-##       'emtopoInputs' --> [ 'emtopo' ] # a list of keywords for input tools (see below for 'emtopo')
+##       'emtopoInputs'           # a input list keyword. Refers to :     
+##            [ 'emtopo' ]        # a list of keywords for input tools 
 ##
-##       'calib'        --> ['calib']             # a list of keywords for input tools
-##       'cut5'         --> ['ptMin5GeV', 'sort'] # an other list of keywords for input tools
-##                                                # (then calib+cut5 is interpreted as ['calib','ptMin5GeV', 'sort']
+##       'calib'                   # a modifier list keyword. Refers to
+##           ['calib']             # a list of keywords for input tools
+##       'cut5'                    # a modifier list keyword. Refers to
+##           ['ptMin5GeV', 'sort'] # an other list of keywords for input tools
+##                                 # (then 'calib+cut5' is interpreted as ['calib','ptMin5GeV', 'sort']
 ##
-##         'emtopo' --> (PseudoJetGetter, dict(InputContainer="CaloCalTopoClusters",Label="EMTopo",SkipNegativeEnergy=True, OutputContainer="EMTopoPseudoJetVec") ) # specification for an input tool in the form (class, dict_of_properties)
+##           'emtopo'   # a keyword for a (input) tool configuration. Refers to :
+##              (PseudoJetGetter, dict(InputContainer="CaloCalTopoClusters",Label="EMTopo",SkipNegativeEnergy=True, OutputContainer="EMTopoPseudoJetVec") ) 
+##                      # this pair (class, dict_of_properties) fully specifies a tool configuration
 ##
-##         'ptMin5GeV' --> ( JetFilterTool, dict(PtMin= 5000) ), $ specification for a modifier tool in the form (class, dict_of_properties)
+##           'ptMin5GeV' # a keyword for a (modifier) tool configuration. Refers to :
+##                 ( JetFilterTool, dict(PtMin= 5000) )
+##                       #      
 ##        ... etc ....
 ##
 ## Together with this hiearchy, some helper functions can interpret the keywords and return the corresponding
