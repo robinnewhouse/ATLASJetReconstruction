@@ -767,7 +767,7 @@ def _buildPrunName(ZCut, RCut):
                                     
 jetConfig.knownJetGroomers = {
     "Trim" : (JetTrimmer, dict(RClus=0.2, PtFrac=0.05), _buildTrimName ),
-    "Prun" : (JetPruner, dict(ZCut = 0.1, RCut=0.5), _buildPrunName), 
+    "Prun" : (JetPruner,  dict(ZCut = 0.1, RCut=0.5),   _buildPrunName), 
     }
 
 ## ********************************************************
