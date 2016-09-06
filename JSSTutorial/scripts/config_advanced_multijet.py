@@ -86,10 +86,10 @@ c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
 
 # prepare a vector of string.
 selectedVars = ROOT.vector('string')()
-containers = [ "AntiKt10LCTopoJets","AntiKt10TruthJets" , ] 
+
+containers = [ "AntiKt10LCTopoJets","AntiKt10TruthJets" , "AntiKt10LCTopoTrimmedPtFrac5SmallR20Jets", "AntiKt10PV0TrackTrimmedPtFrac5SmallR20Jets" ] # containers from input file
 containers2 = [jc+"2" for jc in containers] + [ "AntiKt10PV0TrackJets2"]
-containers += [ "AntiKt10LCTopoTrimmedPtFrac5SmallR20Jets", "AntiKt10PV0TrackTrimmedPtFrac5SmallR20Jets"]
-containers2 += ["AntiKt10LCTopoTrimPtFrac5SmallR2Jets2","AntiKt10PV0TrackTrimPtFrac5SmallR2Jets2"]
+#containers += [ ]
 
 # each entry specify which entry we keep in the xAOD (one can instead veto variables by appending a - before each var)
 def selectJV(cont,vect):

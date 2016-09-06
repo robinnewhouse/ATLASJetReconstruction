@@ -1,6 +1,5 @@
 
 import ROOT
-from JSSTutorial.JetRecConfig import buildClusterGetter
 from JSSTutorial.JetRecConfig import buildJetTrackVtxAssoc , buildJetTrackSelection, buildJetInputTruthParticles
 
 if 'wrapper' in dir():
@@ -82,16 +81,14 @@ def simpleJetConfig(jetTool, output="AntiKt10LCTopoJets2"):
 def simpleJetConfigWithGhosts(jetTool, output):
     """Demonstrate how to add ghosts objects
     """
-    from JSSTutorial.JetRecConfig import buildClusterGetter, buildJetFinder, buildJetCalibModifiers, buildPseudoJetGetter
     from ROOT import TrackPseudoJetGetter
-
     # the idea is to add a PseudoJetGetter configured to produce ghost to the PseudoJetGetters list.
     # We could re-copy everything from above simpleJetConfig, just adding a new PseudoJetGetter,
     # instead we avoid config duplication by re-invoking the function :
     simpleJetConfig(jetTool, output)
 
     # we  then extend the list of PseudoJetGetter.
-
+    
     # Get it : 
     getters = jetTool.PseudoJetGetters
 

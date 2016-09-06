@@ -31,8 +31,8 @@ c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
 
 c.setalg("JSSTutorialPythonConfigAlgo", {"m_debug": True,
                                          "m_name": "JSSTutorialPythonConfigAlgo",
-                                         "m_trimmedContName" : "AntiKt10LCTopoTrimPtFrac5SmallR2Jets2",
-                                         "m_prunedContName" : "AntiKt10LCTopoPrunZCut10RCut5Jets2",
+                                         "m_trimmedContName" : "AntiKt10LCTopoTrimmedPtFrac5SmallR20Jets2",
+                                         "m_prunedContName" : "AntiKt10LCTopoPrunedZCut10RCut50Jets2",
                                          "m_TreeName" : "JetTree_pyconfig"
                                          })
 
