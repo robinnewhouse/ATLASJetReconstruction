@@ -76,16 +76,16 @@ jetConfig.knownInputLists = {
 ## This a simple python dict whicg format is  :
 ##   alias : ( class , dict_of_properties )  
 jetConfig.knownInputTools = {
-    'lctopo' : (PseudoJetGetter, dict(InputContainer="CaloCalTopoClusters",Label="LCTopo",SkipNegativeEnergy=True, OutputContainer="LCTopoPseudoJetVec") ),
-    'emtopo' : (PseudoJetGetter, dict(InputContainer="CaloCalTopoClusters",Label="EMTopo",SkipNegativeEnergy=True, OutputContainer="EMTopoPseudoJetVec") ),
+    'lctopo' : (PseudoJetGetter, dict(InputContainer="CaloCalTopoClusters",Label="LCTopo",SkipNegativeEnergy=True,  ) ),
+    'emtopo' : (PseudoJetGetter, dict(InputContainer="CaloCalTopoClusters",Label="EMTopo",SkipNegativeEnergy=True, ) ),
 
     'track'  : (TrackPseudoJetGetter, dict(InputContainer="JetSelectedTracks_LooseTrackJets", Label="Track",
-                                           TrackVertexAssociation  = "JetTrackVtxAssoc",OutputContainer="TrackPseudoJetVec") ),
+                                           TrackVertexAssociation  = "JetTrackVtxAssoc", ) ),
     'gtrack' : (TrackPseudoJetGetter, dict(InputContainer="JetSelectedTracks_LooseTrackJets", Label="GhostTrack",
-                                           TrackVertexAssociation  = "JetTrackVtxAssoc" , GhostScale=cst.ghostScale,OutputContainer="GTrackPseudoJetVec") ),
+                                           TrackVertexAssociation  = "JetTrackVtxAssoc" , GhostScale=cst.ghostScale, ) ),
 
-    'truth'  : (PseudoJetGetter, dict(InputContainer="JetInputTruthParticles",Label="Truth",OutputContainer="TruthPseudoJetVec") ),
-    'gtruth' : (PseudoJetGetter, dict(InputContainer="JetInputTruthParticles",Label="GhostTruth" , GhostScale=cst.ghostScale,OutputContainer="TruthPseudoJetVec") ), 
+    'truth'  : (PseudoJetGetter, dict(InputContainer="JetInputTruthParticles",Label="Truth",) ),
+    'gtruth' : (PseudoJetGetter, dict(InputContainer="JetInputTruthParticles",Label="GhostTruth" , GhostScale=cst.ghostScale,) ), 
     }
 
 

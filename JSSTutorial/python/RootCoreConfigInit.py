@@ -4,11 +4,16 @@ from ROOT.asg import AsgTool
 def generate_getter(prop_name,prop):
     """Generate a getter for the tool property. Doesn't work"""
     proptype = prop.__class__.__name__
-    if prop.type()>0 and prop.type() < 6: # than it's a simple type
+    if prop.type()>0 and prop.type() < 5: # then it's a simple type
         def get_prop(self):
             pm = self.getPropertyMgr()
             prop = pm.getProperty(prop_name)
             return prop.pointer()[0]
+    elif prop.type()== 5: # then it's a str
+        def get_prop(self):
+            pm = self.getPropertyMgr()
+            prop = pm.getProperty(prop_name)
+            return str(prop.pointer())
     elif "ToolHandleArray" in proptype:
         def get_prop(self):
             try:

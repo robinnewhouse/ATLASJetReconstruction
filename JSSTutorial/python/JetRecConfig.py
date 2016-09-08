@@ -151,6 +151,7 @@ class JetConfigurator(object):
     ## top level tools
     ## ********************************************************
 
+
     def jetFindingSequence(self, topAlias, inputList=None, finder=None, modifierList=None, jetTool=None, outputName=None, doArea=True ):
         """jetFindingSequence returns a JetRecTool (or configure jetTool if given) to run a full jet finding sequence.
         topAlias will be used to retrieve the full configuration from the alias dictionnary knownJetBuilders.
@@ -333,6 +334,7 @@ class JetConfigurator(object):
             defaultProps.update(VariableRMinRadius=0.2, VariableRMassScale=600000,JetRadius=1.0,
                                 JetAlgorithm = dict(VarA='AntiKt',VarK='Kt',VarC='CamKt')[alg] )
 
+
         # pass all the options to the constructor :
         finder = JetFinder(toolName, **defaultProps)
 
@@ -364,6 +366,10 @@ class JetConfigurator(object):
         if tool is None:
             print "ERROR. JetConfigurator.getInputTool unknown modifer  ",alias
             return None
+        if "OutputContainer" not in userProp:
+            tool.OutputContainer = tool.InputContainer+"_pseudojet"
+            if tool.GhostScale > 0.0:
+                tool.OutputContainer = tool.InputContainer+"_gpseudojet"
         return tool
 
     def getInputToolFromAlgName(self, algname, **userProp):
@@ -382,14 +388,15 @@ class JetConfigurator(object):
           - aliasList : a list of strings (alias or tool names)
           """
         aliasList, failed = self.aliasToListOfAliases(alias, self.knownInputLists)
+        
         if aliasList is None:
             print "ERROR JetConfigurator.getInputList unknown alias", failed
             print "            --> add it to JetConfigurator.knownInputLists ? "
             return
-
         toolList = []
         aliasList_str = []
-        for a in aliasList:            
+        for a in aliasList:
+            print a
             if isinstance(a, str):
                 t = self.getInputTool(a, context=context)
             else: # assume a is alaready a tool:
@@ -484,11 +491,11 @@ class JetConfigurator(object):
         else:
             finalProp = defaultProp
 
+
         if 'context' in finalProp: # then klass is actually a function which needs a context
             finalProp['context'] = context
         if context:
             tname = context.output+'.'+alias
-        print '***',klass
         modif = klass(tname, **finalProp)
         return modif
 
@@ -521,23 +528,6 @@ def interpretJetName(jetcollName,  finder = None,input=None, mainParam=None):
         if finder is None:
             print "interpretJetName Error could not guess jet finder type in ", jetcollName
             return 
-
-    if input is None:
-        knownInput = ['LCTopo','Tower','EMTopo', "Truth", "ZTrack", 'PV0Track','TopoTower']
-        for i in knownInput:
-            if i in jetcollName:
-                input = i
-                if i== "Tower":
-                    if 'Ghost' in jetcollName:
-                        input = 'Tower'
-                    else:
-                        input = "TopoTower"
-                break
-        if input is None:
-            print "interpretJetName ERROR could not guess input type in ",jetcollName
-            print " Known input :", knownInput
-            return
-        
     if mainParam is None:
         # get the 2 chars following finder :
         mp = jetcollName[len(finder):len(finder)+2]
@@ -547,5 +537,17 @@ def interpretJetName(jetcollName,  finder = None,input=None, mainParam=None):
         except ValueError :
             print "interpretJetName Error could not guess main parameter in ",jetcollName 
             return
+
+    if input is None:
+        prefix=finder+mp
+        end = jetcollName.find('Jet')
+        if end==-1: end =len(jetcollName)
+        input = jetcollName[len(prefix):end]
+        
+        if input is None:
+            print "interpretJetName ERROR could not guess input type in ",jetcollName
+            print " Known input :", knownInput
+            return
+        
 
     return finder, mainParam, input
