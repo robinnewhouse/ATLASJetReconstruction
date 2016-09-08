@@ -51,8 +51,8 @@ jetConfig.knownJetBuilders = {
     'AntiKt10LCTopo'        : ( 'lctopoInputs', 'cut50+substr' ),
     'AntiKt10LCTopo_full'   : ( 'lctopoInputs+ghosts', 'cut50+substr' ),
 
-    'AntiKt10PV0Track'      : ( 'trackInputs', ['ptMin5GeV','width'] ),
-    'AntiKt10Truth'         : ( 'truthInputs', ['ptMin5GeV','width'] ),        
+    'AntiKt10PV0Track'      : ( 'trackInputs', 'cut50+substr' ),
+    'AntiKt10Truth'         : ( 'truthInputs', 'cut50+substr' ),        
     }
 
 

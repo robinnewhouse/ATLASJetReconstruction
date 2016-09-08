@@ -98,6 +98,10 @@ EL::StatusCode JetExecuteToolAlgo :: initialize ()
   m_event = wk()->xaodEvent();
   m_store = wk()->xaodStore();
 
+  if ( m_debug ) msg().setLevel(MSG::DEBUG);
+  msg().setName( m_name );
+
+
   return EL::StatusCode::SUCCESS;
 }
 
@@ -109,7 +113,8 @@ EL::StatusCode JetExecuteToolAlgo :: execute ()
   // histograms and trees.  This is where most of your actual analysis
   // code will go.
 
-  if ( m_debug ) { Info("execute()", "Executing JetExecuteToolAlgo..."); }
+  //if ( m_debug ) { Info("execute()", "Executing JetExecuteToolAlgo..."); }
+  ATH_MSG_DEBUG( "Executing " );
 
 
   m_jetRecTool->execute();

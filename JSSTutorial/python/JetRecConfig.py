@@ -151,7 +151,7 @@ class JetConfigurator(object):
     ## top level tools
     ## ********************************************************
 
-    def jetFindingSequence(self, topAlias, inputList=None, finder=None, modifierList=None, jetTool=None, outputName=None ):
+    def jetFindingSequence(self, topAlias, inputList=None, finder=None, modifierList=None, jetTool=None, outputName=None, doArea=True ):
         """jetFindingSequence returns a JetRecTool (or configure jetTool if given) to run a full jet finding sequence.
         topAlias will be used to retrieve the full configuration from the alias dictionnary knownJetBuilders.
         If given, the other arguments will be use to overwrite default config as retrieved from knownJetBuilders.
@@ -215,7 +215,7 @@ class JetConfigurator(object):
 
         # prepare the finder --------------
         if finder is None:
-            finder = self.getJetFinderTool(algName=algName, context=context )
+            finder = self.getJetFinderTool(algName=algName, context=context, doArea=doArea )
 
 
         jetTool.PseudoJetGetters = inputList
@@ -273,7 +273,6 @@ class JetConfigurator(object):
             modifAlias = modifierList
 
         modifierList, modifAliasList = self.getModifList( modifAlias, context)
-
         # needed for technical reasons
         jetBuilder=JetFromPseudojet(outputJets+"jetbuild", Attributes = [] )
                                     
@@ -321,12 +320,18 @@ class JetConfigurator(object):
 
         # Technically we need this tool to translate fastjet to xAOD::Jet 
         jetFromPJ = JetFromPseudojet(toolName.replace('Finder',"jetbuild"),
-                                     Attributes = ["ActiveArea", "ActiveAreaFourVector"] )
+                                     Attributes = ["ActiveArea", "ActiveAreaFourVector"] if doArea else [] )
         defaultProps['JetBuilder'] = jetFromPJ
 
         # overwrite with userProp
         defaultProps.update(userProp)
         defaultProps.update( JetAlgorithm =  alg, JetRadius = R )
+
+        if alg.startswith('Var'):
+            # add Variable R jet params.
+            # for now assuming large-R jet usage so fixed param :
+            defaultProps.update(VariableRMinRadius=0.2, VariableRMassScale=600000,JetRadius=1.0,
+                                JetAlgorithm = dict(VarA='AntiKt',VarK='Kt',VarC='CamKt')[alg] )
 
         # pass all the options to the constructor :
         finder = JetFinder(toolName, **defaultProps)
@@ -508,16 +513,17 @@ def buildJetContName(finder, mainParam, input):
 def interpretJetName(jetcollName,  finder = None,input=None, mainParam=None):
     # first step : guess the finder, input , mainParam, if needed
     if finder is None:
-        for a in [ 'AntiKt','CamKt','Kt', 'Cone','SISCone','CMSCone']:
+        for a in [ 'AntiKt','CamKt','Kt', 'Cone','SISCone','CMSCone','VarA','VarK','VarC']:
             if jetcollName.startswith(a):
-                finder = a
+                finder = a #dict(VarA='AntiKt',VarK='Kt',VarC='CamKt').get(a,a)
+                
                 break
         if finder is None:
             print "interpretJetName Error could not guess jet finder type in ", jetcollName
             return 
 
     if input is None:
-        knownInput = ['LCTopo','Tower','EMTopo', "Truth", "ZTrack", 'PV0Track']
+        knownInput = ['LCTopo','Tower','EMTopo', "Truth", "ZTrack", 'PV0Track','TopoTower']
         for i in knownInput:
             if i in jetcollName:
                 input = i
