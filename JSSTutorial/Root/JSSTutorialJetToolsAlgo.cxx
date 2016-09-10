@@ -188,7 +188,7 @@ EL::StatusCode JSSTutorialJetToolsAlgo :: histInitialize ()
 
   ToolHandleArray<IPseudoJetGetter> getterArray;
   // Create a PseudoJet builder.
-  cout << "Creating pseudojet builder." << endl;
+  //cout << "Creating pseudojet builder." << endl;
 
   PseudoJetGetter* lcgetter = new PseudoJetGetter("lcget");
   SC_CHECK(lcgetter->setProperty("InputContainer", "CaloCalTopoClusters"));
@@ -214,7 +214,7 @@ EL::StatusCode JSSTutorialJetToolsAlgo :: histInitialize ()
   SC_CHECK(jetFromPJ->initialize());
 
   // JetFinder 
-  cout << "Creating jet finder." << endl;
+  //cout << "Creating jet finder." << endl;
   JetFinder* finder = new JetFinder("AntiKt4Finder");
   //ToolStore::put(finder);
   SC_CHECK(finder->setProperty("JetAlgorithm", "AntiKt"));
@@ -263,7 +263,7 @@ EL::StatusCode JSSTutorialJetToolsAlgo :: histInitialize ()
   // *********************************************************
   // Finally put everithing together :
 
-  cout << "Creating jetrec tool." << endl;
+  //cout << "Creating jetrec tool." << endl;
   m_jetBuilder = new JetRecTool("jetbuilder");
   SC_CHECK(m_jetBuilder->setProperty("OutputContainer", "AntiKt10LCTopoJets2"));
   SC_CHECK(m_jetBuilder->setProperty("PseudoJetGetters", getterArray));
