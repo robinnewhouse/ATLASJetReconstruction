@@ -24,7 +24,7 @@ IJetExecuteTool* ToolWrapper::init(const std::string & className, const std::str
     // call the user script :
     //if(scriptName!="") p.LoadMacro(scriptName.c_str());
     if(scriptName!="") { 
-      std::string execScript="execfile('"; execScript+=scriptName; execScript+="')";
+      std::string execScript="execfile(JSSTutorial.RootCoreConfigInit.scriptPath('"; execScript+=scriptName; execScript+="') )";
       res = p.Exec(execScript.c_str());
       if( !res) return NULL;
     }
