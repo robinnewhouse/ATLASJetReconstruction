@@ -27,9 +27,6 @@ Sam Meehan <samuel.meehan@cern.ch>
 
 Pierre-Antoine Delsart <delsart@in2p3.fr>
 
-Joe Taenzer <joseph.taenzer@cern.ch>
-
-Sanmay Ganguly <Sanmay.Ganguly@cern.ch>
 
 
 Description
