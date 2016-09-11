@@ -20,9 +20,16 @@ Table of Contents
 
 
 # Authors : 
+These are the main authors and initial developers of this.  If you are following this tutorial to familiarize yourself with jet software in ATLAS, 
+then you _should_ have questions, and you should *_ask_* these people for help.
+
 Sam Meehan <samuel.meehan@cern.ch>
 
 Pierre-Antoine Delsart <delsart@in2p3.fr>
+
+Joe Taenzer <joseph.taenzer@cern.ch>
+
+Sanmay Ganguly <Sanmay.Ganguly@cern.ch>
 
 
 Description
