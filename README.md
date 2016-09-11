@@ -15,7 +15,7 @@ Table of Contents
 
 **[Run an Example on the Grid](#run-an-example-on-the-grid)**
 
-**[TO DO](#todo-new-examples)**
+**[ToDo List](#todo-list)**
 
 
 
@@ -442,8 +442,10 @@ which means the system will search for the script 'xAHjetconfig_example.py' with
 
 
 
-ToDo (new examples)
+ToDo List 
 =====================================
+The list below are additions and modifications to this tutorial that would benefit users.  Contributing to the incorporation of examples of these
+capabilities in this framework is OTP-worthy, so please contact the authors if you are interested.
 - [JET] how to write a simple modifier themselves
 - [JET] playing with variable-R jet reconstruction
 - [MET] example of how to use the custom jets output from the example to create a new set of MET maps and then use these for MET rebuilding
