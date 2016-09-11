@@ -166,25 +166,32 @@ AsgTool.__new__ = _new
 def scriptPath(path):
     from os.path import exists, join
     from os import listdir
+
+    finalpath = None
     # direct test (local, running dir file) :
     if exists(path):
-        return path
+        finalpath = path
     # try in "Package/scripts/"
     # this will work arguments passed as "MyPackage/myscript.py" when the exact location is "$ROOTCOREBIN/user_scripts/MyPackage/myscript.py"
     # which points to "..pathtoworkdir../MyPackage/scripts/myscript.py"
     # (similar as Athena jobOption).
-    user_scripts=ROOT.gSystem.ExpandPathName("$ROOTCOREBIN/user_scripts")
-    upath = join(user_scripts, path)
-    if exists(upath):
-        return upath
-
-    # look for every possible path under $ROOTCOREBIN/user_scripts :
-    for d in listdir(user_scripts):
-        upath = join(user_scripts, d, path)
+    else:
+        user_scripts=ROOT.gSystem.ExpandPathName("$ROOTCOREBIN/user_scripts")
+        upath = join(user_scripts, path)
         if exists(upath):
-            return upath
-    print "RootCoreConfigInit   ERROR could not locate script : ", path
-    
+            finalpath = upath
+        else:
+            # look for every possible path under $ROOTCOREBIN/user_scripts :
+            for d in listdir(user_scripts):
+                upath = join(user_scripts, d, path)
+                if exists(upath):
+                    finalpath = upath
+                    break
+    if finalpath is None:
+        print "RootCoreConfigInit.scriptPath()   ERROR could not locate script : ", path
+    else:
+        print "RootCoreConfigInit.scriptPath()   INFO found  ", path, " as ",finalpath
+    return finalpath
         
 
 ## This is needed to avoid dictionnary issue at load time.

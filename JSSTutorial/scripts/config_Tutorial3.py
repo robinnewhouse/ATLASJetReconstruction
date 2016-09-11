@@ -15,16 +15,16 @@ c.setalg("BasicEventSelection", {"m_debug": False,
 
 # -------------------------------
 # re-build a AntiKt10LCTopoJets : 
-c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py", 
+c.setalg("JetRecToolAlgo", dict(m_configScript="JSSTutorial/xAHjetconfig_example.py", 
                                  m_configCall="simpleJetConfig(tool, 'AntiKt10LCTopoJets2')",
                                  m_name="buildalg" ))
 # trimm the  AntiKt10LCTopoJets  we just build :
-c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
+c.setalg("JetRecToolAlgo", dict(m_configScript="JSSTutorial/xAHjetconfig_example.py",
                                 m_configCall="minimalJetTrimming(tool, 'AntiKt10LCTopoJets2', 0.2, 0.05)",
                                 m_name="buildtrimm" ))
 
 # prune the  AntiKt10LCTopoJets  we just build :
-c.setalg("JetRecToolAlgo", dict(m_configScript="xAHjetconfig_example.py",
+c.setalg("JetRecToolAlgo", dict(m_configScript="JSSTutorial/xAHjetconfig_example.py",
                                 m_configCall="minimalJetPruning(tool, 'AntiKt10LCTopoJets2', 0.1, 0.5)",
                                 m_name="buildprun" ))
 
