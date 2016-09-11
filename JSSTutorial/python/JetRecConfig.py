@@ -105,7 +105,8 @@ JetConfigContext  = namedtuple( 'JetConfigContext', 'algName, alg, R, input, dat
 
 class JetConfigurator(object):        
     
-    dataType = 'FullS'
+    globalOptions = dict(dataType = 'FullS')
+    
 
     ## ********************************************************
     ## Dictionnary definitions
@@ -185,7 +186,7 @@ class JetConfigurator(object):
         if outputName is None : outputName = algName+"Jets"
 
         # context is used to pass around usefull information to sub-tools configuration 
-        context = JetConfigContext(algName, alg, R, input, self.dataType, outputName)
+        context = JetConfigContext(algName, alg, R, input, self.globalOptions['dataType'], outputName)
 
         if jetTool is None:
             jetTool = JetRecTool(outputName )
@@ -257,7 +258,7 @@ class JetConfigurator(object):
             alg,R,input = interpretJetName(inputJets)
             outputJets = inputJets.replace(input, input+algName)
 
-        context = JetConfigContext(algName, groomAlias, -1, inputJets, self.dataType, outputJets)
+        context = JetConfigContext(algName, groomAlias, -1, inputJets, self.globalOptions['dataType'], outputJets)
 
         if jetTool is None:
             jetTool = JetRecTool(algName )
@@ -501,6 +502,13 @@ class JetConfigurator(object):
 
 
 
+    def dumpGlobalOptions(self):
+        print "*******************************"
+        print "JetConfiguration global options :"
+        for k,v in self.globalOptions.iteritems():
+            print "   %-40s : %s"%(k,str(v))
+        print "*******************************"
+
 jetConfig = JetConfigurator()
 
 import JetRecDefaultTools
@@ -551,3 +559,7 @@ def interpretJetName(jetcollName,  finder = None,input=None, mainParam=None):
         
 
     return finder, mainParam, input
+
+def globalOptionBuilder( **args ):
+    from cPickle import dumps
+    return dumps(args)
