@@ -3,23 +3,25 @@ Table of Contents
 
 **[Description](#description)**
 
-
 **[Quick Setup](#quick-setup)**
 
-**[Tutorial 1](#tutorial-1-intro-to-native-fastjet-in-atlas)**
+**[Tutorial 1 : Native fastjet in ATLAS](#tutorial-1-native-fastjet-in-atlas)**
 
-**[Tutorial 2](#tutorial-2-intro-to-jetrec-in-atlas)**
+**[Tutorial 2 : JetRec in ATLAS](#tutorial-2-jetrec-in-atlas)**
 
-**[Tutorial 3](#tutorial-3-how-to-configure-more-extensive-jetrec-tools-in-joboptions)**
+**[Tutorial 3 : Advanced JetRec Tools via jobOptions](#tutorial-3-advanced-jetrec-tools-via-joboptions)**
 
-**[Tutorials explained](#tutorials-explained)**
+**[Tutorials Explained](#tutorials-explained)**
+
+**[Run an Example on the Grid](#run-an-example-on-the-grid)**
 
 **[TO DO](#todo-new-examples)**
 
-**[Run an example on the grid](#run-an-example-on-the-grid)**
+
 
 # Authors : 
 Sam Meehan <samuel.meehan@cern.ch>
+
 Pierre-Antoine Delsart <delsart@in2p3.fr>
 
 
@@ -95,15 +97,14 @@ voms-proxy-init -voms atlas
 rucio get --nrandom 1 mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528
 ```
 
-Tutorial 1 : Intro to native fastjet in ATLAS
+Tutorial 1 : Native fastjet in ATLAS
 =====================================
 
-Being familiar with fastjet and learning how to use it in your analysis is important, 
-especially if you will be working in JetEtMiss (because your advisor said so)
-or because you want to be more creative than the ATLAS tools will allow.  
-Therefore, if you are not familiar with this set of tools please follow this tutorial.
-To simply execute the tutorial (after successfully compiling and getting the test file), 
-execute the following command :
+Being familiar with [fastjet](http://fastjet.fr/) and learning how to use it in your analysis is important, 
+especially if you will be working within the JetEtMiss (because your advisor said so)
+or because you want to be more creative than the ATLAS tools will allow. Therefore, if you are not 
+familiar with this set of tools please follow this tutorial, it will benefit you greatly. To simply execute the tutorial 
+(after successfully compiling and getting the test file), run the following command :
 
 ```
 xAH_run.py --files /afs/cern.ch/work/m/meehan/public/JSSTutorial2016/mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528/DAOD_JETM8* \
@@ -114,8 +115,9 @@ xAH_run.py --files /afs/cern.ch/work/m/meehan/public/JSSTutorial2016/mc15_13TeV.
 direct
 ```
 
-note that you will have to point to the local file that you downloaded and not Sam's public directory.  Next, go 
-ahead and read the source code and see if you can figure out how it works.
+note that you will have to point to the local file that you downloaded and not Sam's public directory.  If this does not work,
+please try to debug it yourself for about 30 minutes, but then **__email the authorsfor help__**!!!.  If you make it this far, then 
+look at the output in a TBrowser and then go ahead and read the source code and see if you can figure out how it works.
 
 ```
 JSSTutorial/scripts/config_Tutorial1.py
@@ -124,19 +126,19 @@ JSSTutorial/Root/JSSTutorialAlgo.cxx
 ```
 
 Check you understanding of the tutorial by answering these questions :
-- How does the command know to execute the EventLoop algorithm in ```JSSTutorialAlgo.cxx```?
-- What are the different components that I need to include in my header files and ```cmt/MakeFile.RootCore``` to allow me to have
+- How does the command know to execute the `EventLoop` algorithm in `JSSTutorialAlgo.cxx`?
+- What are the different components that I need to include in my header files and `cmt/MakeFile.RootCore` to allow me to have
 access to fastjet?
-- Where is jet finding done?  What if I only wanted to examine jets that have a minimum pT of 20 GeV when produced by fastjet?  How could I do that?
+- Where is jet finding done?  What kind of jets am I building?  What if I only wanted to examine jets that have a minimum pT of 20 GeV when produced by fastjet?  How could I do that?
 - What do I need to do in particular to get access to the fastjet contrib packages (https://fastjet.hepforge.org/contrib/)?  Can you identify an example 
 of a fastjet contrib used here?  
 
-Tutorial 2 : Intro to JetRec in ATLAS
+Tutorial 2 : JetRec in ATLAS
 =====================================
 If you are already confident with using native fastjet then you've come to the right place.  The next step to being a jet expert is learning
-how to use *JetRec* (http://acode-browser.usatlas.bnl.gov/lxr/source/atlas/Reconstruction/Jet/JetRec/).  This is the software that is used to perform
+how to use [JetRec](http://acode-browser.usatlas.bnl.gov/lxr/source/atlas/Reconstruction/Jet/JetRec/).  This is the software that is used to perform
 official ATLAS reconstruction, and once you come up with an amazing new idea, you will need to implement it here, if the functionality to execute it
-does not already exist.
+does not already exist, before it can be used within your publishable analysis.
 
 To get you started, this tutorial is intended to do *the exact same thing* as Tutorial 1, but using the official ATLAS tools.  Therefore, the task
 here is to read the code in parallel with the last tutorial and find the similarities and differences.  But first, execute this tutorial
@@ -164,29 +166,28 @@ JSSTutorial/Root/JSSTutorialJetRecAlgo.cxx
 Check you understanding of the tutorial by answering these questions
 (you might find help in the "Tutorials explained" section below):
 
-- Which are the Atlas jet classes used in this tutorial ? 
-- Where are they used in the execute() step ? 
+- What are the ATLAS jet classes used in this tutorial ? 
+- Where are they used in the `execute()` step ? 
 - What header files need to be included ? What dependency do they
-  impliy (check Makefile.RootCore)
-- How did you "get the clusters" from the xAOD::CalCaloTopoCluster container this time?
-- More generally make the correspondances between Tutorial1 and this one
-   * how/where clusters are retrieved & prepared for fastjet ?
+  imply (check `cmt/Makefile.RootCore`)
+- How did you "get the clusters" from the `xAOD::CalCaloTopoCluster` container this time?
+- More generally, please take 10-15 minutes to make the correspondences and draw analogs between __Tutorial 1__ and this one
+   * how/where are clusters retrieved & prepared for fastjet ?
    * how/where is fastjet called ?
-   * how/where substructure variables are calculated ?
+   * how/where are substructure variables calculated ?
 - Compare how the final jets and the substrucure info is retrieved
-  here w.r.t tutorial 1.
+  here wit respect to Tutorial 1.
 - How would you add a new variable calculation here ?
 
 
 
 
-Tutorial 3 : How to configure more extensive JetRec tools in jobOptions
+Tutorial 3 : Advanced JetRec Tools via jobOptions
 =====================================
-Last step : we want maximal flexibility. For this we want to do all
-the configuration of same jet tools we used in tutorial 2 in
-python. This will allow us to change *any* jet rec parameters without
-re-compiling and to easily configure many jet algs. This also has the
-advantage of being very close to how configuration works in Athena. 
+Now we want maximal flexibility in our ability to perform jet finding in an ATLAS official way. For this we want to do all
+the configuration of the same jet tools we used in Tutorial 2, but this time within python. This will allow us to change *any* 
+`JetRec` parameters without re-compiling our analysis and to easily configure many jet algorithms at once. This also has the
+advantage of being very close to how configuration works in Athena and how jets reconstruction is performed at Tier0. 
 
 Let's run it : 
 
@@ -198,83 +199,92 @@ xAH_run.py --files /afs/cern.ch/work/m/meehan/public/JSSTutorial2016/mc15_13TeV.
 --submitDir OutputDirectory_Tutorial3_JetRec \
 direct
 ```
+
 The source code is here 
+
 ```
 JSSTutorial/scripts/config_Tutorial3_JetRec.py
 JSSTutorial/JSSTutorial/JSSTutorialPythonConfigAlgo.h
 JSSTutorial/Root/JSSTutorialPythonConfigAlgo.cxx
 ```
+
 Check you understanding of the tutorial by answering these questions
-(you might find help in the "Tutorials explained" section below):
+(you might find help in the [Tutorials Explained](#tutorials-explained) section below):
 
 * Do you see any jet reconstruction related code in
-  JSSTutorialPythonConfigAlgo.cxx ? 
+  `JSSTutorialPythonConfigAlgo.cxx` ? 
 * Can you find where the atlas jet tools are configured ? Can you make
-  the correspondance with the tutorial 2 ?
-* how would you add an other attribute calculation to the trimmed jets
-  ?
-* Try to play with the configuration functions (can you locate them ?) to change the
-  parameters : radius, alg, or input type.
+  the correspondence with the Tutorial 2 ?
+* How would you add an other attribute calculation to the trimmed jets?
+* Can you locate the configuration functions? If so, try to play with the configuration functions to change the
+  jet finding parameters like: radius, finding algorithm, or input type.
 
 
 
 
 
-Tutorials explained
+Tutorials Explained
 =====================================
 
-## Jet Reconstruction overview
-In Atlas the jet reco code works in 3 distinct steps :
+## Jet Reconstruction Overview
+In Atlas the jet reco code works in 3 distinct steps, which can be seen in the code for [Tutorial 2 : JetRec in ATLAS](#tutorial-2-jetrec-in-atlas) :
 1. Prepare input to jet finding. This means translating the
  clusters/tracks/truth particles from the xAOD format to the fastjet
- format. 
-2. Call fastjet using the input from 1. Translate final jets from
-fastjet to xAOD::Jet.
+ format. This is done via the `PseudoJetGetter` tool like 
+ [in Tutorial 2 here](https://gitlab.cern.ch/JetSubstructure/Tutorial_HCW2016/blob/master/JSSTutorial/Root/JSSTutorialJetToolsAlgo.cxx#L184). 
+ In this case, this is stored and passed to jet finding via a `GetterArray` so that multiple types of inputs can be used for the same type of jet finding.
+2. Call fastjet using a `JetRecTool` using the input from step 1 and translate final jets from
+fastjet to xAOD::Jet [like you can see here](https://gitlab.cern.ch/JetSubstructure/Tutorial_HCW2016/blob/master/JSSTutorial/Root/JSSTutorialJetToolsAlgo.cxx#L267).
 3. Calculate additional quantities on final jets. Ex: calibration,
-filtering, sorting, substructure quantities.
+filtering, sorting, substructure quantities.  This is done via a number of `JetModifier`'s that are 
+[set up before jet finding](https://gitlab.cern.ch/JetSubstructure/Tutorial_HCW2016/blob/master/JSSTutorial/Root/JSSTutorialJetToolsAlgo.cxx#L231)
+and then passed to the JetRecoTool that will build and modify that jet collection [during jet finding](https://gitlab.cern.ch/JetSubstructure/Tutorial_HCW2016/blob/master/JSSTutorial/Root/JSSTutorialJetToolsAlgo.cxx#L271).
 
 Each step are performed by dedicated dual-use tools (i.e tools which
-run in Athena and RootCore).
+run in `Athena` and `RootCore`).
 
-1. PseudoJetGetter (and inherited)
-2. JetFinder (or JetTrimmer in the trimming case)
-3. Many tools, all inheriting IJetModifier : we call them
-JetModifiers.
+1. `PseudoJetGetter` ([LXR Link](http://acode-browser.usatlas.bnl.gov/lxr/source/atlas/Reconstruction/Jet/JetRec/JetRec/PseudoJetGetter.h)) and 
+all of the inheritted classes **(PA to provide examples.)**
+2. `JetFinder` ([LXR Link](http://acode-browser.usatlas.bnl.gov/lxr/source/atlas/Reconstruction/Jet/JetRec/JetRec/JetFinder.h)) or in the case of trimming, `JetTrimmer`
+3. Many tools, all inheriting from `IJetModifier` ([LXR Link](http://acode-browser.usatlas.bnl.gov/lxr/source/atlas/Reconstruction/Jet/JetInterface/JetInterface/IJetModifier.h))
+an example of which is the tool used to calculate N-subjettiness ([LXR Link](http://acode-browser.usatlas.bnl.gov/lxr/source/atlas/Reconstruction/Jet/JetSubStructureMomentTools/JetSubStructureMomentTools/NSubjettinessTool.h)).
 
-All these tools are driven by a top-level tool : JetRecTool. This last
-tool runs the 3 steps and record the final JetContainer in the evt store.
+All these tools are driven by a top-level tool : `JetRecTool`. This last
+tool runs the 3 steps and records the final `JetContainer` in the evt store such
+that it can be used thereafter in the event analysis.
 
-Running a jet alg requires to configure tools for the 3 steps
-and to associate them to a JetRecTool.
+In summary, running a jet alg requires to configure tools for the 3 steps
+and to associate them to a `JetRecTool`. **(PA do we even need this summary statement?)**
 
 
-## Jet Reconstruction in this package
-
-In this package a jet building procedure is done by a JetRecToolAlgo (inherits
-xAH::Algorithm which inherits EL::Algorithm).
-JetRecToolAlgo holds a single instance of a JetRecTool and will call
-it's execute() method once per event.
+## Jet Reconstruction in This Package
+(*PA This portion gets a little abstract for me.  Can it be made a bit more concrete? Or maybe we just put a "WARNING : Proceed only if you think you want to learn the nitty gritty!" statement*)
+In this package a jet building procedure is done by a `JetRecToolAlgo` (inheriting from
+`xAH::Algorithm` which inherits from `EL::Algorithm`).
+This package holds a single instance of a `JetRecTool` and will call
+it's `execute()` method once per event.
 
 The configuration is done through python scripts which contain
 configuration instructions. These scripts are interpreted during
-JetRecToolAlgo::initialize(). 
+`JetRecToolAlgo::initialize()`. 
 
-During the initialize() JetRecToolAlgo passes its JetRecTool instance into
-the python interpreter under the name "tool". JetRecToolAlgo  then
+During the `initialize()` method, `JetRecToolAlgo` passes its `JetRecTool` instance into
+the python interpreter under the name "_tool_". The `JetRecToolAlgo` algorithm then
 tells the interpreter to execute a user given python script and a user
-function call. 
-In this script and function the user has written python instructions to
-configure the variable "tool".
-Since "tool" in the python interpreter really is the JetRecTool
-c++ instance, it is effectively configured "in c++" too. 
+function call. And, since (1) the user has written python instructions to
+configure the variable "_tool_" in this script and function and (2) "_tool_" in the 
+python interpreter really is the `JetRecTool` c++ instance, it is effectively configured "in c++" too. 
 
 So, in the simplest scenario, the user writes a python script (say
 myjetscript.py) which sets the desired properties to "tool". ex :
-```python
-  tool.OutputContainer = "MyJetContainer"
-  tool.JetFinder = JetFinder("AntiKt12", Radius=0.12, ... )
-  tool.PseudoJetGetters = [ ... ] 
+
+```
+python
+tool.OutputContainer = "MyJetContainer"
+tool.JetFinder = JetFinder("AntiKt12", Radius=0.12, ... )
+tool.PseudoJetGetters = [ ... ] 
 ```  
+
 The user then configures a JetRecToolAlgo to use myjetscript.py (by
 setting its m_configScript member). Nothing else is needed : on each
 event JetRecToolAlgo will call the configured JetRecTool and thus make
@@ -309,11 +319,12 @@ algs. Typically : `m_configCall="configMyJet(tool, 0.9)"`
 access to fastjet?
    * see all the `#include "fastjet/XXX.h"` in the .h files and the
    PACKAGE_DEP line in cmt/Makefile.RootCore must contain Asg_FastJet
-- Where is jet finding done?  What if I only wanted to examine jets
+   
+- Where is jet finding done?  What kind of jets are being built? What if I only wanted to examine jets
 that have a minimum pT of 20 GeV when produced by fastjet?  How could
 I do that?
   * jet finding call : `fastjet::ClusterSequence(jet_inputs,
-  jet_def);`, change 0.0 in 
+  jet_def);`, Anti-Kt R=1.0 jets trimmed with Rsub=0.2 and fcut=0.05, change 0.0 in 
   `fastjet::sorted_by_pt(clust_seq.inclusive_jets(0.0) )`  to 20000.
 
 - What do I need to do in particular to get access to the fastjet
@@ -374,34 +385,52 @@ container this time?
   parameters : radius, alg, or input type.
 
 
-Run an example on the grid
+Run an Example on the Grid
 =====================================
-NOT TESTED
+Hopefully you have the basic (and advanced) tools to start being creative with jets.  So now you want to run over all of the dijet samples
+(DSID 361020-361032 [here](https://svnweb.cern.ch/trac/atlasoff/browser/Generators/MC15JobOptions/trunk/share/DSID361xxx)).  Outlined here is
+how you can do that for Tutorial 3 above.
 
 Open a fresh session, go to the working directory and setup the environment for the grid:
+
 ```
 source grid_env.sh
 ```
 
-## running tutorial 3 on the grid.
-A working example 
+Next, make a file called `sample_list_for_grid.list` which contains a newline delimited list of samples that you want to run over like
+
+```
+mc15_13TeV.361020.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ0W.merge.DAOD_JETM8.e3569_s2576_s2132_r7725_r7676_p2794  
+mc15_13TeV.361021.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ1W.merge.DAOD_JETM8.e3569_s2576_s2132_r7725_r7676_p2794  
+mc15_13TeV.361022.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ2W.merge.DAOD_JETM8.e3668_s2576_s2132_r7725_r7676_p2794  
+mc15_13TeV.361023.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ3W.merge.DAOD_JETM8.e3668_s2576_s2132_r7725_r7676_p2794  
+mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7725_r7676_p2794  
+mc15_13TeV.361025.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ5W.merge.DAOD_JETM8.e3668_s2576_s2132_r7725_r7676_p2794  
+mc15_13TeV.361026.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ6W.merge.DAOD_JETM8.e3569_s2608_s2183_r7725_r7676_p2794  
+mc15_13TeV.361027.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ7W.merge.DAOD_JETM8.e3668_s2608_s2183_r7725_r7676_p2794  
+mc15_13TeV.361028.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ8W.merge.DAOD_JETM8.e3569_s2576_s2132_r7772_r7676_p2794  
+mc15_13TeV.361029.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ9W.merge.DAOD_JETM8.e3569_s2576_s2132_r7772_r7676_p2794  
+mc15_13TeV.361030.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ10W.merge.DAOD_JETM8.e3569_s2576_s2132_r7772_r7676_p2794 
+mc15_13TeV.361031.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ11W.merge.DAOD_JETM8.e3569_s2608_s2183_r7772_r7676_p2794 
+mc15_13TeV.361032.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ12W.merge.DAOD_JETM8.e3668_s2608_s2183_r7772_r7676_p2794 
+```
+
+and then run the following command which will submit the analysis code in the Tutorial 3 example to run over those dataset containers.
+
 ```
 xAH_run.py --files sample_list_for_grid.list --inputList --nevents 5 --config config_Tutorial3.py -f --submitDir OutputDirectory_Tutorial3_JetRec --inputDQ2 prun --optGridExpress 1 --optGridNFilesPerJob 1 --optSubmitFlags='--nFiles=1 --useNewCode'
 ```
 
-Important Note when using this framework : all files intended to be
-sent to the grid (example python configuration files) must be part of
-a RootCore package.
+*NOTE* : It is very important to note that when using this framework, all of the files intended to be
+sent to the grid (e.g. python configuration files) must be part of a RootCore package in your local space.
+For instance, the python configuration file must thus be specified using a package
+path like in `config_Tutorial3.py` (*PA, Joe where must this be specified, can this be clarified?*) :
 
-The python configuration file must thus be specified using a package
-path like in `config_Tutorial3.py` :
 ```
 m_configScript="JSSTutorial/xAHjetconfig_example.py" 
 ```
 
-which means the system will search for the script
-'xAHjetconfig_example.py' within the scripts/ directory of the
-`JSSTutorial` package.
+which means the system will search for the script 'xAHjetconfig_example.py' within the `scripts/` directory of the `JSSTutorial` package.
 
 
 
