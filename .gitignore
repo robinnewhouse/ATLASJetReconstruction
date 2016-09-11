@@ -17,3 +17,10 @@ rcSetup.csh
 rcSetup.sh
 ParticleJetTools/
 needed.txt
+
+# ignore everything not already tracked :
+*/
+# except those :
+!JSSTutorial/
+!JSSTutorial/*
+!utils/
