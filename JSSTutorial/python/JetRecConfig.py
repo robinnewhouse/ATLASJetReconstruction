@@ -485,7 +485,7 @@ class JetConfigurator(object):
         klass, defaultProp = aliasDict.get(alias, (None,None) )
         tname = alias
         if klass is None:
-            return None,
+            return None
         if userProp != {} : # copy default and update
             finalProp = dict(defaultProp)
             finalProp.update(userProp)
