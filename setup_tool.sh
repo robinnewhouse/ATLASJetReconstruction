@@ -43,5 +43,5 @@ rc compile
 
 mkdir run
 cd run
-cp ../JSSTutorial/scripts/config_Tutorial*.py .
-cp ../JSSTutorial/scripts/xAHjetconfig_example.py .
+ln -s ../JSSTutorial/scripts/config_Tutorial*.py .
+ln -s ../JSSTutorial/scripts/xAHjetconfig_example.py .

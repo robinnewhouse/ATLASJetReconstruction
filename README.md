@@ -383,10 +383,28 @@ Open a fresh session, go to the working directory and setup the environment for 
 source grid_env.sh
 ```
 
-Run an example on the grid by:
+## running tutorial 3 on the grid.
+A working example 
 ```
-source Run_grid_zprime_list.sh
+xAH_run.py --files sample_list_for_grid.list --inputList --nevents 5 --config config_Tutorial3.py -f --submitDir OutputDirectory_Tutorial3_JetRec --inputDQ2 prun --optGridExpress 1 --optGridNFilesPerJob 1 --optSubmitFlags='--nFiles=1 --useNewCode'
 ```
+
+Important Note when using this framework : all files intended to be
+sent to the grid (example python configuration files) must be part of
+a RootCore package.
+
+The python configuration file must thus be specified using a package
+path like in `config_Tutorial3.py` :
+```
+m_configScript="JSSTutorial/xAHjetconfig_example.py" 
+```
+
+which means the system will search for the script
+'xAHjetconfig_example.py' within the scripts/ directory of the
+`JSSTutorial` package.
+
+
+
 
 ToDo (new examples)
 =====================================
