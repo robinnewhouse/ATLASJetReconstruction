@@ -113,7 +113,7 @@ familiar with this set of tools please follow this tutorial, it will benefit you
 ```
 xAH_run.py --files /afs/cern.ch/work/m/meehan/public/JSSTutorial2016/mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528/DAOD_JETM8* \
 --nevents 1 \
---config config_Tutorial1_fastjet.py \
+--config config_Tutorial1.py \
 -v \
 --submitDir OutputDirectory_Tutorial1_fastjet \
 direct
@@ -200,7 +200,7 @@ xAH_run.py --files /afs/cern.ch/work/m/meehan/public/JSSTutorial2016/mc15_13TeV.
 --nevents 1 \
 --config config_Tutorial3.py \
 -v \
---submitDir OutputDirectory_Tutorial3_JetRec \
+--submitDir OutputDirectory_Tutorial3_JetRecJobOptions \
 direct
 ```
 
@@ -427,8 +427,9 @@ xAH_run.py --files sample_list_for_grid.list --inputList --nevents 5 --config co
 
 *NOTE* : It is very important to note that when using this framework, all of the files intended to be
 sent to the grid (e.g. python configuration files) must be part of a RootCore package in your local space.
-For instance, the python configuration file must thus be specified using a package
-path like in `config_Tutorial3.py` (*PA, Joe where must this be specified, can this be clarified?*) :
+For instance, if your python configuration uses the same style as config_Tutorial3.py, that is calling configuration 
+functions defined in another python script, the python script containing the function definitions should be stored 
+in the `<package-name>/scripts` directory and this same path should be used in the main python config file:
 
 ```
 m_configScript="JSSTutorial/xAHjetconfig_example.py" 
