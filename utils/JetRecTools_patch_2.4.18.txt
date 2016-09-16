@@ -1,0 +1,19 @@
+Index: JetRecTools/Root/LinkDef.h
+===================================================================
+--- JetRecTools/Root/LinkDef.h	(révision 773045)
++++ JetRecTools/Root/LinkDef.h	(copie de travail)
+@@ -1,6 +1,7 @@
+ #include <JetRecTools/JetTrackSelectionTool.h>
+ #include <JetRecTools/TrackVertexAssociationTool.h>
+ #include <JetRecTools/TrackPseudoJetGetter.h>
++#include <JetRecTools/PFlowPseudoJetGetter.h>
+ 
+ #ifdef __CINT__
+ 
+@@ -12,5 +13,6 @@
+ #pragma link C++ class JetTrackSelectionTool+;
+ #pragma link C++ class TrackVertexAssociationTool+;
+ #pragma link C++ class TrackPseudoJetGetter+;
++#pragma link C++ class PFlowPseudoJetGetter+;
+ 
+ #endif

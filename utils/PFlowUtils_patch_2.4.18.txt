@@ -1,0 +1,26 @@
+Index: PFlowUtils/Root/LinkDef.h
+===================================================================
+--- PFlowUtils/Root/LinkDef.h	(révision 0)
++++ PFlowUtils/Root/LinkDef.h	(copie de travail)
+@@ -0,0 +1,14 @@
++#include <PFlowUtils/RetrievePFOTool.h>
++#include <PFlowUtils/WeightPFOTool.h>
++
++#ifdef __CINT__
++
++#pragma link off all globals;
++#pragma link off all classes;
++#pragma link off all functions;
++#pragma link C++ nestedclass;
++
++#pragma link C++ class CP::WeightPFOTool+;
++#pragma link C++ class CP::RetrievePFOTool+;
++
++#endif
+
+Modification de propriétés sur PFlowUtils/Root/LinkDef.h
+___________________________________________________________________
+Added: svn:eol-style
+## -0,0 +1 ##
++native
+\ No newline at end of property
