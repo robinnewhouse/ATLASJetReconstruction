@@ -15,7 +15,7 @@ svn co svn+ssh://$USER@svn.cern.ch/reps/atlas-dferreir/dferreir/ShowerDeconstruc
 svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/BoostedJetTaggers/trunk BoostedJetTaggers
 
 # trunk of these packages needed in 2.4.18 
-svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetMomentTools/trunk JetMomentTools
+svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetMomentTools/tags/JetMomentTools-00-03-42 JetMomentTools
 svn co svn+ssh://svn.cern.ch/reps/atlasoff/PhysicsAnalysis/AnalysisCommon/ParticleJetTools/trunk ParticleJetTools
 svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetSubStructureMomentTools/trunk JetSubStructureMomentTools
 svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetRec/tags/JetRec-03-00-83 JetRec
