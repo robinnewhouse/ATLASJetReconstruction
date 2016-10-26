@@ -6,7 +6,7 @@
 
 import JSSTutorial.RootCoreConfigInit
 
-from ROOT import JetConstituentModSequence, CaloClusterConstituentsOrigin
+from ROOT import JetConstituentModSequence, CaloClusterConstituentsOrigin, SoftKillerWeightTool
 
 
 
@@ -19,7 +19,7 @@ class JetConstitSeqConfig(object):
     knownModifierTools = dict()
 
 
-    def constitModifSequence(self, name , inputContainer=None, modifierAlias=None, inputType=None):
+    def constitModifSequence(self, name , inputContainer=None, modifierAlias=None, inputType=None,jetTool=None):
         seqName = name+'Seq'
 
         if jetTool is None:
@@ -43,24 +43,24 @@ class JetConstitSeqConfig(object):
         finalModList, modifAliasList = self.getModifList(modifierAlias)
 
 
-        jetTool.InputContainer = inputContainer,
-        jetTool.OutputContainer = outputContainer,
-        jetTool.InputType = inputType,
-        jetTool.Modifiers = finalModList, # pass the list of modifier we want 
+        jetTool.InputContainer = inputContainer
+        jetTool.OutputContainer = outputContainer
+        jetTool.InputType = inputType
+        jetTool.Modifiers = finalModList # pass the list of modifier we want 
 
 
 
         print " *********************************** "
-        print " JetConstitSeqConfig : Configured cluster mod for ", topAlias, "  -> ", outputName
+        print " JetConstitSeqConfig : Configured cluster mod for ", name
         print "   --> alg name      : ",name.ljust(20)
-        print "   --> modifiers     : ", str(modifAlias).ljust(20), '=', modifAliasList
+        print "   --> modifiers     : ", str(modifierAlias).ljust(20), '=', modifAliasList
         print " *********************************** "
 
         return jetTool
 
 
     def getModifTool(self, alias,  **userProp ):
-        klass , defaultProps = self.knownModifierTools( alias, (None,None) )
+        klass , defaultProp = self.knownModifierTools.get( alias, (None,None) )
         if klass is None:
             print "ERROR. JetConstitSeqConfig.getModifTool unknown modifer  ",alias
             return None
@@ -75,7 +75,7 @@ class JetConstitSeqConfig(object):
 
     def getModifList(self, alias, context=None):
         if isinstance(alias, list):
-            return aliasList = alias
+            aliasList = alias
         else:
             aliasList = self.knownModifierList.get(alias, None)
             if aliasList is None:

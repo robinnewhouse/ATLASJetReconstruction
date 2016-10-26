@@ -25,6 +25,7 @@
 #pragma link C++ class JetExecuteToolAlgo+;
 #pragma link C++ class ToolWrapper+;
 #pragma link C++ class JetRecToolAlgo+;
+#pragma link C++ class JetConstitSeqAlgo+;
 #pragma link C++ class JSSMinixAOD+;
 #pragma link C++ class JetGlobalOptionsAlgo+;
 #pragma link C++ class FixVertexAlgo+;
