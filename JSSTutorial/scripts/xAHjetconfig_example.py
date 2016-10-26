@@ -164,3 +164,4 @@ def minimalJetPruning(jetTool, inputJets,zcut,rcut):
 
 
 from JSSTutorial.JetRecConfig import jetConfig
+from JSSTutorial.JetConstitSeqConfig import constitConfig

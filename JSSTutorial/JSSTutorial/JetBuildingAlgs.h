@@ -66,4 +66,17 @@ public:
   ClassDef(JetRecToolAlgo, 1);
 
 };
+
+/// \class JetConstitSeqAlgo
+///
+/// Exactly identical to JetExecuteToolAlgo, except the class name of the tool
+/// is JetConstituentModSequence and does not need to be configured.
+class JetConstitSeqAlgo : public JetExecuteToolAlgo {
+public:
+  JetConstitSeqAlgo() {m_className = "JetConstituentModSequence";}
+  // this is needed to distribute the algorithm to the workers
+  ClassDef(JetConstitSeqAlgo, 1);
+
+};
+
 #endif
