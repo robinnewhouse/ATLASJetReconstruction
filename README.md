@@ -79,8 +79,8 @@ kinit <username>@CERN.CH
 To check out and set up the code, simply do:
 
 ```
-git clone https://:@gitlab.cern.ch:8443/JetSubstructure/Tutorial_HCW2016.git
-cd Tutorial_HCW2016/
+git clone https://:@gitlab.cern.ch:8443/JetEtMiss/JetRecoTutorial.git
+cd JetRecoTutorial/
 source setup_tool.sh
 ```
 
