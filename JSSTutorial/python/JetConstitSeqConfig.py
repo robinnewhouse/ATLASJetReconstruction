@@ -35,7 +35,14 @@ class JetConstitSeqConfig(object):
     knownModifierTools = dict()
 
 
+    ## ###################################
     def constitModifSequence(self, name , inputContainer=None, modifierAlias=None, inputType=None,jetTool=None):
+        """translates a keyword 'name' into a configured JetConstituentModSequence.
+        this function uses the hiearchy defined by knownSequences, knownModifierList and knownModifierTools to perform the configuration.
+        if additional parameters are given, they will overwrite those retrieved from knownXXX dictionnaries.
+
+        returns the configured instance.
+        """
         seqName = name+'Seq'
 
         if jetTool is None:
