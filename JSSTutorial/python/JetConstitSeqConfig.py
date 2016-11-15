@@ -12,10 +12,26 @@ from ROOT import JetConstituentModSequence, CaloClusterConstituentsOrigin, SoftK
 
 class JetConstitSeqConfig(object):
 
+    ## ###########################
+    ## knownSequences contain the topLevel keywords defining a constituent sequence config.
+    ## format is : 
+    ##  "keyword" : ( ("inputContainer", "constituentType") , "modifierListAlias")
+    ## or :
+    ##  "keyword" : ( ("inputContainer", "constituentType") , ["modifierAlias1", "modifierAlias2",...] )
+    ## in the 1st case, "modifierListAlias" must be an entry in knownModifierList
+    ## in the 2nd case "modifierAlias1", "modifierAlias2",... are entries in knownModifierTools
     knownSequences = dict()
 
+    ## #########################
+    ## knownModifierList contain the keywords defining list of modifier tools
+    ## format is :
+    ##  "keyword" : ["modifierAlias1", "modifierAlias2",...]
     knownModifierList = dict()
 
+    ## #########################
+    ## knownModifierTools contain the keywords defining configuration of individual modifier tools.
+    ## format is :
+    ##  "keyword" : (ToolClass , dict_of_properties)
     knownModifierTools = dict()
 
 
@@ -99,7 +115,7 @@ class JetConstitSeqConfig(object):
 
 JetConstitSeqConfig.knownSequences = {
     "OrigLCTopoClusters" : ( ("CaloCalTopoClusters","CaloCluster") , ['orig'] ),    
-    "OrigLCTopoSKClusters" : ( ("CaloCalTopoClusters","CaloCluster") , ['orig','softkiller'] ),    
+    "OrigSKLCTopoClusters" : ( ("CaloCalTopoClusters","CaloCluster") , ['orig','softkiller'] ),    
 
     }
 
