@@ -365,7 +365,8 @@ class JetConfigurator(object):
     def getInputTool(self, alias,context=None, **userProp):
         tool = self.aliasToTool( alias, self.knownInputTools, context = context, **userProp)
         if tool is None:
-            print "ERROR. JetConfigurator.getInputTool unknown modifer  ",alias
+            print "ERROR. JetConfigurator.getInputTool unknown input  ",alias
+            print "available are   ",self.knownInputTools.keys()
             return None
         if "OutputContainer" not in userProp:
             tool.OutputContainer = tool.InputContainer+"_pseudojet"

@@ -123,8 +123,8 @@ class JetConstitSeqConfig(object):
 JetConstitSeqConfig.knownSequences = {
     "OrigLCTopoClusters" : ( ("CaloCalTopoClusters","CaloCluster") , ['orig'] ),    
     "OrigSKLCTopoClusters" : ( ("CaloCalTopoClusters","CaloCluster") , ['orig','softkiller'] ),    
-
     }
+
 
 JetConstitSeqConfig.knownModifierList = dict()
 

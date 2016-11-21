@@ -6,6 +6,7 @@ if 'wrapper' in dir():
     jetTool = wrapper.m_tool
 
 
+
 def simpleJetConfig(jetTool, output="AntiKt10LCTopoJets2"):
     """This function demonstrate how to configure a JetRecTool expliciting each sub-tool.
     jetTool : is an instance of a JetRecTpp;
