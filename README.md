@@ -79,7 +79,7 @@ kinit <username>@CERN.CH
 To check out and set up the code, simply do:
 
 ```
-git clone https://:@gitlab.cern.ch:8443/JetEtMiss/JetRecoTutorial.git
+git clone https://:@gitlab.cern.ch:8443/atlas-jetetmiss/JetRecoTutorial.git
 cd JetRecoTutorial/
 source setup_tool.sh
 ```
