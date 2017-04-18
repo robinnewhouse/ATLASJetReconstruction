@@ -86,9 +86,6 @@ source setup_tool.sh
 
 note that the choice of the URL depends on the authentication method you are using.  Since we guided you to set up kerberos, it is the KRB5 url from the above dropdown menu.
 
-## Additionnal steps with AnalysisBase 2.4.18
-
-NOT NEEDED anymore every needed package should be in setup_tool.sh
 
 
 ## Get the test file :
