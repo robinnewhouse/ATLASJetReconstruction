@@ -80,6 +80,8 @@ To check out and set up the code, simply do:
 
 ```
 git clone https://:@gitlab.cern.ch:8443/atlas-jetetmiss/JetRecoTutorial.git
+# if the above does not work try the https protocol :
+# https://MYUSERNAME@gitlab.cern.ch/atlas-jetetmiss/JetRecoTutorial.git
 cd JetRecoTutorial/
 git checkout AnalysisBase_2.4.24
 source setup_tool.sh
