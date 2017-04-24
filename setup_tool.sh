@@ -1,6 +1,15 @@
 ### Setup Tool and Compile: ###
 
 
+export USER=`whoami`
+
+if [ "$1" != "" ] ; then 
+    export USER=$1
+fi
+
+echo "USER is " $USER
+
+
 git clone https://github.com/UCATLAS/xAODAnaHelpers.git
 cd xAODAnaHelpers
 
@@ -8,8 +17,8 @@ cd xAODAnaHelpers
 git checkout 9ab194fb180d208767c353536876859293c62788  
 cd ..
 
+
 # Get the SVN repo of Shower Deconstruction
-export USER=`whoami`
 svn co svn+ssh://$USER@svn.cern.ch/reps/atlas-dferreir/dferreir/ShowerDeconstruction/tags/ShowerDeconstruction-01-00-00 ShowerDeconstruction
 #svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/BoostedJetTaggers/tags/BoostedJetTaggers-00-00-25 BoostedJetTaggers
 #svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/PFlow/PFlowUtils/tags/PFlowUtils-00-00-10 PFlowUtils
