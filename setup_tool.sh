@@ -32,7 +32,10 @@ svn co svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/JetRecTools/tags/J
 setupATLAS
 Release=2.4.24
 rcSetup Base,$Release
-python xAODAnaHelpers/scripts/checkoutASGtags.py $Release
+
+
+# do this if you need btagging in 2.4.24
+# python xAODAnaHelpers/scripts/checkoutASGtags.py $Release
 
 rc clean
 rc find_packages
