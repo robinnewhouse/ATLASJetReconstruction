@@ -80,15 +80,15 @@ To check out and set up the code, simply do:
 
 ```
 git clone https://:@gitlab.cern.ch:8443/atlas-jetetmiss/JetRecoTutorial.git
+# if the above does not work try the https protocol :
+# https://MYUSERNAME@gitlab.cern.ch/atlas-jetetmiss/JetRecoTutorial.git
 cd JetRecoTutorial/
-source setup_tool.sh
+# if not on lxplus, replace USERNAME by you lxplus login. Else leave it blank 
+source setup_tool.sh USERNAME
 ```
 
 note that the choice of the URL depends on the authentication method you are using.  Since we guided you to set up kerberos, it is the KRB5 url from the above dropdown menu.
 
-## Additionnal steps with AnalysisBase 2.4.18
-
-NOT NEEDED anymore every needed package should be in setup_tool.sh
 
 
 ## Get the test file :
