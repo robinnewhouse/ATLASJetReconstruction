@@ -57,8 +57,6 @@
 // for NSubjettiness
 #include <fastjet/contrib/Nsubjettiness.hh>
 
-// for Shower Deconstruction
-#include "ShowerDeconstruction/ShowerDeconstruction.h"
 
 
 // root includes

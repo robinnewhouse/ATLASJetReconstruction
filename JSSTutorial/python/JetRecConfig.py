@@ -219,7 +219,6 @@ class JetConfigurator(object):
         if finder is None:
             finder = self.getJetFinderTool(algName=algName, context=context, doArea=doArea )
 
-
         jetTool.PseudoJetGetters = inputList
         jetTool.JetFinder = finder
         jetTool.JetModifiers = modifierList
@@ -233,7 +232,6 @@ class JetConfigurator(object):
         print "   --> modifiers   : ", str(modifAlias).ljust(20), '=', modifAliasList
         print " *********************************** "
         
-                
         return jetTool
 
 
@@ -364,6 +362,7 @@ class JetConfigurator(object):
             
     def getInputTool(self, alias,context=None, **userProp):
         tool = self.aliasToTool( alias, self.knownInputTools, context = context, **userProp)
+
         if tool is None:
             print "ERROR. JetConfigurator.getInputTool unknown input  ",alias
             print "available are   ",self.knownInputTools.keys()
