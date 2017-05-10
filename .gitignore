@@ -4,7 +4,7 @@ JetRec/
 JetRecTools/
 JetSubStructureMomentTools/
 Asg_FastJet/
-# BoostedJetTaggers/
+#BoostedJetTaggers/
 
 PFlowUtils/
 RootCoreBin/
@@ -19,7 +19,7 @@ ParticleJetTools/
 needed.txt
 
 # ignore everything not already tracked :
-*/
+#*/
 # except those :
 !JSSTutorial/
 !JSSTutorial/*
@@ -29,3 +29,6 @@ needed.txt
 RootCore.par
 .RootCoreBin
 *.svn*
+mc15_13TeV*
+cmake-build-debug/
+cmake-build-debug/
