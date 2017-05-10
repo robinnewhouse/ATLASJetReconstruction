@@ -1,0 +1,3 @@
+setupATLAS
+rcsetup
+rc build
