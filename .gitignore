@@ -4,7 +4,7 @@ JetRec/
 JetRecTools/
 JetSubStructureMomentTools/
 Asg_FastJet/
-BoostedJetTaggers/
+# BoostedJetTaggers/
 
 PFlowUtils/
 RootCoreBin/
@@ -24,3 +24,8 @@ needed.txt
 !JSSTutorial/
 !JSSTutorial/*
 !utils/
+
+#Robin's additions
+RootCore.par
+.RootCoreBin
+*.svn*
