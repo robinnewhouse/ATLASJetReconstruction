@@ -241,6 +241,30 @@ EL::StatusCode JSSTutorialAlgo :: initialize ()
   // count number of events
   m_eventCounter = 0;
 
+  //jet calibration
+  const std::string name = "MyxAODAnalysis"; //string describing the current thread, for logging
+  TString jetAlgo = "AntiKt10LCTopoTrimmedPtFrac5SmallR20";  //String describing your jet collection, for example AntiKt4EMTopo or AntiKt4LCTopo (see below)
+  TString config = "JES_MC15recommendation_FatJet_Nov2016_QCDCombinationUncorrelatedWeights.config"; //Path to global config used to initialize the tool (see below)
+  TString calibSeq = "EtaJES_JMS" ; //String describing the calibration sequence to apply (see below)
+  bool isData = false; //bool describing if the events are data or from simulation
+
+  m_jetCalibration = new JetCalibrationTool("myJetCalibration");
+  m_jetCalibration->setProperty("JetCollection",jetAlgo.Data());
+  m_jetCalibration->setProperty("ConfigFile",config.Data());
+  m_jetCalibration->setProperty("CalibSequence",calibSeq.Data());
+  m_jetCalibration->setProperty("IsData",isData);
+
+  // Initialize the tool
+  m_jetCalibration->initializeTool(name);
+
+
+  // Instantiation (if not using some ToolHandle )
+  std::cout<<"Initializing DNN top Tagger"<<std::endl;
+  m_JSSWTopTaggerDNN = nullptr;
+  m_JSSWTopTaggerDNN = std::unique_ptr<JSSWTopTaggerDNN>( new JSSWTopTaggerDNN( "Xbb" ) );
+  m_JSSWTopTaggerDNN->setProperty( "ConfigFile",   "DNNTagger/XbbTagger_AntiKt10LCTopoTrimmed_1BTag_MC15c_20161118.dat");
+  m_JSSWTopTaggerDNN->initialize();
+
   ATH_MSG_INFO( "JSSTutorialAlgo Interface succesfully initialized!" );
   return EL::StatusCode::SUCCESS;
 }
@@ -261,7 +285,36 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
 
   ++m_eventCounter;
 
+  std::cout<<std::endl<<std::endl<<std::endl<<"Executing : SAM"<<std::endl;
 
+
+  // Obtain the set of clusters from StoreGate
+  const xAOD::JetContainer* myJets;
+  RETURN_CHECK("JSSTutorialAlgo::execute()", HelperFunctions::retrieve(myJets, "AntiKt10LCTopoTrimmedPtFrac5SmallR20Jets", m_event, m_store,  m_verbose), "");
+  std::cout<<"NumJets: "<<myJets->size()<<std::endl;
+
+  int ijet=0;
+  for(const xAOD::Jet* jet : * myJets ){
+    ijet++;
+
+    std::cout<<std::endl<<"Uncalibrated Jet : "<<ijet<<std::endl;
+    std::cout<<jet->pt()<<"  "<<jet->eta()<<std::endl;
+
+    xAOD::Jet * caljet = 0;
+    std::cout<<"Applying Calibration"<<std::endl;
+    m_jetCalibration->calibratedCopy(*jet,caljet); //make a calibrated copy, assuming a copy hasn't been made already, alternative is:
+
+    std::cout<<std::endl<<"Calibrated Jet : "<<ijet<<std::endl;
+    std::cout<<caljet->pt()<<"  "<<caljet->eta()<<std::endl;
+
+    std::cout<<"Testing DNN Tagger "<<std::endl;
+//    JSSWTopTaggerDNN::Result h_res = m_JSSWTopTaggerDNN->result( *caljet , true ); // 2nd argument enables jet decorations
+    int h_res = m_JSSWTopTaggerDNN->result( *caljet); // 2nd argument enables jet decorations
+    std::cout<<"result(DNN) = "<<h_res<<std::endl;
+  }
+
+
+/*
   ///////////////////////////
   // Build Jets
   // In native fastjet this is done by passing a vector of PseudoJets to a ClusterSequence and
@@ -466,6 +519,7 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
     outTree->Fill();
 
   }
+*/
 
 
   return EL::StatusCode::SUCCESS;

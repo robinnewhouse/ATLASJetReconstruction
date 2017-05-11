@@ -57,7 +57,8 @@
 // for NSubjettiness
 #include <fastjet/contrib/Nsubjettiness.hh>
 
-
+//include the headers of relevance
+#include "BoostedJetTaggers/JSSWTopTaggerDNN.h"
 
 // root includes
 #include "TH1D.h"
@@ -135,6 +136,13 @@ private:
 
   // Subjet Calibration
   JetCalibrationTool* m_jetCalibration_subjet; //!
+
+  // Jet Calibration
+  JetCalibrationTool* m_jetCalibration; //!
+
+  //declare the tagger
+  std::unique_ptr<JSSWTopTaggerDNN> m_JSSWTopTaggerDNN;    //!
+
 
 //FUNCTION DECLARATIONS
 public:
