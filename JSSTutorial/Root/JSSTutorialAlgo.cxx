@@ -261,8 +261,8 @@ EL::StatusCode JSSTutorialAlgo :: initialize ()
   // Instantiation (if not using some ToolHandle )
   std::cout<<"Initializing DNN top Tagger"<<std::endl;
   m_JSSWTopTaggerDNN = nullptr;
-  m_JSSWTopTaggerDNN = std::unique_ptr<JSSWTopTaggerDNN>( new JSSWTopTaggerDNN( "Xbb" ) );
-  m_JSSWTopTaggerDNN->setProperty( "ConfigFile",   "DNNTagger/XbbTagger_AntiKt10LCTopoTrimmed_1BTag_MC15c_20161118.dat");
+  m_JSSWTopTaggerDNN = std::unique_ptr<JSSWTopTaggerDNN>( new JSSWTopTaggerDNN( "DNN" ) );
+  m_JSSWTopTaggerDNN->setProperty( "ConfigFile",   "JSSWTopTaggerDNN/JSSDNNTagger_AntiKt10LCTopoTrimmed_DUMMYCONFIG_TopQuark_MC15c_20170511.dat");
   m_JSSWTopTaggerDNN->initialize();
 
   ATH_MSG_INFO( "JSSTutorialAlgo Interface succesfully initialized!" );
@@ -308,8 +308,7 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
     std::cout<<caljet->pt()<<"  "<<caljet->eta()<<std::endl;
 
     std::cout<<"Testing DNN Tagger "<<std::endl;
-//    JSSWTopTaggerDNN::Result h_res = m_JSSWTopTaggerDNN->result( *caljet , true ); // 2nd argument enables jet decorations
-    int h_res = m_JSSWTopTaggerDNN->result( *caljet); // 2nd argument enables jet decorations
+    JSSWTopTaggerDNN::Result h_res = m_JSSWTopTaggerDNN->result( *caljet , true ); // 2nd argument enables jet decorations
     std::cout<<"result(DNN) = "<<h_res<<std::endl;
   }
 

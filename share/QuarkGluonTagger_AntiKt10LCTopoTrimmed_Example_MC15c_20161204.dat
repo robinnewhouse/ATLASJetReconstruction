@@ -1,0 +1,14 @@
+####################################################################################
+# Title :
+# Quark Gluon Tagger Config
+#
+# Author :
+# Samuel Meehan <samuel.meehan@cern.ch>
+#
+# Description :
+# Simple quark/gluon tagger based on NTrack cut
+#
+#
+####################################################################################
+
+NTrackCut: 10
