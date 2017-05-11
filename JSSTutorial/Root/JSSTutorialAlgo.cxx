@@ -308,7 +308,8 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
     std::cout<<caljet->pt()<<"  "<<caljet->eta()<<std::endl;
 
     std::cout<<"Testing DNN Tagger "<<std::endl;
-    JSSWTopTaggerDNN::Result h_res = m_JSSWTopTaggerDNN->result( *caljet , true ); // 2nd argument enables jet decorations
+    // JSSWTopTaggerDNN::Result h_res = m_JSSWTopTaggerDNN->result( *caljet , true ); // 2nd argument enables jet decorations
+    int h_res = m_JSSWTopTaggerDNN->result( *caljet ); // 2nd argument enables jet decorations
     std::cout<<"result(DNN) = "<<h_res<<std::endl;
   }
 

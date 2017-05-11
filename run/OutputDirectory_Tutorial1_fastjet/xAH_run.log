@@ -1,0 +1,35 @@
+[HTopMultilep-00-02-04-69-g9ab194f] xAH_run.py --files ../mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528/DAOD_JETM8.07713065._000140.pool.root.1 --nevents 1 --config config_Tutorial1.py -v --submitDir OutputDirectory_Tutorial1_fastjet direct
+Code:  https://github.com/UCATLAS/xAODAnaHelpers/tree/9ab194f
+Start: May 09 2017 16:49:51
+Stop:  May 09 2017 16:50:05
+Delta: 0:00:14.258430
+
+job runner options
+	input_filename                                      = ['../mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528/DAOD_JETM8.07713065._000140.pool.root.1']
+	submit_dir                                          = OutputDirectory_Tutorial1_fastjet
+	num_events                                          = 1
+	skip_events                                         = 0
+	force_overwrite                                     = False
+	use_inputFileList                                   = False
+	use_scanDQ2                                         = False
+	use_scanRucio                                       = False
+	use_scanEOS                                         = False
+	use_scanXRD                                         = False
+	verbose                                             = 1
+	driver                                              = direct
+<class 'ROOT.BasicEventSelection'> algorithm options
+	setting <class 'ROOT.BasicEventSelection'>.m_truthLevelOnly               = False
+	setting <class 'ROOT.BasicEventSelection'>.m_debug                        = False
+	setting <class 'ROOT.BasicEventSelection'>.m_useMetaData                  = False
+	setting <class 'ROOT.BasicEventSelection'>.m_vertexContainerName          = PrimaryVertices
+	setting <class 'ROOT.BasicEventSelection'>.m_derivationName               = JETM8
+	setting <class 'ROOT.BasicEventSelection'>.m_applyGRLCut                  = False
+	setting <class 'ROOT.BasicEventSelection'>.m_PVNTrack                     = 2
+	setting <class 'ROOT.BasicEventSelection'>.m_isMC                         = True
+	setting <class 'ROOT.BasicEventSelection'>.m_doPUreweighting              = False
+	setting <class 'ROOT.BasicEventSelection'>.m_applyPrimaryVertexCut        = True
+<class 'ROOT.JSSTutorialAlgo'> algorithm options
+	setting <class 'ROOT.JSSTutorialAlgo'>.m_TreeName                     = JetTree
+	setting <class 'ROOT.JSSTutorialAlgo'>.m_debug                        = False
+	setting <class 'ROOT.JSSTutorialAlgo'>.m_MyNewVariable                = ThisGotLoadedIn
+	setting <class 'ROOT.JSSTutorialAlgo'>.m_name                         = JSSTutorialAlgo
