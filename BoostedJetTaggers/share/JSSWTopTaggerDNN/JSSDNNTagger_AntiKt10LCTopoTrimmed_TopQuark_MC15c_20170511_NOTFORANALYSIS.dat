@@ -13,9 +13,9 @@
 #
 ####################################################################################
 
-TaggerType: WBoson
+TaggerType: TopQuark
 
-DecorationName: DNNTaggerScoreWBoson
+DecorationName: DNNTaggerScoreTopQuark
 
 KerasConfigFile: keras_top_dnn_BN_december11_contained.json
 

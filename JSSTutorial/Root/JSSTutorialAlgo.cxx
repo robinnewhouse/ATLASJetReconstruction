@@ -262,7 +262,7 @@ EL::StatusCode JSSTutorialAlgo :: initialize ()
   std::cout<<"Initializing DNN top Tagger"<<std::endl;
   m_JSSWTopTaggerDNN = nullptr;
   m_JSSWTopTaggerDNN = std::unique_ptr<JSSWTopTaggerDNN>( new JSSWTopTaggerDNN( "DNN" ) );
-  // m_JSSWTopTaggerDNN->setProperty( "ConfigFile",   "JSSWTopTaggerDNN/JSSDNNTagger_AntiKt10LCTopoTrimmed_DUMMYCONFIG_TopQuark_MC15c_20170511.dat");
+  m_JSSWTopTaggerDNN->setProperty( "ConfigFile",   "../BoostedJetTaggers/share/JSSWTopTaggerDNN/JSSDNNTagger_AntiKt10LCTopoTrimmed_TopQuark_MC15c_20170511_NOTFORANALYSIS.dat");
   m_JSSWTopTaggerDNN->setProperty( "TopTagger",   true); // maybe put in config file
   m_JSSWTopTaggerDNN->initialize();
 
@@ -310,7 +310,7 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
 
     std::cout<<"Testing DNN Tagger "<<std::endl;
     // JSSWTopTaggerDNN::Result h_res = m_JSSWTopTaggerDNN->result( *caljet , true ); // 2nd argument enables jet decorations
-    int h_res = m_JSSWTopTaggerDNN->result( *caljet ); // 2nd argument enables jet decorations
+    JSSWTopTaggerDNN::Result h_res = m_JSSWTopTaggerDNN->result( *caljet, true); // 2nd argument enables jet decorations
     std::cout<<"result(DNN) = "<<h_res<<std::endl;
   }
 
