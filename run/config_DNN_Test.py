@@ -17,7 +17,7 @@ c.setalg("BasicEventSelection", {"m_debug": False,
 c.setalg("JSSTutorialAlgo", {"m_debug": False,
     "m_name": "JSSTutorialAlgo",
     "m_MyNewVariable" : "ThisGotLoadedIn",
-    "m_TreeName" : "JetTree"
+    "m_TreeName" : "JetTree",
 })
 
 
