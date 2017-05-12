@@ -63,21 +63,21 @@ StatusCode JSSWTopTaggerDNN::initialize(){
 
     // // -- Get the working point files
     std::string taggerType("");       // what kind of tagger the user selected
-    // std::string wkptDataName("");     // the data name to access working points
-    // if (m_wtag){
-    //     taggerType     = "wtag";
-    //     m_wkptFileName = "BoostedJetTaggers/keras_w_dnn_2.dat";
-    //     wkptDataName   = "DNN_Wtag_"+m_wkpt+"wp"; // dummy
-    // }
-    // else if (m_ztag){
-    //     taggerType     = "ztag";
-    //     m_wkptFileName = "BoostedJetTaggers/keras_z_dnn_2.dat";
-    //     wkptDataName   = "DNN_Ztag_"+m_wkpt+"wp"; // dummy
-    // }
+    std::string wkptDataName("");     // the data name to access working points
+    if (m_wtag){
+        taggerType     = "wtag";
+        m_wkptFileName = "BoostedJetTaggers/keras_w_dnn_2.dat";
+        wkptDataName   = "DNN_Wtag_"+m_wkpt+"wp"; // dummy
+    }
+    else if (m_ztag){
+        taggerType     = "ztag";
+        m_wkptFileName = "BoostedJetTaggers/keras_z_dnn_2.dat";
+        wkptDataName   = "DNN_Ztag_"+m_wkpt+"wp"; // dummy
+    }
     if (m_toptag){
         taggerType     = "toptag";
-    //     m_wkptFileName = "../BoostedJetTaggers/share/JSSWTopTaggerDNN/JSSDNNTagger_AntiKt10LCTopoTrimmed_DUMMYCONFIG_TopQuark_MC15c_20170511.dat";
-    //     wkptDataName   = "DNN_TOPtag_"+m_wkpt+"wp";
+        m_wkptFileName = "../BoostedJetTaggers/share/JSSWTopTaggerDNN/JSSDNNTagger_AntiKt10LCTopoTrimmed_DUMMYCONFIG_TopQuark_MC15c_20170511.dat";
+        wkptDataName   = "DNN_TOPtag_"+m_wkpt+"wp";
     }
 
     // -- Grab the weights from json files
@@ -100,8 +100,11 @@ StatusCode JSSWTopTaggerDNN::initialize(){
 // #endif
 
     // working point data
-    // m_wkptFile = TFile::Open(m_wkptFileName.c_str()); // file that contains TF1s for tagging
-    // m_wkpt_DNN = (TF1*)m_wkptFile->Get( wkptDataName.c_str() );
+    std::cout << "debug1" << std::endl;
+    m_wkptFile = TFile::Open(m_wkptFileName.c_str()); // file that contains TF1s for tagging
+    std::cout << "debug2" << std::endl;
+    m_wkpt_DNN = (TF1*)m_wkptFile->Get( wkptDataName.c_str() );
+    std::cout << "debug3" << std::endl;
 
     // read json file for DNN weights
     std::ifstream input_cfg( m_DNN_weights.at(taggerType).c_str() );
@@ -143,9 +146,7 @@ int JSSWTopTaggerDNN::result(const xAOD::Jet& jet) const{
     }
 
     // get DNN score
-    std::cout << "debug1" << std::endl;
     double DNNscore = getScore(jet);
-    std::cout << "debug2" << std::endl;
 
     // check if tagged (pT,mass,DNN score)
     double jet_DNN_min_cut  = m_wkpt_DNN->Eval(jet.pt()*1e-3);  // GeV
