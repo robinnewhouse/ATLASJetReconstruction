@@ -262,8 +262,8 @@ EL::StatusCode JSSTutorialAlgo :: initialize ()
   std::cout<<"Initializing DNN top Tagger"<<std::endl;
   m_JSSWTopTaggerDNN = nullptr;
   m_JSSWTopTaggerDNN = std::unique_ptr<JSSWTopTaggerDNN>( new JSSWTopTaggerDNN( "DNN" ) );
-  m_JSSWTopTaggerDNN->setProperty( "ConfigFile",   "../BoostedJetTaggers/share/JSSWTopTaggerDNN/JSSDNNTagger_AntiKt10LCTopoTrimmed_TopQuark_MC15c_20170511_NOTFORANALYSIS.dat");
-  m_JSSWTopTaggerDNN->setProperty( "TopTagger",   true); // maybe put in config file
+  m_JSSWTopTaggerDNN->setProperty( "ConfigFile",   "JSSWTopTaggerDNN/JSSDNNTagger_AntiKt10LCTopoTrimmed_TopQuark_MC15c_20170511_NOTFORANALYSIS.dat");
+  // m_JSSWTopTaggerDNN->setProperty( "TopTagger",   true); // maybe put in config file
   m_JSSWTopTaggerDNN->initialize();
 
   ATH_MSG_INFO( "JSSTutorialAlgo Interface succesfully initialized!" );
