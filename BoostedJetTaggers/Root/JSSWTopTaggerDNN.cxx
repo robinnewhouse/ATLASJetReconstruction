@@ -26,6 +26,9 @@
 
 #define APP_NAME "JSSWTopTaggerDNN"
 
+#define N_CONSTITUENTS 20
+#define EMPTY_CONSTITUENT 0.0
+
 #define CERRD std::cout<<"SAM Error : "<<__FILE__<<"  "<<__LINE__<<std::endl;
 
 JSSWTopTaggerDNN::JSSWTopTaggerDNN( const std::string& name ) :
@@ -286,6 +289,15 @@ double JSSWTopTaggerDNN::getScore(const xAOD::Jet& jet) const{
 
     // create input dictionary map<string,double> for argument to lwtnn
     std::map<std::string,double> DNN_inputValues = getJetProperties(jet);
+    std::map<std::string,double> DNN_inputValues_test = getJetConstituents(jet); // RN
+
+    for (int j = 0; j < N_CONSTITUENTS; ++j)
+    {
+      std::cout << "constit_"<<j <<
+      "   pt  :  " << DNN_inputValues_test["pt"+std::to_string(j)] <<
+      "   eta :  " << DNN_inputValues_test["eta"+std::to_string(j)] <<
+      "   phi :  " << DNN_inputValues_test["phi"+std::to_string(j)] << std::endl;
+    }
 
     // evaluate the network
     lwt::ValueMap discriminant = m_lwnn->compute(DNN_inputValues);
@@ -311,6 +323,37 @@ void JSSWTopTaggerDNN::decorateJet(const xAOD::Jet& jet, float mcutH, float mcut
     dec_scoreCut(jet)   = scoreCut;
     dec_scoreValue(jet) = scoreValue;
 
+}
+
+// RN
+std::map<std::string,double> JSSWTopTaggerDNN::getJetConstituents(const xAOD::Jet& jet) const{
+    // Update the jet constituents for this jet
+    std::map<std::string,double> DNN_inputValues;
+
+    // Initialize map with empty values. Truncate at N_CONSTITUENTS
+    for (int i = 0; i < N_CONSTITUENTS; ++i)
+    {
+      DNN_inputValues["pt"+std::to_string(i)] = EMPTY_CONSTITUENT;
+      DNN_inputValues["eta"+std::to_string(i)] = EMPTY_CONSTITUENT;
+      DNN_inputValues["phi"+std::to_string(i)] = EMPTY_CONSTITUENT;
+    }
+
+    // Extract jet constituents from jet
+    xAOD::JetConstituentVector clusters = jet.getConstituents();
+
+    ATH_MSG_INFO("clusters size: " << clusters.size());
+    int count = std::min(N_CONSTITUENTS, int(clusters.size()));
+    for (int j = 0; j < count; ++j)
+    {
+      DNN_inputValues["pt"+std::to_string(j)] = clusters.at(j)->pt();
+      // std::cout << clusters.at(j)->pt();
+      DNN_inputValues["eta"+std::to_string(j)] = clusters.at(j)->eta();
+      // std::cout << clusters.at(j)->eta();
+      DNN_inputValues["phi"+std::to_string(j)] = clusters.at(j)->phi();
+      // std::cout << clusters.at(j)->phi();
+    }
+
+    return DNN_inputValues;
 }
 
 std::map<std::string,double> JSSWTopTaggerDNN::getJetProperties(const xAOD::Jet& jet) const{
