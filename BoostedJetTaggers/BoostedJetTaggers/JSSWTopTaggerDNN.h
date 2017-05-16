@@ -76,14 +76,14 @@ class JSSWTopTaggerDNN :  public JSSTaggerBase {
     std::string m_name;
     std::string m_APP_NAME;
 
+    // DNN tools
+    std::unique_ptr<lwt::LightweightNeuralNetwork> m_lwnn;
+    std::map<std::string, double> m_DNN_inputValues;   // variables for DNN
+
     // the kinematic bounds for the jet - these are in MeV (not GeV!)
     float m_jetPtMin;
     float m_jetPtMax;
     float m_jetEtaMax;
-
-    // DNN tools
-    std::unique_ptr<lwt::LightweightNeuralNetwork> m_lwnn;
-    std::map<std::string, double> m_DNN_inputValues;   // variables for DNN
 
     // inclusive config file
     std::string m_configFile;

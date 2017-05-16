@@ -26,7 +26,7 @@
 
 #define APP_NAME "JSSWTopTaggerDNN"
 
-#define N_CONSTITUENTS 20
+#define N_CONSTITUENTS 10
 #define EMPTY_CONSTITUENT 0.0
 
 #define CERRD std::cout<<"SAM Error : "<<__FILE__<<"  "<<__LINE__<<std::endl;
