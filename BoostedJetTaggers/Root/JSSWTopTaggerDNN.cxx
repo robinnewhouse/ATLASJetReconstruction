@@ -227,7 +227,7 @@ JSSWTopTaggerDNN::Result JSSWTopTaggerDNN::result(const xAOD::Jet& jet, bool dec
 
   // get DNN score for the jet
   float jet_score = getScore(transformed_jet);
-
+  // delete transformed_jet // ?
   // evaluate the values of the upper and lower mass bounds and the d2 cut
   float cut_mass_low  = m_funcMassCutLow ->Eval(jet_pt);
   float cut_mass_high = m_funcMassCutHigh->Eval(jet_pt);
@@ -289,21 +289,31 @@ JSSWTopTaggerDNN::Result JSSWTopTaggerDNN::result(const xAOD::Jet& jet, bool dec
 }
 
 xAOD::Jet JSSWTopTaggerDNN::preprocess(const xAOD::Jet& jet) const{
-
+    /* Adapted from Jannicke Pearkes */
+    
     // Make new jet 
     xAOD::Jet* transformed_jet = new xAOD::Jet(jet);
+    // Load constituents
+    std::cout<<"Loading constituents from individual jet"<<std::endl;
+    xAOD::JetConstituentVector clusters = jet.getConstituents();
+    std::cout<<"Length of jet constituents " << clusters.size() << std::endl;
 
-    // // create input dictionary map<string,double> for argument to lwtnn
-    // std::map<std::string,double> DNN_inputValues = getJetProperties(jet);
-    // std::map<std::string,double> DNN_inputValues_clusters = getJetConstituents(jet); // RN
+    std::vector<double> jet_constit_pt;
+    std::vector<double> jet_constit_eta;
+    std::vector<double> jet_constit_phi;
+    std::vector<double> jet_constit_scale;
+    std::vector<double> jet_constit_log_pt;
+    std::vector<double> jet_constit_log_mean;
+    std::vector<double> jet_constit_log_scale;
 
-    // for (int j = 0; j < N_CONSTITUENTS; ++j)
-    // {
-    //   std::cout << "constit_"<<j <<
-    //   "   pt  :  " << DNN_inputValues_clusters["pt"+std::to_string(j)] <<
-    //   "   eta :  " << DNN_inputValues_clusters["eta"+std::to_string(j)] <<
-    //   "   phi :  " << DNN_inputValues_clusters["phi"+std::to_string(j)] << std::endl;
-    // }
+    double max_pt = 1679.1593231;
+    double min_pt = 0.0;
+
+    double max_eta = 2.7;
+    double max_phi = M_PI;
+
+    // jet_constits_pt_list = [[] for j in range(91)]
+    // jet_constits_log_pt_list = [[] for j in range(91)]
 
     // // evaluate the network
     // lwt::ValueMap discriminant = m_lwnn->compute(DNN_inputValues_clusters);
@@ -315,19 +325,18 @@ xAOD::Jet JSSWTopTaggerDNN::preprocess(const xAOD::Jet& jet) const{
     return *transformed_jet;
 }
 
-
 double JSSWTopTaggerDNN::getScore(const xAOD::Jet& jet) const{
 
     // create input dictionary map<string,double> for argument to lwtnn
     std::map<std::string,double> DNN_inputValues = getJetProperties(jet);
     std::map<std::string,double> DNN_inputValues_clusters = getJetConstituents(jet); // RN
 
-    for (int j = 0; j < N_CONSTITUENTS; ++j)
+    for (int i = 0; i < N_CONSTITUENTS; ++i)
     {
-      std::cout << "constit_"<<j <<
-      "   pt  :  " << DNN_inputValues_clusters["pt"+std::to_string(j)] <<
-      "   eta :  " << DNN_inputValues_clusters["eta"+std::to_string(j)] <<
-      "   phi :  " << DNN_inputValues_clusters["phi"+std::to_string(j)] << std::endl;
+      std::cout << "constit_"<<i <<
+      "   pt  :  " << DNN_inputValues_clusters["clust_"+std::to_string(i)+"_pt"] <<
+      "   eta :  " << DNN_inputValues_clusters["clust_"+std::to_string(i)+"_eta"] <<
+      "   phi :  " << DNN_inputValues_clusters["clust_"+std::to_string(i)+"_phi"] << std::endl;
     }
 
     // evaluate the network
@@ -374,14 +383,14 @@ std::map<std::string,double> JSSWTopTaggerDNN::getJetConstituents(const xAOD::Je
 
     ATH_MSG_INFO("clusters size: " << clusters.size());
     int count = std::min(N_CONSTITUENTS, int(clusters.size()));
-    for (int j = 0; j < count; ++j)
+    for (int i = 0; i < count; ++i)
     {
-      DNN_inputValues["pt"+std::to_string(j)] = clusters.at(j)->pt();
-      // std::cout << clusters.at(j)->pt();
-      DNN_inputValues["eta"+std::to_string(j)] = clusters.at(j)->eta();
-      // std::cout << clusters.at(j)->eta();
-      DNN_inputValues["phi"+std::to_string(j)] = clusters.at(j)->phi();
-      // std::cout << clusters.at(j)->phi();
+      DNN_inputValues["clust_"+std::to_string(i)+"_pt"] = clusters.at(i)->pt();
+      // std::cout << clusters.at(i)->pt();
+      DNN_inputValues["clust_"+std::to_string(i)+"_eta"] = clusters.at(i)->eta();
+      // std::cout << clusters.at(i)->eta();
+      DNN_inputValues["clust_"+std::to_string(i)+"_phi"] = clusters.at(i)->phi();
+      // std::cout << clusters.at(i)->phi();
     }
 
     return DNN_inputValues;
