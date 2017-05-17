@@ -222,8 +222,11 @@ JSSWTopTaggerDNN::Result JSSWTopTaggerDNN::result(const xAOD::Jet& jet, bool dec
   float jet_pt   = jet.pt()/1000.0;
   float jet_mass = jet.m()/1000.0;
 
+  // Preprocess Jet
+  xAOD::Jet transformed_jet = preprocess(jet);
+
   // get DNN score for the jet
-  float jet_score = getScore(jet);
+  float jet_score = getScore(transformed_jet);
 
   // evaluate the values of the upper and lower mass bounds and the d2 cut
   float cut_mass_low  = m_funcMassCutLow ->Eval(jet_pt);
@@ -285,22 +288,50 @@ JSSWTopTaggerDNN::Result JSSWTopTaggerDNN::result(const xAOD::Jet& jet, bool dec
   return InvalidJet;
 }
 
+xAOD::Jet JSSWTopTaggerDNN::preprocess(const xAOD::Jet& jet) const{
+
+    // Make new jet 
+    xAOD::Jet* transformed_jet = new xAOD::Jet(jet);
+
+    // // create input dictionary map<string,double> for argument to lwtnn
+    // std::map<std::string,double> DNN_inputValues = getJetProperties(jet);
+    // std::map<std::string,double> DNN_inputValues_clusters = getJetConstituents(jet); // RN
+
+    // for (int j = 0; j < N_CONSTITUENTS; ++j)
+    // {
+    //   std::cout << "constit_"<<j <<
+    //   "   pt  :  " << DNN_inputValues_clusters["pt"+std::to_string(j)] <<
+    //   "   eta :  " << DNN_inputValues_clusters["eta"+std::to_string(j)] <<
+    //   "   phi :  " << DNN_inputValues_clusters["phi"+std::to_string(j)] << std::endl;
+    // }
+
+    // // evaluate the network
+    // lwt::ValueMap discriminant = m_lwnn->compute(DNN_inputValues_clusters);
+
+    // // obtain the output associated with the single output node
+    // double DNNscore(-666.);
+    // DNNscore = discriminant[m_kerasConfigOutputName];
+
+    return *transformed_jet;
+}
+
+
 double JSSWTopTaggerDNN::getScore(const xAOD::Jet& jet) const{
 
     // create input dictionary map<string,double> for argument to lwtnn
     std::map<std::string,double> DNN_inputValues = getJetProperties(jet);
-    std::map<std::string,double> DNN_inputValues_test = getJetConstituents(jet); // RN
+    std::map<std::string,double> DNN_inputValues_clusters = getJetConstituents(jet); // RN
 
     for (int j = 0; j < N_CONSTITUENTS; ++j)
     {
       std::cout << "constit_"<<j <<
-      "   pt  :  " << DNN_inputValues_test["pt"+std::to_string(j)] <<
-      "   eta :  " << DNN_inputValues_test["eta"+std::to_string(j)] <<
-      "   phi :  " << DNN_inputValues_test["phi"+std::to_string(j)] << std::endl;
+      "   pt  :  " << DNN_inputValues_clusters["pt"+std::to_string(j)] <<
+      "   eta :  " << DNN_inputValues_clusters["eta"+std::to_string(j)] <<
+      "   phi :  " << DNN_inputValues_clusters["phi"+std::to_string(j)] << std::endl;
     }
 
     // evaluate the network
-    lwt::ValueMap discriminant = m_lwnn->compute(DNN_inputValues);
+    lwt::ValueMap discriminant = m_lwnn->compute(DNN_inputValues_clusters);
 
     // obtain the output associated with the single output node
     double DNNscore(-666.);
@@ -333,9 +364,9 @@ std::map<std::string,double> JSSWTopTaggerDNN::getJetConstituents(const xAOD::Je
     // Initialize map with empty values. Truncate at N_CONSTITUENTS
     for (int i = 0; i < N_CONSTITUENTS; ++i)
     {
-      DNN_inputValues["pt"+std::to_string(i)] = EMPTY_CONSTITUENT;
-      DNN_inputValues["eta"+std::to_string(i)] = EMPTY_CONSTITUENT;
-      DNN_inputValues["phi"+std::to_string(i)] = EMPTY_CONSTITUENT;
+      DNN_inputValues["clust_"+std::to_string(i)+"_pt"] = EMPTY_CONSTITUENT;
+      DNN_inputValues["clust_"+std::to_string(i)+"_eta"] = EMPTY_CONSTITUENT;
+      DNN_inputValues["clust_"+std::to_string(i)+"_phi"] = EMPTY_CONSTITUENT;
     }
 
     // Extract jet constituents from jet

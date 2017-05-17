@@ -17,7 +17,7 @@ TaggerType: TopQuark
 
 DecorationName: DNNTaggerScoreTopQuark
 
-KerasConfigFile: keras_top_dnn_BN_december11_contained.json
+KerasConfigFile: KerasConverted_DNNTest.json
 
 KerasOutput: top_dnn_BN_dec11_contained
 
