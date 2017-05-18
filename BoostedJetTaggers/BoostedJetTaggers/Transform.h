@@ -3,6 +3,9 @@
 #define BOOSTEDJETSTAGGERS_TRANSFORM_H_
 
 #include <math.h>
+#include <map>
+#include <vector>
+
 
 class Transform {
   public:
@@ -15,6 +18,7 @@ class Transform {
 	static double phi_shift(double clust_phi, double jet_phi);
 	static double eta_shift_and_scale(double clust_eta, double jet_eta);
 	static double phi_shift_and_scale(double clust_phi, double jet_phi);
+	static std::vector<double> calculate_thetas_for_rotations(std::map<std::string,double> clusters);
 	// static double phi_eta_shift_and_rotate(double & pt,double & eta, double & phi, double & jet_eta, double & jet_phi, double & theta);
 
 };

@@ -337,11 +337,15 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
       T_clusters["clust_"+std::to_string(i)+"_phi"] = Transform::phi_shift(clusters["clust_"+std::to_string(i)+"_phi"], jet_phi);
     }
 
-    // TODO - rotate 
-    // Code under "Calculating thetas for rotation” and “Rotating”, 
-    // the rotation part is just a python translation of TLorentzVector’s rotate method  
-    // https://root.cern.ch/doc/master/classTLorentzVector.html
-    
+    // - rotate 
+    std::vector<double> thetas = Transform::calculate_thetas_for_rotations(clusters);
+    if (jet.getConstituents().size() >= 1){
+      // Code under "Calculating thetas for rotation” and “Rotating”, 
+      // the rotation part is just a python translation of TLorentzVector’s rotate method  
+      // https://root.cern.ch/doc/master/classTLorentzVector.html
+    }
+
+
     // TODO - flip 
     // Code under  elif "flip" in eta_phi_prep_type:
 
