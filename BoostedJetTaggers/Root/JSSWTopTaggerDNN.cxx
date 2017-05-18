@@ -349,7 +349,9 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
     // Perform the rotation // TODO do we rotate if the theta == 0.0 ?
     Transform::rotate_about_primary(T_clusters, thetas);
 
-    // TODO - flip 
+    // - flip 
+    Transform::flip(T_clusters);
+
     // Code under  elif "flip" in eta_phi_prep_type:
 
     clusters = T_clusters;

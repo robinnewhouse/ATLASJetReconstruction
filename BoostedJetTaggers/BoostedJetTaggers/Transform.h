@@ -20,6 +20,7 @@ class Transform {
 	static double phi_shift_and_scale(double clust_phi, double jet_phi);
 	static std::vector<double> calculate_thetas_for_rotations(std::map<std::string,double> clusters);
 	static void rotate_about_primary(std::map<std::string,double> &clusters, std::vector<double> thetas);
+	static void flip(std::map<std::string,double> &clusters);
 	// static double phi_eta_shift_and_rotate(double & pt,double & eta, double & phi, double & jet_eta, double & jet_phi, double & theta);
 
 };

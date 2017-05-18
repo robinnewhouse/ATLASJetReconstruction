@@ -142,6 +142,21 @@ void Transform::rotate_about_primary(std::map<std::string,double> &clusters, std
 	return;
 }
 
+void Transform::flip(std::map<std::string,double> &clusters){
+	double sum_eta = 0.0;
+	double sum_phi = 0.0;
+	for (uint i = 0; i < clusters.size() / 3; ++i) {
+		sum_eta += clusters["clust_"+std::to_string(i)+"_eta"];
+		sum_phi += clusters["clust_"+std::to_string(i)+"_phi"];
+	}
+
+    if (sum_eta < 0){ // if more eta on negative, flip all eta
+		for (uint i = 0; i < clusters.size() / 3; ++i) {
+			clusters["clust_"+std::to_string(i)+"_eta"] = -clusters["clust_"+std::to_string(i)+"_eta"];
+		}
+	}
+	return;
+}
 
 /*
 
