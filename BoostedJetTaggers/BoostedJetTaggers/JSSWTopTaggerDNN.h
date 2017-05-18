@@ -60,8 +60,8 @@ class JSSWTopTaggerDNN :  public JSSTaggerBase {
     // Get the tagging result -- run for every jet!
     Result result(const xAOD::Jet& jet, bool decorate=true) const;
 
-    // Preprocess the jet by applying transformations
-    xAOD::Jet preprocess(const xAOD::Jet& jet) const;
+    // Preprocess the jet constituents by applying transformations
+    void preprocess(std::map<std::string,double> &clusters, xAOD::Jet jet) const;
 
     // Retrieve score for a given DNN type (top/W)
     double getScore(const xAOD::Jet& jet) const;

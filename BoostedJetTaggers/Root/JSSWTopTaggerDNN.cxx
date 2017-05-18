@@ -222,12 +222,9 @@ JSSWTopTaggerDNN::Result JSSWTopTaggerDNN::result(const xAOD::Jet& jet, bool dec
   float jet_pt   = jet.pt()/1000.0;
   float jet_mass = jet.m()/1000.0;
 
-  // Preprocess Jet
-  xAOD::Jet transformed_jet = preprocess(jet);
-
   // get DNN score for the jet
-  float jet_score = getScore(transformed_jet);
-  // delete transformed_jet // ?
+  float jet_score = getScore(jet);
+
   // evaluate the values of the upper and lower mass bounds and the d2 cut
   float cut_mass_low  = m_funcMassCutLow ->Eval(jet_pt);
   float cut_mass_high = m_funcMassCutHigh->Eval(jet_pt);
@@ -288,69 +285,15 @@ JSSWTopTaggerDNN::Result JSSWTopTaggerDNN::result(const xAOD::Jet& jet, bool dec
   return InvalidJet;
 }
 
-xAOD::Jet JSSWTopTaggerDNN::preprocess(const xAOD::Jet& jet) const{
-    /* Adapted from Jannicke Pearkes */
-    
-    // Make new jet 
-    xAOD::Jet* transformed_jet = new xAOD::Jet(jet);
-    // Make new cluster map
-    std::map<std::string,double> T_clusters;
-    // Load constituents
-    std::cout<<"Loading constituents from individual jet"<<std::endl;
-    std::map<std::string,double> clusters = getJetConstituents(jet);
-    std::cout<<"Length of jet constituents " << clusters.size()/3 << std::endl;
-
-    // Extract jet properties
-    double jet_pt = jet.pt();
-    double jet_eta = jet.eta();
-    double jet_phi = jet.phi();
-
-    // Instructions from Jannicke
-    //- min max scaling (this is actually has a hard-coded min and max) 
-    // this is the function pt_min_max_scale()
-    for (int i = 0; i < N_CONSTITUENTS; ++i) {
-      T_clusters["clust_"+std::to_string(i)+"_pt"] = Transform::pt_min_max_scale(clusters["clust_"+std::to_string(i)+"_pt"], 0);
-    }
-    // -  shift prim (translation about primary jet constituent)
-    // this is the function eta_shift()
-    // this is the function phi_shift()
-    // Transform::eta_shift();
-    // Transform::phi_shift();
-
-    // - rotate 
-    // Code under "Calculating thetas for rotation” and “Rotating”, 
-    // the rotation part is just a python translation of TLorentzVector’s rotate method  
-    // https://root.cern.ch/doc/master/classTLorentzVector.html
-    
-    // - flip 
-    // Code under  elif "flip" in eta_phi_prep_type:
-
-    std::vector<double> jet_constit_pt;
-    std::vector<double> jet_constit_eta;
-    std::vector<double> jet_constit_phi;
-    std::vector<double> jet_constit_scale;
-    std::vector<double> jet_constit_log_pt;
-    std::vector<double> jet_constit_log_mean;
-    std::vector<double> jet_constit_log_scale;
-
-    // jet_constits_pt_list = [[] for j in range(91)]
-    // jet_constits_log_pt_list = [[] for j in range(91)]
-
-    // // evaluate the network
-    // lwt::ValueMap discriminant = m_lwnn->compute(DNN_inputValues_clusters);
-
-    // // obtain the output associated with the single output node
-    // double DNNscore(-666.);
-    // DNNscore = discriminant[m_kerasConfigOutputName];
-
-    return *transformed_jet;
-}
-
 double JSSWTopTaggerDNN::getScore(const xAOD::Jet& jet) const{
 
     // create input dictionary map<string,double> for argument to lwtnn
-    std::map<std::string,double> DNN_inputValues = getJetProperties(jet);
+    // std::map<std::string,double> DNN_inputValues = getJetProperties(jet);
+    std::cout<<"Loading constituents from individual jet"<<std::endl;
     std::map<std::string,double> DNN_inputValues_clusters = getJetConstituents(jet); // RN
+    
+    std::cout<<"Preprocessing constituents"<<std::endl;
+    preprocess(DNN_inputValues_clusters, jet);
 
     for (int i = 0; i < N_CONSTITUENTS; ++i)
     {
@@ -370,6 +313,41 @@ double JSSWTopTaggerDNN::getScore(const xAOD::Jet& jet) const{
     return DNNscore;
 }
 
+// RN
+void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const xAOD::Jet jet) const {
+    /* Adapted from Jannicke Pearkes */
+    // We assume these constituents are sorted by pt
+
+    // Make new cluster map
+    std::map<std::string,double> T_clusters;
+
+    // Extract jet properties
+    double jet_pt = jet.pt();
+    double jet_eta = jet.eta();
+    double jet_phi = jet.phi();
+
+    // Instructions from Jannicke
+    //- min max scaling (this is actually has a hard-coded min and max) 
+    for (int i = 0; i < N_CONSTITUENTS; ++i) {
+      T_clusters["clust_"+std::to_string(i)+"_pt"] = Transform::pt_min_max_scale(clusters["clust_"+std::to_string(i)+"_pt"], 0);
+    }
+    // -  shift prim (translation about primary jet constituent)
+    for (int i = 0; i < N_CONSTITUENTS; ++i) {
+      T_clusters["clust_"+std::to_string(i)+"_eta"] = Transform::eta_shift(clusters["clust_"+std::to_string(i)+"_eta"], jet_eta);
+      T_clusters["clust_"+std::to_string(i)+"_phi"] = Transform::phi_shift(clusters["clust_"+std::to_string(i)+"_phi"], jet_phi);
+    }
+
+    // TODO - rotate 
+    // Code under "Calculating thetas for rotation” and “Rotating”, 
+    // the rotation part is just a python translation of TLorentzVector’s rotate method  
+    // https://root.cern.ch/doc/master/classTLorentzVector.html
+    
+    // TODO - flip 
+    // Code under  elif "flip" in eta_phi_prep_type:
+
+    clusters = T_clusters;
+    return;
+}
 void JSSWTopTaggerDNN::decorateJet(const xAOD::Jet& jet, float mcutH, float mcutL, float scoreCut, float scoreValue) const{
     /* decorate jet with attributes */
 
@@ -384,10 +362,6 @@ void JSSWTopTaggerDNN::decorateJet(const xAOD::Jet& jet, float mcutH, float mcut
     dec_scoreCut(jet)   = scoreCut;
     dec_scoreValue(jet) = scoreValue;
 
-}
-
-bool compare_pt(xAOD::JetConstituent a, xAOD::JetConstituent b) {
-  return (a->pt() > b->pt());
 }
 
 // RN
