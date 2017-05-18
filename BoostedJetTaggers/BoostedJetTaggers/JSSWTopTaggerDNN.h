@@ -2,6 +2,7 @@
 #ifndef JSSWTOPTAGGERDNN_H_
 #define JSSWTOPTAGGERDNN_H_
 #include "BoostedJetTaggers/JSSTaggerBase.h"
+#include "BoostedJetTaggers/Transform.h"
 #include "AsgTools/AsgTool.h"
 
 #include "BoostedJetTaggers/lwtnn/LightweightNeuralNetwork.h"
@@ -15,8 +16,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <math.h>
-
+#include <algorithm>
 
 class JSSWTopTaggerDNN :  public JSSTaggerBase {
 

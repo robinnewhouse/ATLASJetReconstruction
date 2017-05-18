@@ -293,10 +293,37 @@ xAOD::Jet JSSWTopTaggerDNN::preprocess(const xAOD::Jet& jet) const{
     
     // Make new jet 
     xAOD::Jet* transformed_jet = new xAOD::Jet(jet);
+    // Make new cluster map
+    std::map<std::string,double> T_clusters;
     // Load constituents
     std::cout<<"Loading constituents from individual jet"<<std::endl;
-    xAOD::JetConstituentVector clusters = jet.getConstituents();
-    std::cout<<"Length of jet constituents " << clusters.size() << std::endl;
+    std::map<std::string,double> clusters = getJetConstituents(jet);
+    std::cout<<"Length of jet constituents " << clusters.size()/3 << std::endl;
+
+    // Extract jet properties
+    double jet_pt = jet.pt();
+    double jet_eta = jet.eta();
+    double jet_phi = jet.phi();
+
+    // Instructions from Jannicke
+    //- min max scaling (this is actually has a hard-coded min and max) 
+    // this is the function pt_min_max_scale()
+    for (int i = 0; i < N_CONSTITUENTS; ++i) {
+      T_clusters["clust_"+std::to_string(i)+"_pt"] = Transform::pt_min_max_scale(clusters["clust_"+std::to_string(i)+"_pt"], 0);
+    }
+    // -  shift prim (translation about primary jet constituent)
+    // this is the function eta_shift()
+    // this is the function phi_shift()
+    // Transform::eta_shift();
+    // Transform::phi_shift();
+
+    // - rotate 
+    // Code under "Calculating thetas for rotation” and “Rotating”, 
+    // the rotation part is just a python translation of TLorentzVector’s rotate method  
+    // https://root.cern.ch/doc/master/classTLorentzVector.html
+    
+    // - flip 
+    // Code under  elif "flip" in eta_phi_prep_type:
 
     std::vector<double> jet_constit_pt;
     std::vector<double> jet_constit_eta;
@@ -305,12 +332,6 @@ xAOD::Jet JSSWTopTaggerDNN::preprocess(const xAOD::Jet& jet) const{
     std::vector<double> jet_constit_log_pt;
     std::vector<double> jet_constit_log_mean;
     std::vector<double> jet_constit_log_scale;
-
-    double max_pt = 1679.1593231;
-    double min_pt = 0.0;
-
-    double max_eta = 2.7;
-    double max_phi = M_PI;
 
     // jet_constits_pt_list = [[] for j in range(91)]
     // jet_constits_log_pt_list = [[] for j in range(91)]
@@ -365,6 +386,10 @@ void JSSWTopTaggerDNN::decorateJet(const xAOD::Jet& jet, float mcutH, float mcut
 
 }
 
+bool compare_pt(xAOD::JetConstituent a, xAOD::JetConstituent b) {
+  return (a->pt() > b->pt());
+}
+
 // RN
 std::map<std::string,double> JSSWTopTaggerDNN::getJetConstituents(const xAOD::Jet& jet) const{
     // Update the jet constituents for this jet
@@ -379,7 +404,13 @@ std::map<std::string,double> JSSWTopTaggerDNN::getJetConstituents(const xAOD::Je
     }
 
     // Extract jet constituents from jet
-    xAOD::JetConstituentVector clusters = jet.getConstituents();
+    std::vector<xAOD::JetConstituent> clusters = jet.getConstituents().asSTLVector();
+    // Sort them by pt (using lambda function for sorting)
+    std::sort(clusters.begin(), clusters.end(), 
+      [](const xAOD::JetConstituent & a, const xAOD::JetConstituent & b) -> bool
+      { 
+          return a.pt() > b.pt(); 
+      });
 
     ATH_MSG_INFO("clusters size: " << clusters.size());
     int count = std::min(N_CONSTITUENTS, int(clusters.size()));
