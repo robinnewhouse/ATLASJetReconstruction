@@ -338,13 +338,16 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
     }
 
     // - rotate 
-    std::vector<double> thetas = Transform::calculate_thetas_for_rotations(clusters);
-    if (jet.getConstituents().size() >= 1){
-      // Code under "Calculating thetas for rotation” and “Rotating”, 
-      // the rotation part is just a python translation of TLorentzVector’s rotate method  
-      // https://root.cern.ch/doc/master/classTLorentzVector.html
+    // //// Code under "Calculating thetas for rotation” and “Rotating”, 
+    // //// the rotation part is just a python translation of TLorentzVector’s rotate method  
+    // //// https://root.cern.ch/doc/master/classTLorentzVector.html
+    // Calculate axes of rotation
+    std::vector<double> thetas;
+    if (jet.getConstituents().size() >= 2){ // need at least 2 constituents 
+      thetas = Transform::calculate_thetas_for_rotations(clusters);
     }
-
+    // Perform the rotation // TODO do we rotate if the theta == 0.0 ?
+    Transform::rotate_about_primary(T_clusters, thetas);
 
     // TODO - flip 
     // Code under  elif "flip" in eta_phi_prep_type:
