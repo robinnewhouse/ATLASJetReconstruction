@@ -33,3 +33,4 @@ mc15_13TeV*
 cmake-build-debug/
 cmake-build-debug/
 .idea/
+run/*.csv

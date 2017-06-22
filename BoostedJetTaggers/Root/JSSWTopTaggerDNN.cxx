@@ -58,6 +58,7 @@ JSSWTopTaggerDNN::JSSWTopTaggerDNN( const std::string& name ) :
 JSSWTopTaggerDNN::~JSSWTopTaggerDNN() {}
 
 StatusCode JSSWTopTaggerDNN::initialize(){
+  std::remove("jet_data.csv");
 
   /* Initialize the DNN tagger tool */
   ATH_MSG_INFO( (m_APP_NAME+": Initializing JSSWTopTaggerDNN tool").c_str() );
@@ -295,6 +296,9 @@ double JSSWTopTaggerDNN::getScore(const xAOD::Jet& jet) const{
     std::cout<<"Preprocessing constituents"<<std::endl;
     preprocess(DNN_inputValues_clusters, jet);
 
+    // print to a file to compare with python-based preprocessing
+    store_jet_data(DNN_inputValues_clusters, jet);
+
     for (int i = 0; i < N_CONSTITUENTS; ++i)
     {
       std::cout << "constit_"<<i <<
@@ -322,7 +326,7 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
     std::map<std::string,double> T_clusters;
 
     // Extract jet properties
-    double jet_pt = jet.pt();
+    // double jet_pt = jet.pt(); // unused
     double jet_eta = jet.eta();
     double jet_phi = jet.phi();
 
@@ -357,6 +361,56 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
     clusters = T_clusters;
     return;
 }
+
+void JSSWTopTaggerDNN::store_jet_data(std::map<std::string,double> clusters, const xAOD::Jet jet) const {
+  
+
+
+  std::ofstream jetData;
+  jetData.open ("jet_data.csv", std::ios_base::app); // append
+  jetData << 0.0 << ","; // weight
+  jetData << 1.0 << ","; // label
+  jetData << jet.m() << ","; // jet mass
+  jetData << jet.pt() << ","; // jet pt
+  jetData << jet.eta() << ","; // jet eta
+  jetData << jet.phi() << ","; // jet phi
+  jetData << 0.0 << ","; // Tau32_wta
+  jetData << 0.0 << ","; // Split23
+  jetData << 0.0 << ","; // NPV
+  jetData << 0.0 << ","; // C2
+  jetData << 0.0 << ","; // D2
+  jetData << 0.0 << ","; // subjet start
+  jetData << 0.0 << ","; // b eta
+  jetData << 0.0 << ","; // b phi
+  jetData << 0.0 << ","; // W_1 pt
+  jetData << 0.0 << ","; // W_1 eta
+  jetData << 0.0 << ","; // W_1 phi
+  jetData << 0.0 << ","; // W_2 pt
+  jetData << 0.0 << ","; // W_2 eta
+  jetData << 0.0 << ","; // W_2 phi
+  // jetData << 0.0 << ","; // constit start pt
+  // jetData << 0.0 << ","; // 1 const eta
+  // jetData << 0.0 << ","; // 1 const phi
+  // jetData << 0.0 << ","; // 2 const pt
+  // jetData << 0.0 << ","; // 2 const eta
+  // jetData << 0.0 << ","; // 2 const phi
+  // jetData << 0.0 << ","; // 3 const pt
+  // jetData << 0.0 << ","; // 3 const eta
+  // jetData << 0.0 << ","; // 4 const phi
+  for (int i = 0; i < N_CONSTITUENTS; ++i)
+  {
+    jetData << clusters["clust_"+std::to_string(i)+"_pt"]  << ",";
+    jetData << clusters["clust_"+std::to_string(i)+"_eta"] << ",";
+    jetData << clusters["clust_"+std::to_string(i)+"_phi"] << ",";
+
+  }
+
+  jetData << std::endl; 
+  jetData.close();
+
+}
+
+
 void JSSWTopTaggerDNN::decorateJet(const xAOD::Jet& jet, float mcutH, float mcutL, float scoreCut, float scoreValue) const{
     /* decorate jet with attributes */
 

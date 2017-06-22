@@ -296,21 +296,30 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
 
   int ijet=0;
   for(const xAOD::Jet* jet : * myJets ){
+    // don't store if doesn't pass cuts
+    // EXOT_PT_CUT
+    if (jet->pt() < 450e3)
+      continue;
+    // MAX_ETA
+    if (abs(jet->eta()) > 2.0)
+      continue;
+
     ijet++;
 
     std::cout<<std::endl<<"Uncalibrated Jet : "<<ijet<<std::endl;
     std::cout<<jet->pt()<<"  "<<jet->eta()<<std::endl;
 
-    xAOD::Jet * caljet = 0;
-    std::cout<<"Applying Calibration"<<std::endl;
-    m_jetCalibration->calibratedCopy(*jet,caljet); //make a calibrated copy, assuming a copy hasn't been made already, alternative is:
+    // xAOD::Jet * caljet = 0;
+    // std::cout<<"Applying Calibration"<<std::endl;
+    // m_jetCalibration->calibratedCopy(*jet,caljet); //make a calibrated copy, assuming a copy hasn't been made already, alternative is:
 
-    std::cout<<std::endl<<"Calibrated Jet : "<<ijet<<std::endl;
-    std::cout<<caljet->pt()<<"  "<<caljet->eta()<<std::endl;
+    // std::cout<<std::endl<<"Calibrated Jet : "<<ijet<<std::endl;
+    // std::cout<<caljet->pt()<<"  "<<caljet->eta()<<std::endl;
 
     std::cout<<"Testing DNN Tagger "<<std::endl;
+    // The topocluster DNN seems to require the uncalibrated jet
     // JSSWTopTaggerDNN::Result h_res = m_JSSWTopTaggerDNN->result( *caljet , true ); // 2nd argument enables jet decorations
-    JSSWTopTaggerDNN::Result h_res = m_JSSWTopTaggerDNN->result( *caljet, true); // 2nd argument enables jet decorations
+    JSSWTopTaggerDNN::Result h_res = m_JSSWTopTaggerDNN->result( *jet, true); // 2nd argument enables jet decorations
     std::cout<<"result(DNN) = "<<h_res<<std::endl;
   }
 
