@@ -1,2 +1,5 @@
 data/
 output/
+*.csv*
+*.npz
+__pycache__/

@@ -64,7 +64,7 @@ class JSSWTopTaggerDNN :  public JSSTaggerBase {
     void preprocess(std::map<std::string,double> &clusters, xAOD::Jet jet) const;
 
     // Store the variables defining a jet and its constituents into a file
-    void store_jet_data(std::map<std::string,double> clusters, xAOD::Jet jet) const;
+    void store_jet_data(std::map<std::string,double> clusters, xAOD::Jet jet, std::string filename) const;
 
     // Retrieve score for a given DNN type (top/W)
     double getScore(const xAOD::Jet& jet) const;

@@ -34,3 +34,5 @@ cmake-build-debug/
 cmake-build-debug/
 .idea/
 run/*.csv
+run/run.sh.*
+

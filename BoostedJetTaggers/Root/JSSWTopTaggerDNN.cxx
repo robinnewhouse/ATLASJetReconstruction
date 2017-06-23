@@ -58,7 +58,12 @@ JSSWTopTaggerDNN::JSSWTopTaggerDNN( const std::string& name ) :
 JSSWTopTaggerDNN::~JSSWTopTaggerDNN() {}
 
 StatusCode JSSWTopTaggerDNN::initialize(){
-  std::remove("jet_data.csv");
+  std::remove("jet_data_final.csv");
+  std::remove("jet_data_scaled_shifted_rotated_flipped.csv");
+  std::remove("jet_data_scaled_shifted_rotated.csv");
+  std::remove("jet_data_scaled_shifted.csv");
+  std::remove("jet_data_scaled.csv");
+  std::remove("jet_data_untransformed.csv");
 
   /* Initialize the DNN tagger tool */
   ATH_MSG_INFO( (m_APP_NAME+": Initializing JSSWTopTaggerDNN tool").c_str() );
@@ -297,7 +302,7 @@ double JSSWTopTaggerDNN::getScore(const xAOD::Jet& jet) const{
     preprocess(DNN_inputValues_clusters, jet);
 
     // print to a file to compare with python-based preprocessing
-    store_jet_data(DNN_inputValues_clusters, jet);
+    store_jet_data(DNN_inputValues_clusters, jet, "jet_data_final.csv");
 
     for (int i = 0; i < N_CONSTITUENTS; ++i)
     {
@@ -330,16 +335,24 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
     double jet_eta = jet.eta();
     double jet_phi = jet.phi();
 
+    store_jet_data(clusters, jet, "jet_data_untransformed.csv"); 
+
     // Instructions from Jannicke
     //- min max scaling (this is actually has a hard-coded min and max) 
     for (int i = 0; i < N_CONSTITUENTS; ++i) {
       T_clusters["clust_"+std::to_string(i)+"_pt"] = Transform::pt_min_max_scale(clusters["clust_"+std::to_string(i)+"_pt"], 0);
     }
+    store_jet_data(T_clusters, jet, "jet_data_scaled.csv"); 
+
     // -  shift prim (translation about primary jet constituent)
     for (int i = 0; i < N_CONSTITUENTS; ++i) {
       T_clusters["clust_"+std::to_string(i)+"_eta"] = Transform::eta_shift(clusters["clust_"+std::to_string(i)+"_eta"], jet_eta);
       T_clusters["clust_"+std::to_string(i)+"_phi"] = Transform::phi_shift(clusters["clust_"+std::to_string(i)+"_phi"], jet_phi);
+      T_clusters["clust_"+std::to_string(i)+"_eta"] = Transform::eta_shift_and_scale(clusters["clust_"+std::to_string(i)+"_eta"], jet_eta);
+      T_clusters["clust_"+std::to_string(i)+"_phi"] = Transform::phi_shift_and_scale(clusters["clust_"+std::to_string(i)+"_phi"], jet_phi);
     }
+
+    store_jet_data(T_clusters, jet, "jet_data_scaled_shifted.csv"); 
 
     // - rotate 
     // //// Code under "Calculating thetas for rotation” and “Rotating”, 
@@ -353,25 +366,29 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
     // Perform the rotation // TODO do we rotate if the theta == 0.0 ?
     Transform::rotate_about_primary(T_clusters, thetas);
 
-    // - flip 
+    store_jet_data(T_clusters, jet, "jet_data_scaled_shifted_rotated.csv"); 
+
+
+    // - flip     
+    // Code under  elif "flip" in eta_phi_prep_type:
     Transform::flip(T_clusters);
 
-    // Code under  elif "flip" in eta_phi_prep_type:
+    store_jet_data(T_clusters, jet, "jet_data_scaled_shifted_rotated_flipped.csv"); 
 
     clusters = T_clusters;
     return;
 }
 
-void JSSWTopTaggerDNN::store_jet_data(std::map<std::string,double> clusters, const xAOD::Jet jet) const {
+void JSSWTopTaggerDNN::store_jet_data(std::map<std::string,double> clusters, const xAOD::Jet jet, std::string filename) const {
   
 
 
   std::ofstream jetData;
-  jetData.open ("jet_data.csv", std::ios_base::app); // append
+  jetData.open (filename, std::ios_base::app); // append
   jetData << 0.0 << ","; // weight
   jetData << 1.0 << ","; // label
-  jetData << jet.m() << ","; // jet mass
-  jetData << jet.pt() << ","; // jet pt
+  jetData << jet.m()/1000.0 << ","; // jet mass GeV
+  jetData << jet.pt()/1000.0 << ","; // jet pt GeV
   jetData << jet.eta() << ","; // jet eta
   jetData << jet.phi() << ","; // jet phi
   jetData << 0.0 << ","; // Tau32_wta
@@ -399,7 +416,7 @@ void JSSWTopTaggerDNN::store_jet_data(std::map<std::string,double> clusters, con
   // jetData << 0.0 << ","; // 4 const phi
   for (int i = 0; i < N_CONSTITUENTS; ++i)
   {
-    jetData << clusters["clust_"+std::to_string(i)+"_pt"]  << ",";
+    jetData << clusters["clust_"+std::to_string(i)+"_pt"]  << ","; // is this is GeV ???
     jetData << clusters["clust_"+std::to_string(i)+"_eta"] << ",";
     jetData << clusters["clust_"+std::to_string(i)+"_phi"] << ",";
 
@@ -453,7 +470,7 @@ std::map<std::string,double> JSSWTopTaggerDNN::getJetConstituents(const xAOD::Je
     int count = std::min(N_CONSTITUENTS, int(clusters.size()));
     for (int i = 0; i < count; ++i)
     {
-      DNN_inputValues["clust_"+std::to_string(i)+"_pt"] = clusters.at(i)->pt();
+      DNN_inputValues["clust_"+std::to_string(i)+"_pt"] = clusters.at(i)->pt() / 1000.0; // convert to GeV
       // std::cout << clusters.at(i)->pt();
       DNN_inputValues["clust_"+std::to_string(i)+"_eta"] = clusters.at(i)->eta();
       // std::cout << clusters.at(i)->eta();
