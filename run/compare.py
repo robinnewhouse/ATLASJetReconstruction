@@ -6,7 +6,7 @@ from time import sleep
 d_pt = 0.01
 d_eta = 0.01
 d_phi = 0.01
-d_err = 0.01
+d_err = 0.0001
 
 
 def display_side_by_side(pre_py_file, pre_c_file):
@@ -19,7 +19,7 @@ def display_side_by_side(pre_py_file, pre_c_file):
     # pre_c = (np.load(pre_c_file+".npz"))["arr_0"]   
     pre_c = pre_c[pre_c[:,get_column_no["jet pt"]].argsort()] # sort both by pt
 
-    for x in range(3):
+    for x in range(1000):
         vals_to_print = list(chain([0,1,3,4,5], range(20,len(pre_c[x]))))
 
         print("py:", end='')    
@@ -30,7 +30,7 @@ def display_side_by_side(pre_py_file, pre_c_file):
 
         print("c: ", end='')    
         for y in vals_to_print:
-            c = pre_c[x][y]
+            c = pre_c[compare_dict[x]][y]
             print("{:.2e}".format(c), end=' ')
         print()
         print("df:", end='')    
@@ -161,10 +161,10 @@ if __name__ == '__main__':
     # print()
     # print()
     # display_c("jet_data_scaled_shifted.csv")
-    display_side_by_side("testrun_short_10_no_scale_pt_no_scale_eta_phiflip_everything.npz", "jet_data_untransformed.csv")
-    display_side_by_side("testrun_short_10_pt_min_max_scale_pt_no_scale_eta_phiflip_everything.npz", "jet_data_scaled.csv")
-    display_side_by_side("testrun_short_10_pt_min_max_scale_pt_shift_prim_eta_phiflip_everything.npz", "jet_data_scaled_shifted.csv")
-    display_side_by_side("testrun_short_10_pt_min_max_scale_pt_shift_prim_and_rotate_prim_eta_phiflip_everything.npz", "jet_data_scaled_shifted_rotated.csv")
-    display_side_by_side("testrun_short_10_pt_min_max_scale_pt_shift_prim_and_rotate_prim_and_flip_eta_phiflip_everything.npz", "jet_data_scaled_shifted_rotated_flipped.csv")
+    # display_side_by_side("testrun_short_10_no_scale_pt_no_scale_eta_phiflip_everything.npz", "jet_data_untransformed.csv")
+    # display_side_by_side("testrun_short_10_pt_min_max_scale_pt_no_scale_eta_phiflip_everything.npz", "jet_data_scaled.csv")
+    # display_side_by_side("testrun_short_10_pt_min_max_scale_pt_shift_prim_eta_phiflip_everything.npz", "jet_data_scaled_shifted.csv")
+    # display_side_by_side("testrun_short_10_pt_min_max_scale_pt_shift_prim_and_rotate_prim_eta_phiflip_everything.npz", "jet_data_scaled_shifted_rotated.csv")
+    # display_side_by_side("testrun_short_10_pt_min_max_scale_pt_shift_prim_and_rotate_prim_and_flip_eta_phiflip_everything.npz", "jet_data_scaled_shifted_rotated_flipped.csv")
     display_side_by_side("testrun_short_10_pt_min_max_scale_pt_shift_prim_and_rotate_prim_and_flip_eta_phiflip_everything.npz", "jet_data_final.csv")
 

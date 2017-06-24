@@ -294,23 +294,14 @@ JSSWTopTaggerDNN::Result JSSWTopTaggerDNN::result(const xAOD::Jet& jet, bool dec
 double JSSWTopTaggerDNN::getScore(const xAOD::Jet& jet) const{
 
     // create input dictionary map<string,double> for argument to lwtnn
-    // std::map<std::string,double> DNN_inputValues = getJetProperties(jet);
-    std::cout<<"Loading constituents from individual jet"<<std::endl;
+    // Loading constituents from individual jet
     std::map<std::string,double> DNN_inputValues_clusters = getJetConstituents(jet); // RN
     
-    std::cout<<"Preprocessing constituents"<<std::endl;
+    // Preprocessing constituents
     preprocess(DNN_inputValues_clusters, jet);
 
-    // print to a file to compare with python-based preprocessing
-    store_jet_data(DNN_inputValues_clusters, jet, "jet_data_final.csv");
-
-    for (int i = 0; i < N_CONSTITUENTS; ++i)
-    {
-      std::cout << "constit_"<<i <<
-      "   pt  :  " << DNN_inputValues_clusters["clust_"+std::to_string(i)+"_pt"] <<
-      "   eta :  " << DNN_inputValues_clusters["clust_"+std::to_string(i)+"_eta"] <<
-      "   phi :  " << DNN_inputValues_clusters["clust_"+std::to_string(i)+"_phi"] << std::endl;
-    }
+    // // print to a file to compare with python-based preprocessing
+    // store_jet_data(DNN_inputValues_clusters, jet, "jet_data_final.csv");
 
     // evaluate the network
     lwt::ValueMap discriminant = m_lwnn->compute(DNN_inputValues_clusters);
@@ -327,34 +318,25 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
     /* Adapted from Jannicke Pearkes */
     // We assume these constituents are sorted by pt
 
-    // Make new cluster map
-    std::map<std::string,double> T_clusters;
-
     // Extract jet properties
-    // double jet_pt = jet.pt(); // unused
+    // double jet_pt = jet.pt(); 
     // double jet_eta = jet.eta();
     // double jet_phi = jet.phi();
     // double prim_pt = clusters["clust_0_pt"];
     double prim_eta = clusters["clust_0_eta"];
     double prim_phi = clusters["clust_0_phi"];
 
-
-    store_jet_data(clusters, jet, "jet_data_untransformed.csv"); 
-
     // Instructions from Jannicke
     //- min max scaling (this is actually has a hard-coded min and max) 
     for (int i = 0; i < N_CONSTITUENTS; ++i) {
       clusters["clust_"+std::to_string(i)+"_pt"] = Transform::pt_min_max_scale(clusters["clust_"+std::to_string(i)+"_pt"], 0);
     }
-    store_jet_data(clusters, jet, "jet_data_scaled.csv"); 
 
     // -  shift prim (translation about primary jet constituent)
     for (int i = 0; i < N_CONSTITUENTS; ++i) {
       clusters["clust_"+std::to_string(i)+"_eta"] = Transform::eta_shift(clusters["clust_"+std::to_string(i)+"_eta"], prim_eta);
       clusters["clust_"+std::to_string(i)+"_phi"] = Transform::phi_shift(clusters["clust_"+std::to_string(i)+"_phi"], prim_phi);
     }
-
-    store_jet_data(clusters, jet, "jet_data_scaled_shifted.csv"); 
 
     // - rotate 
     // //// Code under "Calculating thetas for rotation” and “Rotating”, 
@@ -368,23 +350,15 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
     // Perform the rotation // TODO do we rotate if the theta == 0.0 ?
     Transform::rotate_about_primary(clusters, theta);
 
-    store_jet_data(clusters, jet, "jet_data_scaled_shifted_rotated.csv"); 
-
-
     // - flip     
     // Code under  elif "flip" in eta_phi_prep_type:
     Transform::flip(clusters);
 
-    store_jet_data(clusters, jet, "jet_data_scaled_shifted_rotated_flipped.csv"); 
-
-    // clusters = T_clusters;
     return;
 }
 
 void JSSWTopTaggerDNN::store_jet_data(std::map<std::string,double> clusters, const xAOD::Jet jet, std::string filename) const {
   
-
-
   std::ofstream jetData;
   jetData.open (filename, std::ios_base::app); // append
   jetData << 0.0 << ","; // weight
