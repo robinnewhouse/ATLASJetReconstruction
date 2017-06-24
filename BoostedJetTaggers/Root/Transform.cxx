@@ -123,7 +123,7 @@ void Transform::rotate_about_primary(std::map<std::string,double> &clusters, std
 	    if ((pxx == 0) & (pyy == 0) & (pzz == 0))
 	    	theta = 0.0;
 	    else
-	    	theta = atan2(pt, pzz);  // why are we recalculating theta here? and not adding pi/2
+	    	theta = atan2(pt_r, pzz);  // why are we recalculating theta here? and not adding pi/2
 		if (pow(cos(theta),2) < 1)
 			eta_r = -0.5 * log((1 - cos(theta)) / (1 + cos(theta)));
 		else if (pzz == 0.0)

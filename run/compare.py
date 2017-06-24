@@ -15,8 +15,8 @@ def display_side_by_side(pre_py_file, pre_c_file):
     pre_py = pre_py[pre_py[:,get_column_no["jet pt"]].argsort()] # sort both by pt
 
     pre_c = np.loadtxt(open(pre_c_file, "rb"), delimiter=",", usecols=range(50))
-    np.savez(pre_c_file+".npz", pre_c)
-    pre_c = (np.load(pre_c_file+".npz"))["arr_0"]   
+    # np.savez(pre_c_file+".npz", pre_c)
+    # pre_c = (np.load(pre_c_file+".npz"))["arr_0"]   
     pre_c = pre_c[pre_c[:,get_column_no["jet pt"]].argsort()] # sort both by pt
 
     for x in range(3):

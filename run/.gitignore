@@ -3,3 +3,4 @@ output/
 *.csv*
 *.npz
 __pycache__/
+compare_output.txt

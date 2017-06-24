@@ -332,8 +332,12 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
 
     // Extract jet properties
     // double jet_pt = jet.pt(); // unused
-    double jet_eta = jet.eta();
-    double jet_phi = jet.phi();
+    // double jet_eta = jet.eta();
+    // double jet_phi = jet.phi();
+    // double prim_pt = clusters["clust_0_pt"];
+    double prim_eta = clusters["clust_0_eta"];
+    double prim_phi = clusters["clust_0_phi"];
+
 
     store_jet_data(clusters, jet, "jet_data_untransformed.csv"); 
 
@@ -346,10 +350,8 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
 
     // -  shift prim (translation about primary jet constituent)
     for (int i = 0; i < N_CONSTITUENTS; ++i) {
-      T_clusters["clust_"+std::to_string(i)+"_eta"] = Transform::eta_shift(clusters["clust_"+std::to_string(i)+"_eta"], jet_eta);
-      T_clusters["clust_"+std::to_string(i)+"_phi"] = Transform::phi_shift(clusters["clust_"+std::to_string(i)+"_phi"], jet_phi);
-      T_clusters["clust_"+std::to_string(i)+"_eta"] = Transform::eta_shift_and_scale(clusters["clust_"+std::to_string(i)+"_eta"], jet_eta);
-      T_clusters["clust_"+std::to_string(i)+"_phi"] = Transform::phi_shift_and_scale(clusters["clust_"+std::to_string(i)+"_phi"], jet_phi);
+      T_clusters["clust_"+std::to_string(i)+"_eta"] = Transform::eta_shift(clusters["clust_"+std::to_string(i)+"_eta"], prim_eta);
+      T_clusters["clust_"+std::to_string(i)+"_phi"] = Transform::phi_shift(clusters["clust_"+std::to_string(i)+"_phi"], prim_phi);
     }
 
     store_jet_data(T_clusters, jet, "jet_data_scaled_shifted.csv"); 
