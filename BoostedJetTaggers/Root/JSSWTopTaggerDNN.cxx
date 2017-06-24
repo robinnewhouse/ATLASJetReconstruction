@@ -344,40 +344,40 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
     // Instructions from Jannicke
     //- min max scaling (this is actually has a hard-coded min and max) 
     for (int i = 0; i < N_CONSTITUENTS; ++i) {
-      T_clusters["clust_"+std::to_string(i)+"_pt"] = Transform::pt_min_max_scale(clusters["clust_"+std::to_string(i)+"_pt"], 0);
+      clusters["clust_"+std::to_string(i)+"_pt"] = Transform::pt_min_max_scale(clusters["clust_"+std::to_string(i)+"_pt"], 0);
     }
-    store_jet_data(T_clusters, jet, "jet_data_scaled.csv"); 
+    store_jet_data(clusters, jet, "jet_data_scaled.csv"); 
 
     // -  shift prim (translation about primary jet constituent)
     for (int i = 0; i < N_CONSTITUENTS; ++i) {
-      T_clusters["clust_"+std::to_string(i)+"_eta"] = Transform::eta_shift(clusters["clust_"+std::to_string(i)+"_eta"], prim_eta);
-      T_clusters["clust_"+std::to_string(i)+"_phi"] = Transform::phi_shift(clusters["clust_"+std::to_string(i)+"_phi"], prim_phi);
+      clusters["clust_"+std::to_string(i)+"_eta"] = Transform::eta_shift(clusters["clust_"+std::to_string(i)+"_eta"], prim_eta);
+      clusters["clust_"+std::to_string(i)+"_phi"] = Transform::phi_shift(clusters["clust_"+std::to_string(i)+"_phi"], prim_phi);
     }
 
-    store_jet_data(T_clusters, jet, "jet_data_scaled_shifted.csv"); 
+    store_jet_data(clusters, jet, "jet_data_scaled_shifted.csv"); 
 
     // - rotate 
     // //// Code under "Calculating thetas for rotation” and “Rotating”, 
     // //// the rotation part is just a python translation of TLorentzVector’s rotate method  
     // //// https://root.cern.ch/doc/master/classTLorentzVector.html
     // Calculate axes of rotation
-    std::vector<double> thetas;
+    double theta = 0.0;
     if (jet.getConstituents().size() >= 2){ // need at least 2 constituents 
-      thetas = Transform::calculate_thetas_for_rotations(clusters);
+      theta = Transform::calculate_theta_for_rotations(clusters);
     }
     // Perform the rotation // TODO do we rotate if the theta == 0.0 ?
-    Transform::rotate_about_primary(T_clusters, thetas);
+    Transform::rotate_about_primary(clusters, theta);
 
-    store_jet_data(T_clusters, jet, "jet_data_scaled_shifted_rotated.csv"); 
+    store_jet_data(clusters, jet, "jet_data_scaled_shifted_rotated.csv"); 
 
 
     // - flip     
     // Code under  elif "flip" in eta_phi_prep_type:
-    Transform::flip(T_clusters);
+    Transform::flip(clusters);
 
-    store_jet_data(T_clusters, jet, "jet_data_scaled_shifted_rotated_flipped.csv"); 
+    store_jet_data(clusters, jet, "jet_data_scaled_shifted_rotated_flipped.csv"); 
 
-    clusters = T_clusters;
+    // clusters = T_clusters;
     return;
 }
 

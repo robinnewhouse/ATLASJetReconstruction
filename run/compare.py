@@ -42,7 +42,7 @@ def display_side_by_side(pre_py_file, pre_c_file):
                 if c == 0: rel_err = 0
             else: rel_err = (p - c)/p
             print("{:.2e}".format(rel_err), end=' ')
-            if rel_err >= d_err:
+            if abs(rel_err) >= d_err:
                 print("<-UNMATCHED", end=' ')
                 # sleep(0.5)
         print()

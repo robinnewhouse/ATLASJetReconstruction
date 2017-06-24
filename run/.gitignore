@@ -4,3 +4,4 @@ output/
 *.npz
 __pycache__/
 compare_output.txt
+out_comp.txt
