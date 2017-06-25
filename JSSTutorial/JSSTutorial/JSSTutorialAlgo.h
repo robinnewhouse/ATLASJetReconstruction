@@ -58,7 +58,7 @@
 #include <fastjet/contrib/Nsubjettiness.hh>
 
 //include the headers of relevance
-#include "BoostedJetTaggers/JSSWTopTaggerDNN.h"
+#include "BoostedJetTaggers/TopoclusterTopTagger.h"
 
 // root includes
 #include "TH1D.h"
@@ -141,7 +141,7 @@ private:
   JetCalibrationTool* m_jetCalibration; //!
 
   //declare the tagger
-  std::unique_ptr<JSSWTopTaggerDNN> m_JSSWTopTaggerDNN;    //!
+  std::unique_ptr<TopoclusterTopTagger> m_topoclusterTopTagger;    //!
 
 
 //FUNCTION DECLARATIONS

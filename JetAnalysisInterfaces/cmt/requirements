@@ -1,0 +1,30 @@
+package JetAnalysisInterfaces
+
+author Sam Meehan
+
+public
+use  AtlasPolicy         AtlasPolicy-*                   
+use  xAODJet             xAODJet-*          Event/xAOD
+use  AsgTools            AsgTools-*         Control/AthToolSupport
+use  GaudiInterface      GaudiInterface-*   External
+use  xAODRootAccess      xAODRootAccess-*   Control
+use  AtlasROOT           AtlasROOT-*        External
+use  PATInterfaces       PATInterfaces-*    PhysicsAnalysis/AnalysisCommon
+use  PATCore             PATCore-*          PhysicsAnalysis/AnalysisCommon
+
+# use	 AtlasShowerDeconstruction	AtlasShowerDeconstruction-*			External
+use AtlasEigen	   AtlasEigen-*        External
+
+private
+use  JetSelectorTools   	JetSelectorTools-*          	PhysicsAnalysis/JetMissingEtID
+use  JetEDM        	JetEDM-*          	Reconstruction/Jet
+use  CxxUtils                    CxxUtils-*                   Control
+use  AtlasBoost            AtlasBoost-*             External
+
+use  PathResolver   PathResolver-*      Tools
+end_private
+
+# Specify the required ROOT components for cmake (transparent to CMT)
+apply_pattern cmake_add_command command="find_package(ROOT COMPONENTS Matrix RooFit)"
+
+apply_pattern declare_python_modules files="*.py"
