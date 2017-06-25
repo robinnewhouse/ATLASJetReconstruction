@@ -58,12 +58,6 @@ JSSWTopTaggerDNN::JSSWTopTaggerDNN( const std::string& name ) :
 JSSWTopTaggerDNN::~JSSWTopTaggerDNN() {}
 
 StatusCode JSSWTopTaggerDNN::initialize(){
-  std::remove("jet_data_final.csv");
-  std::remove("jet_data_scaled_shifted_rotated_flipped.csv");
-  std::remove("jet_data_scaled_shifted_rotated.csv");
-  std::remove("jet_data_scaled_shifted.csv");
-  std::remove("jet_data_scaled.csv");
-  std::remove("jet_data_untransformed.csv");
 
   /* Initialize the DNN tagger tool */
   ATH_MSG_INFO( (m_APP_NAME+": Initializing JSSWTopTaggerDNN tool").c_str() );
@@ -318,8 +312,11 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
     /* Adapted from Jannicke Pearkes */
     // We assume these constituents are sorted by pt
 
+    // Make new cluster map
+    std::map<std::string,double> T_clusters;
+
     // Extract jet properties
-    // double jet_pt = jet.pt(); 
+    // double jet_pt = jet.pt(); // unused
     // double jet_eta = jet.eta();
     // double jet_phi = jet.phi();
     // double prim_pt = clusters["clust_0_pt"];
@@ -357,6 +354,7 @@ void JSSWTopTaggerDNN::preprocess(std::map<std::string,double> &clusters, const 
     return;
 }
 
+
 void JSSWTopTaggerDNN::store_jet_data(std::map<std::string,double> clusters, const xAOD::Jet jet, std::string filename) const {
   
   std::ofstream jetData;
@@ -381,15 +379,7 @@ void JSSWTopTaggerDNN::store_jet_data(std::map<std::string,double> clusters, con
   jetData << 0.0 << ","; // W_2 pt
   jetData << 0.0 << ","; // W_2 eta
   jetData << 0.0 << ","; // W_2 phi
-  // jetData << 0.0 << ","; // constit start pt
-  // jetData << 0.0 << ","; // 1 const eta
-  // jetData << 0.0 << ","; // 1 const phi
-  // jetData << 0.0 << ","; // 2 const pt
-  // jetData << 0.0 << ","; // 2 const eta
-  // jetData << 0.0 << ","; // 2 const phi
-  // jetData << 0.0 << ","; // 3 const pt
-  // jetData << 0.0 << ","; // 3 const eta
-  // jetData << 0.0 << ","; // 4 const phi
+  // Store constituents
   for (int i = 0; i < N_CONSTITUENTS; ++i)
   {
     jetData << clusters["clust_"+std::to_string(i)+"_pt"]  << ","; // is this is GeV ???
