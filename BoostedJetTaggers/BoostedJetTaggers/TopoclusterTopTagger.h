@@ -1,8 +1,8 @@
 // for editors : this file is -*- C++ -*-
-#ifndef JSSWTOPTAGGERDNN_H_
-#define JSSWTOPTAGGERDNN_H_
-
+#ifndef TOPOCLUSTERTOPTAGGER_H_
+#define TOPOCLUSTERTOPTAGGER_H_
 #include "BoostedJetTaggers/JSSTaggerBase.h"
+#include "BoostedJetTaggers/TopoclusterTransform.h"
 #include "AsgTools/AsgTool.h"
 
 #include "BoostedJetTaggers/lwtnn/LightweightNeuralNetwork.h"
@@ -16,25 +16,47 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 
-class JSSWTopTaggerDNN :  public JSSTaggerBase {
+class TopoclusterTopTagger :  public JSSTaggerBase {
 
-  ASG_TOOL_CLASS0(JSSWTopTaggerDNN)
+  ASG_TOOL_CLASS0(TopoclusterTopTagger)
 
   public:
 
+    enum Result {
+
+      OutOfRangeHighPt = -3,
+      OutOfRangeLowPt = -2,
+      OutOfRangeEta = -1,
+      InvalidJet = 0,
+
+      AllPassed = 1,
+      MassPassMVAPass = 1,
+
+      MassPassMVAFail     = 2,
+      LowMassFailMVAPass  = 4,
+      LowMassFailMVAFail  = 8,
+      HighMassFailMVAPass = 16,
+      HighMassFailMVAFail = 32,
+
+    };
+
     //Default - so root can load based on a name
-    JSSWTopTaggerDNN(const std::string& name);
+    TopoclusterTopTagger(const std::string& name);
 
     // Default - so we can clean up
-    ~JSSWTopTaggerDNN();
-    JSSWTopTaggerDNN& operator=(const JSSWTopTaggerDNN& rhs);
+    ~TopoclusterTopTagger();
+    TopoclusterTopTagger& operator=(const TopoclusterTopTagger& rhs);
 
     // Run once at the start of the job to setup everything
     StatusCode initialize();
 
-    // IJetSelectorTools interface
+    // IJetSelectorTool interface
     virtual Root::TAccept tag(const xAOD::Jet& jet) const;
+
+    // Preprocess the jet constituents by applying transformations
+    void preprocess(std::map<std::string,double> &clusters, xAOD::Jet jet) const;
 
     // Retrieve score for a given DNN type (top/W)
     double getScore(const xAOD::Jet& jet) const;
@@ -44,6 +66,10 @@ class JSSWTopTaggerDNN :  public JSSTaggerBase {
 
     // Update the jet substructure variables for each jet to use in DNN
     std::map<std::string,double> getJetProperties(const xAOD::Jet& jet) const;
+
+    // Update the jet constituents for this jet to use in DNN
+    std::map<std::string,double> getJetConstituents(const xAOD::Jet& jet) const;
+
     StatusCode finalize();
 
   private:
@@ -53,6 +79,11 @@ class JSSWTopTaggerDNN :  public JSSTaggerBase {
     // DNN tools
     std::unique_ptr<lwt::LightweightNeuralNetwork> m_lwnn;
     std::map<std::string, double> m_DNN_inputValues;   // variables for DNN
+
+    // the kinematic bounds for the jet - these are in MeV (not GeV!)
+    float m_jetPtMin;
+    float m_jetPtMax;
+    float m_jetEtaMax;
 
     // inclusive config file
     std::string m_configFile;

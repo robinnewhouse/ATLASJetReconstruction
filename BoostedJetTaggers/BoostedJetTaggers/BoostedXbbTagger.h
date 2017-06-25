@@ -1,23 +1,30 @@
 #ifndef JSSXBBTAGGER_H_
 #define JSSXBBTAGGER_H_
+
+//////////////////////////////////////////////////
 // boosted Xbb tagger
 // Felix Mueller <fmueller@cern.ch>
 // Eric Takasugi <eric.hayato.takasugi@cern.ch>
 //
 // based on original BoostedXbbTag tool in JetSubStructureUtils by
 // Giordon Stark <gstark@cern.ch>
+//////////////////////////////////////////////////
+
 #include "BoostedJetTaggers/JSSTaggerBase.h"
 #include "AsgTools/AsgTool.h"
+
 // c++ includes
 #include <set>
 #include <string>
 #include <memory>
 #include "TF1.h"
+
 // EDM includes
 #include <xAODJet/JetContainer.h>
 #include <xAODMuon/MuonContainer.h>
 #include "MuonSelectorTools/MuonSelectionTool.h"
 #include "MuonMomentumCorrections/MuonCalibrationAndSmearingTool.h"
+
 class BoostedXbbTagger : public JSSTaggerBase {
     ASG_TOOL_CLASS0(BoostedXbbTagger)
     public:
@@ -28,41 +35,17 @@ class BoostedXbbTagger : public JSSTaggerBase {
             SimpleMuon,
             NoMuon
         };
-        enum Result {
-            OutOfRangeHighPt = -3,
-            OutOfRangeLowPt = -2,
-            OutOfRangeEta = -1,
-            InvalidJet = 0,
-            AllPassed = 1,
-            MassPassBTagPassJSSPass      = 1,
-            MassPassBTagPassJSSFail      = 2,
-            MassPassBTagFailJSSPass      = 4,
-            MassPassBTagFailJSSFail      = 8,
-            LowMassFailBTagPassJSSPass   = 16,
-            LowMassFailBTagPassJSSFail   = 32,
-            LowMassFailBTagFailJSSPass   = 64,
-            LowMassFailBTagFailJSSFail   = 128,
-            HighMassFailBTagPassJSSPass  = 256,
-            HighMassFailBTagPassJSSFail  = 512,
-            HighMassFailBTagFailJSSPass  = 1024,
-            HighMassFailBTagFailJSSFail  = 2048,
-            MassPassBTagPass = MassPassBTagPassJSSPass | MassPassBTagPassJSSFail,
-            MassPassBTagFail = MassPassBTagFailJSSPass | MassPassBTagFailJSSFail,
-            MassFailBTagPass = LowMassFailBTagPassJSSPass | LowMassFailBTagPassJSSFail | HighMassFailBTagPassJSSPass | HighMassFailBTagPassJSSFail,
-            MassFailBTagFail = LowMassFailBTagFailJSSPass | LowMassFailBTagFailJSSFail | HighMassFailBTagFailJSSPass | HighMassFailBTagFailJSSFail,
-            MassPass = MassPassBTagPass | MassPassBTagFail,
-            BTagPass = MassPassBTagPass | MassFailBTagPass,
-            JSSPass = MassPassBTagPassJSSPass | MassPassBTagFailJSSPass | LowMassFailBTagPassJSSPass | LowMassFailBTagFailJSSPass | HighMassFailBTagPassJSSPass | HighMassFailBTagFailJSSPass
-        };
+
         // standard tool constructor
         BoostedXbbTagger(const std::string& name );
+
+        // destructor
         ~BoostedXbbTagger();
+
         StatusCode initialize();
-        virtual bool tag(const xAOD::Jet& jet, bool decorate) const {return (result(jet, decorate) == AllPassed); };
         StatusCode finalize();
 
-        // result function with detailed output about passed cuts; 3 is passed all
-        Result result(const xAOD::Jet& jet, bool decorate=true) const;
+        virtual Root::TAccept tag(const xAOD::Jet& jet) const;
 
         // return a vector of track jets which are btagged by the tool
         std::vector<const xAOD::Jet*> getTrackJets(const xAOD::Jet& jet) const;
@@ -99,11 +82,6 @@ class BoostedXbbTagger : public JSSTaggerBase {
         std::string m_jetMassMaxStr;
         TF1 * m_jetMassMaxTF1;
         TF1 * m_jetMassMinTF1;
-
-        // the kinematic bounds for the jet - these are in MeV (not GeV!)
-        float m_jetPtMin;
-        float m_jetPtMax;
-        float m_jetEtaMax;
 
         // the substructure variable and cut value
         std::string m_jetSubVarStr;

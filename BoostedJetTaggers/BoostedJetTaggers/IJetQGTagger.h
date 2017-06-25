@@ -1,10 +1,10 @@
-// this file is -*- C++ -*- 
+// this file is -*- C++ -*-
 #ifndef IJETQGTAGGER_H
 #define IJETQGTAGGER_H
 
 #include "PATInterfaces/CorrectionCode.h"
 #include "PATInterfaces/ISystematicsTool.h"
-#include "BoostedJetTaggers/IJSSTagger.h"
+#include "JetAnalysisInterfaces/IJetSelectorTool.h"
 
 #include "xAODJet/Jet.h"
 
@@ -22,14 +22,14 @@ namespace CP {
     const static SystematicVariation nchargedpdf_down("JET_QG_nchargedPDF__1down");
   } //namespace QGntrackSyst
 
-  class IJetQGTagger : public virtual CP::ISystematicsTool, public virtual IJSSTagger {
-    
+  class IJetQGTagger : public virtual CP::ISystematicsTool, public virtual IJetSelectorTool {
+
     ASG_TOOL_INTERFACE( CP::IJetQGTagger )
-    
+
     public:
-    
+
     virtual ~IJetQGTagger() {}
-    
+
   };
 
 } // namespace CP

@@ -15,14 +15,14 @@
 
 TaggerType: TopQuark
 
-DecorationName: DNNTaggerScoreTopQuark
+DecorationName: TopoclusterTopTaggerScoreTopQuark
 
-KerasConfigFile: keras_top_dnn_BN_december11_contained.json
+KerasConfigFile:  TopoclusterTopTaggerDNN_TEST_20170519.json
 
-KerasOutput: top_dnn_BN_dec11_contained
+KerasOutput: HFT_MVA
 
 MassCutLow: 60.0
 
 MassCutHigh: 200.0
 
-DNNCut: 0.0
+ScoreCut: 0.0

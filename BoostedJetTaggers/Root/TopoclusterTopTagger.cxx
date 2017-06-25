@@ -16,7 +16,7 @@
 //       (use trained tagger info to get discriminant for new jet)
 //
 ***************************************************************/
-#include "BoostedJetTaggers/JSSWTopTaggerDNN.h"
+#include "BoostedJetTaggers/TopoclusterTopTagger.h"
 
 #include "PathResolver/PathResolver.h"
 
@@ -24,20 +24,26 @@
 #include "TF1.h"
 #include "TSystem.h"
 
-#define APP_NAME "JSSWTopTaggerDNN"
+#define APP_NAME "TopoclusterTopTagger"
+
+#define N_CONSTITUENTS 10
+#define EMPTY_CONSTITUENT 0.0
 
 #define CERRD std::cout<<"SAM Error : "<<__FILE__<<"  "<<__LINE__<<std::endl;
 
-JSSWTopTaggerDNN::JSSWTopTaggerDNN( const std::string& name ) :
+TopoclusterTopTagger::TopoclusterTopTagger( const std::string& name ) :
   JSSTaggerBase( name ),
   m_name(name),
   m_APP_NAME(APP_NAME),
-  m_lwnn(nullptr)
+  m_lwnn(nullptr),
+  m_jetPtMin(200000.),
+  m_jetPtMax(300000.),
+  m_jetEtaMax(2.0)
   {
 
     declareProperty( "ConfigFile",   m_configFile="");
     declareProperty( "Decoration",   m_decorationName="XX");
-    declareProperty( "DecorateJet",  m_decorate = true);
+    declareProperty( "DecorateJet",           m_decorate = true);
 
     declareProperty( "JetPtMin",              m_jetPtMin = 200000.0);
     declareProperty( "JetPtMax",              m_jetPtMax = 3000000.0);
@@ -50,12 +56,12 @@ JSSWTopTaggerDNN::JSSWTopTaggerDNN( const std::string& name ) :
 
 }
 
-JSSWTopTaggerDNN::~JSSWTopTaggerDNN() {}
+TopoclusterTopTagger::~TopoclusterTopTagger() {}
 
-StatusCode JSSWTopTaggerDNN::initialize(){
+StatusCode TopoclusterTopTagger::initialize(){
 
   /* Initialize the DNN tagger tool */
-  ATH_MSG_INFO( (m_APP_NAME+": Initializing JSSWTopTaggerDNN tool").c_str() );
+  ATH_MSG_INFO( (m_APP_NAME+": Initializing TopoclusterTopTagger tool").c_str() );
   ATH_MSG_INFO( (m_APP_NAME+": Using config file :"+m_configFile).c_str() );
 
   if( ! m_configFile.empty() ) {
@@ -101,7 +107,7 @@ StatusCode JSSWTopTaggerDNN::initialize(){
     // get the configured cut values
     m_strMassCutLow  = configReader.GetValue("MassCutLow" ,"");
     m_strMassCutHigh = configReader.GetValue("MassCutHigh" ,"");
-    m_strScoreCut    = configReader.GetValue("DNNCut" ,"");
+    m_strScoreCut    = configReader.GetValue("ScoreCut" ,"");
 
     // get the decoration name
     m_decorationName = configReader.GetValue("DecorationName" ,"");
@@ -148,7 +154,7 @@ StatusCode JSSWTopTaggerDNN::initialize(){
 
 // convert the JSON config file name to the full path
 #ifdef ROOTCORE
-    m_kerasConfigFilePath = gSystem->ExpandPathName(("$ROOTCOREBIN/data/BoostedJetTaggers/JSSWTopTaggerDNN/"+m_kerasConfigFileName).c_str());
+    m_kerasConfigFilePath = gSystem->ExpandPathName(("$ROOTCOREBIN/data/BoostedJetTaggers/TopoclusterTopTagger/"+m_kerasConfigFileName).c_str());
 #else
     m_kerasConfigFilePath   = PathResolverFindDataFile("BoostedJetTaggers/data/"+m_kerasConfigFileName);
 #endif
@@ -171,32 +177,26 @@ StatusCode JSSWTopTaggerDNN::initialize(){
   m_lwnn = std::unique_ptr<lwt::LightweightNeuralNetwork>
               (new lwt::LightweightNeuralNetwork(cfg.inputs, cfg.layers, cfg.outputs) );
 
-
   //setting the possible states that the tagger can be left in after the JSSTaggerBase::tag() function is called
   m_accept.addCut( "ValidPtRangeHigh"    , "True if the jet is not too high pT"  );
   m_accept.addCut( "ValidPtRangeLow"     , "True if the jet is not too low pT"   );
   m_accept.addCut( "ValidEtaRange"       , "True if the jet is not too forward"     );
   m_accept.addCut( "ValidJetContent"     , "True if the jet is alright technicall (e.g. all attributes necessary for tag)"        );
 
-  if(m_tagType.compare("WBoson")==0 || m_tagType.compare("ZBoson")==0){
-    m_accept.addCut( "PassMassLow"         , "mJet > mCutLow"       );
-    m_accept.addCut( "PassMassHigh"        , "mJet < mCutHigh"      );
-    m_accept.addCut( "PassScore"           , "ScoreJet > ScoreCut"         );
-  }
-  if(m_tagType.compare("TopQuark")==0){
-    m_accept.addCut( "PassMassLow"         , "mJet > mCutLow"       );
-    m_accept.addCut( "PassScore"           , "ScoreJet > ScoreCut"         );
-  }
+  m_accept.addCut( "PassMassLow"         , "mJet > mCut"       );
+  m_accept.addCut( "PassScore"           , "ScoreJet > ScoreCut"         );
+
   //loop over and print out the cuts that have been configured
   ATH_MSG_INFO( "After tagging, you will have access to the following cuts as a Root::TAccept : (<NCut>) <cut> : <description>)" );
   showCuts();
 
-  ATH_MSG_INFO( (m_APP_NAME+": DNN Tagger tool initialized").c_str() );
 
-  return StatusCode::SUCCESS;
+    ATH_MSG_INFO( (m_APP_NAME+": DNN Tagger tool initialized").c_str() );
+
+    return StatusCode::SUCCESS;
 }
 
-Root::TAccept JSSWTopTaggerDNN::tag(const xAOD::Jet& jet) const{
+Root::TAccept TopoclusterTopTagger::tag(const xAOD::Jet& jet) const{
 
   ATH_MSG_DEBUG( ": Obtaining DNN result" );
 
@@ -252,36 +252,27 @@ Root::TAccept JSSWTopTaggerDNN::tag(const xAOD::Jet& jet) const{
   ATH_MSG_VERBOSE(": CutsValues : MassWindow=["<<std::to_string(cut_mass_low)<<","<<std::to_string(cut_mass_high)<<"]  ,  scoreCut="<<std::to_string(cut_score) );
   ATH_MSG_VERBOSE(": JetValues  : JetMass="<<std::to_string(jet_mass)<<"  ,  score="<<std::to_string(jet_score) );
 
+  //set the TAccept
+  if( jet_mass>cut_mass_low )
+    m_accept.setCutResult( "PassMassLow"  , true );
+  if( jet_score > cut_score )
+    m_accept.setCutResult( "PassScore"    , true );
 
-  //set the TAccept depending on whether it is a W/Z or a top tag
-  if(m_tagType.compare("WBoson")==0 || m_tagType.compare("ZBoson")==0){
-    ATH_MSG_VERBOSE("Determining WZ tag return");
-    if( jet_mass>cut_mass_low )
-      m_accept.setCutResult( "PassMassLow"  , true );
-    if( jet_mass<cut_mass_high )
-      m_accept.setCutResult( "PassMassHigh" , true );
-    if( jet_score > cut_score )
-      m_accept.setCutResult( "PassScore"    , true );
-  }
-  else if(m_tagType.compare("TopQuark")==0){
-    ATH_MSG_VERBOSE("Determining TopQuark tag return");
-    if( jet_mass>cut_mass_low )
-      m_accept.setCutResult( "PassMassLow"  , true );
-    if( jet_score > cut_score )
-      m_accept.setCutResult( "PassScore"    , true );
-  }
-
-  // you should never arrive here
+  // return the TAccept you just set
   return m_accept;
 }
 
-double JSSWTopTaggerDNN::getScore(const xAOD::Jet& jet) const{
+double TopoclusterTopTagger::getScore(const xAOD::Jet& jet) const{
 
     // create input dictionary map<string,double> for argument to lwtnn
-    std::map<std::string,double> DNN_inputValues = getJetProperties(jet);
+    // Loading constituents from individual jet
+    std::map<std::string,double> DNN_inputValues_clusters = getJetConstituents(jet); // RN
+
+    // Preprocessing constituents
+    preprocess(DNN_inputValues_clusters, jet);
 
     // evaluate the network
-    lwt::ValueMap discriminant = m_lwnn->compute(DNN_inputValues);
+    lwt::ValueMap discriminant = m_lwnn->compute(DNN_inputValues_clusters);
 
     // obtain the output associated with the single output node
     double DNNscore(-666.);
@@ -290,13 +281,61 @@ double JSSWTopTaggerDNN::getScore(const xAOD::Jet& jet) const{
     return DNNscore;
 }
 
-void JSSWTopTaggerDNN::decorateJet(const xAOD::Jet& jet, float mcutH, float mcutL, float scoreCut, float scoreValue) const{
+// RN
+void TopoclusterTopTagger::preprocess(std::map<std::string,double> &clusters, const xAOD::Jet jet) const {
+    /* Adapted from Jannicke Pearkes */
+    // We assume these constituents are sorted by pt
+
+    // Make new cluster map
+    std::map<std::string,double> T_clusters;
+
+    // Extract jet properties
+    // double jet_pt = jet.pt(); // unused
+    // double jet_eta = jet.eta();
+    // double jet_phi = jet.phi();
+    // double prim_pt = clusters["clust_0_pt"];
+    double prim_eta = clusters["clust_0_eta"];
+    double prim_phi = clusters["clust_0_phi"];
+
+    // Instructions from Jannicke
+    //- min max scaling (this is actually has a hard-coded min and max) 
+    for (int i = 0; i < N_CONSTITUENTS; ++i) {
+      clusters["clust_"+std::to_string(i)+"_pt"] = TopoclusterTransform::pt_min_max_scale(clusters["clust_"+std::to_string(i)+"_pt"], 0);
+    }
+
+    // -  shift prim (translation about primary jet constituent)
+    for (int i = 0; i < N_CONSTITUENTS; ++i) {
+      clusters["clust_"+std::to_string(i)+"_eta"] = TopoclusterTransform::eta_shift(clusters["clust_"+std::to_string(i)+"_eta"], prim_eta);
+      clusters["clust_"+std::to_string(i)+"_phi"] = TopoclusterTransform::phi_shift(clusters["clust_"+std::to_string(i)+"_phi"], prim_phi);
+    }
+
+    // - rotate 
+    // //// Code under "Calculating thetas for rotation” and “Rotating”, 
+    // //// the rotation part is just a python translation of TLorentzVector’s rotate method  
+    // //// https://root.cern.ch/doc/master/classTLorentzVector.html
+    // Calculate axes of rotation
+    double theta = 0.0;
+    if (jet.getConstituents().size() >= 2){ // need at least 2 constituents 
+      theta = TopoclusterTransform::calculate_theta_for_rotations(clusters);
+    }
+    // Perform the rotation // TODO do we rotate if the theta == 0.0 ?
+    TopoclusterTransform::rotate_about_primary(clusters, theta);
+
+    // - flip     
+    // Code under  elif "flip" in eta_phi_prep_type:
+    TopoclusterTransform::flip(clusters);
+
+    return;
+}
+
+
+void TopoclusterTopTagger::decorateJet(const xAOD::Jet& jet, float mcutH, float mcutL, float scoreCut, float scoreValue) const{
     /* decorate jet with attributes */
 
     // decorators to be used throughout
-    static SG::AuxElement::Decorator<float>    dec_mcutL ("BDTTagCut_mlow");
-    static SG::AuxElement::Decorator<float>    dec_mcutH ("BDTTagCut_mlow");
-    static SG::AuxElement::Decorator<float>    dec_scoreCut("BDTTagCut_dnn");
+    static SG::AuxElement::Decorator<float>    dec_mcutL ("TopoclusterTopTagCut_mlow");
+    static SG::AuxElement::Decorator<float>    dec_mcutH ("TopoclusterTopTagCut_mlow");
+    static SG::AuxElement::Decorator<float>    dec_scoreCut("TopoclusterTopTagCut_score");
     static SG::AuxElement::Decorator<float>    dec_scoreValue(m_decorationName.c_str());
 
     dec_mcutH(jet)      = mcutH;
@@ -306,7 +345,44 @@ void JSSWTopTaggerDNN::decorateJet(const xAOD::Jet& jet, float mcutH, float mcut
 
 }
 
-std::map<std::string,double> JSSWTopTaggerDNN::getJetProperties(const xAOD::Jet& jet) const{
+// RN
+std::map<std::string,double> TopoclusterTopTagger::getJetConstituents(const xAOD::Jet& jet) const{
+    // Update the jet constituents for this jet
+    std::map<std::string,double> DNN_inputValues;
+
+    // Initialize map with empty values. Truncate at N_CONSTITUENTS
+    for (int i = 0; i < N_CONSTITUENTS; ++i)
+    {
+      DNN_inputValues["clust_"+std::to_string(i)+"_pt"] = EMPTY_CONSTITUENT;
+      DNN_inputValues["clust_"+std::to_string(i)+"_eta"] = EMPTY_CONSTITUENT;
+      DNN_inputValues["clust_"+std::to_string(i)+"_phi"] = EMPTY_CONSTITUENT;
+    }
+
+    // Extract jet constituents from jet
+    std::vector<xAOD::JetConstituent> clusters = jet.getConstituents().asSTLVector();
+    // Sort them by pt (using lambda function for sorting)
+    std::sort(clusters.begin(), clusters.end(),
+      [](const xAOD::JetConstituent & a, const xAOD::JetConstituent & b) -> bool
+      {
+          return a.pt() > b.pt();
+      });
+
+    ATH_MSG_INFO("clusters size: " << clusters.size());
+    int count = std::min(N_CONSTITUENTS, int(clusters.size()));
+    for (int i = 0; i < count; ++i)
+    {
+      DNN_inputValues["clust_"+std::to_string(i)+"_pt"] = clusters.at(i)->pt() / 1000.0; // convert to GeV
+      // std::cout << clusters.at(i)->pt();
+      DNN_inputValues["clust_"+std::to_string(i)+"_eta"] = clusters.at(i)->eta();
+      // std::cout << clusters.at(i)->eta();
+      DNN_inputValues["clust_"+std::to_string(i)+"_phi"] = clusters.at(i)->phi();
+      // std::cout << clusters.at(i)->phi();
+    }
+
+    return DNN_inputValues;
+}
+
+std::map<std::string,double> TopoclusterTopTagger::getJetProperties(const xAOD::Jet& jet) const{
     // Update the jet substructure variables for this jet
     std::map<std::string,double> DNN_inputValues;
 
@@ -355,7 +431,7 @@ std::map<std::string,double> JSSWTopTaggerDNN::getJetProperties(const xAOD::Jet&
     return DNN_inputValues;
 }
 
-StatusCode JSSWTopTaggerDNN::finalize(){
+StatusCode TopoclusterTopTagger::finalize(){
     // Delete or clear anything
     return StatusCode::SUCCESS;
 }

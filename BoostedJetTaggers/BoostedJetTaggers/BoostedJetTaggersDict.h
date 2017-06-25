@@ -6,6 +6,5 @@
 #endif // __GCCXML__
 
 // Includes for the dictionary generation:
-#include "BoostedJetTaggers/SubstructureTopTagger.h"
 
 #endif // BOOSTEDJETTAGGERS_BOOSTEDJETTAGGERSDICT_H

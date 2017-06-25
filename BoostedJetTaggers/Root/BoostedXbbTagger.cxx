@@ -10,20 +10,26 @@
 //
 //   Standard Higgs->bb tagger defined by selections on mass, subjet btagging, and
 //   substructure
-//asdfasdf
+//
 ***************************************************************/
 #include "BoostedJetTaggers/BoostedXbbTagger.h"
 
 #include "PathResolver/PathResolver.h"
 
 #include "TEnv.h"
+
+#define CERRD std::cout<<"SAMERROR : "<<__FILE__<<"  "<<__LINE__<<std::endl;
+
 // make all static accessors static to this file, like extern but hip
 SG::AuxElement::ConstAccessor<ElementLink<xAOD::JetContainer>> BoostedXbbTagger::parent("Parent");
 SG::AuxElement::ConstAccessor<std::vector<ElementLink<xAOD::IParticleContainer> > >BoostedXbbTagger::ghostMatchedTrackJets("GhostAntiKt2TrackJet");
+
 BoostedXbbTagger::BoostedXbbTagger( const std::string& name ) :
+
   JSSTaggerBase( name ),
   m_name(name),
   m_jetSubCutTF1(nullptr),
+
   // the following don't have default constructors, so need to initialise them here
   m_muonSelectionTool(new CP::MuonSelectionTool(name+"MuonSelection")),
   m_muonCalibrationAndSmearingTool(new CP::MuonCalibrationAndSmearingTool(name+"MuonCalibrationTool")),
@@ -40,6 +46,7 @@ BoostedXbbTagger::BoostedXbbTagger( const std::string& name ) :
       // load parameter from configuration file
       declareProperty( "WorkingPoint",          m_wkpt = "" );       // allows to specify more WP inside one configuration file
       declareProperty( "ConfigFile",            m_configFile = "");
+      declareProperty( "DecorateJet",           m_decorate = "");
 
       // set sensible defaults
       // b-tagging (double)
@@ -71,8 +78,10 @@ BoostedXbbTagger::BoostedXbbTagger( const std::string& name ) :
       declareProperty( "TrackJetContainer",     m_trackJetContName = "GhostAntiKt2TrackJet");
 
 }
+
 // destructor has to be specified because virtual interface class requires it
 BoostedXbbTagger::~BoostedXbbTagger() {}
+
 StatusCode BoostedXbbTagger::initialize()
 {
     ATH_MSG_INFO("Initializing BoostedXbbTagger tool");
@@ -191,8 +200,278 @@ StatusCode BoostedXbbTagger::initialize()
     ATH_MSG_INFO("TrackJetEtaMax:        " << m_trackJetEtaMax);
     ATH_MSG_INFO("TrackJetNConstituents: " << m_trackJetNConst);
     ATH_MSG_INFO("TrackJetContainer:     " << m_trackJetContName);
+
+    //initialize the tagger states
+    m_accept.addCut( "ValidPtRangeHigh"    , "True if the jet is not too high pT"  );
+    m_accept.addCut( "ValidPtRangeLow"     , "True if the jet is not too low pT"   );
+    m_accept.addCut( "ValidEtaRange"       , "True if the jet is not too forward"     );
+    m_accept.addCut( "ValidJetContent"     , "True if the jet is alright technicall (e.g. all attributes necessary for tag)"        );
+    m_accept.addCut( "PassMassLow"         , "True if the jet passes the lower mass bound : mJet>MCutLow"       );
+    m_accept.addCut( "PassMassHigh"        , "True if the jet passes the upper mass bound : mJet<MCutHigh"      );
+    m_accept.addCut( "PassBTag"            , "True if the jet is flagged with b-tagging - one or two tags depending on configuration"          );
+    //m_accept.addCut( "PassJSS"             , "True if the jet passes the substructure cut"           ); //not enabled for the moment
+
+    //loop over and print out the cuts that have been configured
+    ATH_MSG_INFO( "After tagging, you will have access to the following cuts as a Root::TAccept : (<NCut>) <cut> : <description>)" );
+    showCuts();
+
     return StatusCode::SUCCESS;
 }
+
+StatusCode BoostedXbbTagger::finalize(){
+    /* Delete or clear anything */
+    return StatusCode::SUCCESS;
+}
+
+Root::TAccept BoostedXbbTagger::tag(const xAOD::Jet& jet) const
+{
+CERRD
+  ATH_MSG_DEBUG( ": Obtaining Standard Xbb tagger result" );
+
+  // reset the TAccept cut results to false
+  m_accept.clear();
+
+  // set the jet validity bits to 1 by default
+  m_accept.setCutResult( "ValidPtRangeHigh", true);
+  m_accept.setCutResult( "ValidPtRangeLow" , true);
+  m_accept.setCutResult( "ValidEtaRange"   , true);
+  m_accept.setCutResult( "ValidJetContent" , true);
+
+  // no associated muons available at the moment in DxAOD
+  // decorate track jets with muons using simple dR matching
+  if (decorateWithMuons(jet) == StatusCode::FAILURE) {
+    ATH_MSG_ERROR("No muon decoration for muon-in-jet correction available.");
+    m_accept.setCutResult("ValidJetContent" , false);
+  }
+  // check basic kinematic selection
+  if (std::fabs(jet.eta()) > m_jetEtaMax) {
+    ATH_MSG_DEBUG("Jet does not pass basic kinematic selection (|eta| < " << m_jetEtaMax << "). Jet eta = " << jet.eta());
+    m_accept.setCutResult("ValidEtaRange", false);
+  }
+  if (jet.pt() < m_jetPtMin) {
+    ATH_MSG_DEBUG("Jet does not pass basic kinematic selection (pT > " << m_jetPtMin << "). Jet pT = " << jet.pt()/1.e3);
+    m_accept.setCutResult("ValidPtRangeLow", false);
+  }
+  if (jet.pt() > m_jetPtMax) {
+    ATH_MSG_WARNING("Jet does not pass basic kinematic selection (pT < " << m_jetPtMax << "). Jet pT = " << jet.pt()/1.e3);
+    m_accept.setCutResult("ValidPtRangeHigh", false);
+  }
+  /* Steps:
+      1. Get all AntiKt2TrackJets asssociated with the ungroomed jet
+      2. B-tag the two leading track-jets
+        - if double b-tagging, require that both track-jets are b-tagged
+        - if single b-tagging, and there is more than one track-jet, take the highest MV2 of the leading two jets
+      3. Match the muon (if any) to these b-tagged track-jets
+        - if more than 1 muon matches a track jet (within the radius of the track jet), only use the muon closest in DR
+      4. Correct the fat-jet mass by putting the matched muon back (if there is a matched muon)
+      5. Set a cut on the corrected fat jet mass
+      6. Evaluate JSS cut (not there yet)
+  */
+  // global pass variables, set to false by default
+  bool pass_btag = false;
+  bool pass_lowmass = false;
+  bool pass_highmass = false;
+  bool pass_jss  = true; // always true unless a cut is specified
+  // Step 1
+  // std::vector<const xAOD::Jet*> associated_trackJets;
+  std::vector<ElementLink<xAOD::IParticleContainer> > associated_trackJets;
+CERRD
+  // get the track jets from the parent
+  bool problemWithParent = false;
+  ElementLink<xAOD::JetContainer> parentEL;
+  if(!parent.isAvailable(jet)) problemWithParent = true;
+  else parentEL = parent(jet);
+  if(problemWithParent || !parentEL.isValid()){
+    if(problemWithParent) ATH_MSG_ERROR("Parent decoration does not exist.");
+    if(!parentEL.isValid()) ATH_MSG_ERROR("Parent link is not valid.");
+    m_accept.setCutResult("ValidJetContent" , false);
+  }
+  else {
+    const xAOD::Jet* parentJet = *parentEL;
+    // use accessor instead of getAssociatedObject in order to have EL
+    if (!ghostMatchedTrackJets.isAvailable(*parentJet)) {
+      ATH_MSG_ERROR("Ghostmatched jet collection does not exist.");
+    }
+    associated_trackJets = ghostMatchedTrackJets(*parentJet);
+  }
+CERRD
+  // decorate all trackjets by default
+  // filter out the track jets we do not want (pT > 10 GeV and |eta| < 2.5 and at least 2 constituents)
+  std::vector<ElementLink<xAOD::IParticleContainer> > associated_trackJets_filtered;
+  for(const auto& trackJetEL: associated_trackJets) {
+    if(!trackJetEL.isValid()) {
+        ATH_MSG_ERROR("Track jet link is not valid.");
+        m_accept.setCutResult("ValidJetContent" , false);
+    }
+    const xAOD::Jet *trackJet(static_cast<const xAOD::Jet*>(*trackJetEL));
+    if (trackJet->pt() < m_trackJetPtMin) continue;
+    if (fabs(trackJet->eta()) > m_trackJetEtaMax) continue;
+    if (trackJet->numConstituents() < m_trackJetNConst) continue;
+    associated_trackJets_filtered.push_back(trackJetEL);
+  }
+  std::sort(associated_trackJets_filtered.begin(), associated_trackJets_filtered.end(), [](ElementLink<xAOD::IParticleContainer> lhs, ElementLink<xAOD::IParticleContainer> rhs) -> bool { return ((static_cast<const xAOD::IParticle*>(*lhs))->pt() > (static_cast<const xAOD::IParticle*>(*rhs))->pt()); });
+  if ((int)associated_trackJets_filtered.size() < m_numBTags) {
+    ATH_MSG_DEBUG("Number of associated track jets below number of required b-tags for this working point.");
+    m_accept.setCutResult("ValidJetContent" , false);
+  }
+  if (associated_trackJets_filtered.size() < 1) {
+    ATH_MSG_DEBUG("Number of associated track jets is zero."); // only happens when b-tagging is switched off.
+    m_accept.setCutResult("ValidJetContent" , false);
+  }
+CERRD
+  // Step 2
+  int num_bTags(0);
+  int num_trackJets(0);
+  std::vector<ElementLink<xAOD::IParticleContainer> > associated_trackJets_links;
+  for (const auto& trackJetEL: associated_trackJets_filtered) {
+    if (num_trackJets >= 2) break; // make configurable?
+    const xAOD::Jet *trackJet(static_cast<const xAOD::Jet*>(*trackJetEL));
+    double bTagWeight(FLT_MIN);
+    if(!trackJet->btagging()->MVx_discriminant(m_bTagAlg, bTagWeight)){
+      ATH_MSG_ERROR("Could not retrieve the discriminant for " << m_bTagAlg << ".");
+      m_accept.setCutResult("ValidJetContent" , false);
+    }
+    if (bTagWeight > m_bTagCut) {
+      num_bTags++;
+      associated_trackJets_links.push_back(trackJetEL);  // only keep track jets that are b-tagged
+    }
+    num_trackJets++;
+  }
+  if( num_bTags < m_numBTags ){
+    ATH_MSG_DEBUG("Jet FAILED the b-tagging: b-tags found = " << num_bTags << ", b-tags required = " << m_numBTags << ".");
+  } else {
+    ATH_MSG_DEBUG("Jet PASSED the b-tagging: b-tags found = " << num_bTags << ", b-tags required = " << m_numBTags << ".");
+    pass_btag = true;
+  }
+  if (m_decorate)
+    trackJetsInFatJet(jet) = associated_trackJets_links;
+CERRD
+  // Step 3
+  std::vector<xAOD::Muon*> calibratedMuons;
+  std::vector<const xAOD::Muon*> matched_muons;
+  std::vector<ElementLink<xAOD::IParticleContainer> > matched_muons_links;
+  for (const auto& trackJetEL: associated_trackJets_links) {
+      const xAOD::Jet *trackJet(static_cast<const xAOD::Jet*>(*trackJetEL));
+      float maxDR(m_muonMatchDR);
+//       trackJet->getAttribute("SizeParameter", maxDR);
+      const xAOD::Muon *closest_muon(nullptr);
+      ElementLink<xAOD::IParticleContainer> closest_muonEL;
+      // get muons from jet decoration
+      if( ! muonsInTrackJetLink.isAvailable( *trackJet ) ) {
+          ATH_MSG_ERROR("No muons link found for jet.");
+          m_accept.setCutResult("ValidJetContent" , false);
+      }
+      for (auto muonLink : muonsInTrackJetLink( *trackJet)) {
+          if(!muonLink.isValid()) {
+              ATH_MSG_DEBUG("Muon link not valid."); // ok to continue?
+              continue;
+          }
+          const xAOD::Muon *muon(static_cast<const xAOD::Muon*>(*muonLink));
+          // apply muon correction if not calibrated yet
+          static SG::AuxElement::Accessor<float> acc_muonSpectrometerPt ("MuonSpectrometerPt");
+          static SG::AuxElement::Accessor<float> acc_innerDetectorPt ("InnerDetectorPt");
+          if (!(acc_innerDetectorPt.isAvailable(*muon) && acc_muonSpectrometerPt.isAvailable(*muon))) {
+              ATH_MSG_DEBUG("No decorators for MuonSpectrometerPt or InnerDetectorPt found. Calibrate muons on-the-fly.");
+              xAOD::Muon *muon_calib(nullptr);
+
+        if (!m_muonCalibrationAndSmearingTool->correctedCopy( *muon, muon_calib)) {
+                  ATH_MSG_ERROR("Could not get calibrated copy of muon.");
+                  m_accept.setCutResult("ValidJetContent" , false);
+              }
+              if (m_decorate) calibratedMuonDecor(*muon) = muon_calib->p4();
+        // save the pointers for deletion later
+        calibratedMuons.push_back(muon_calib);
+              // work with calibrated muon
+              muon = muon_calib;
+    }
+          // muon quality selection
+          if (muon->pt() < m_muonPtMin) continue;
+          if (m_muonSelectionTool->getQuality(*muon) > xAOD::Muon::Medium) continue;
+          if (fabs(muon->eta()) > m_muonEtaMax) continue;
+          // find clostest muon
+          float DR( trackJet->p4().DeltaR(muon->p4()) );
+          if (DR > maxDR) continue;
+          maxDR = DR;
+          closest_muon = muon;
+          closest_muonEL = muonLink;
+      }
+
+      // check if the closest muon was already selected
+      for (const auto muon: matched_muons){
+          if(closest_muon == muon){
+              closest_muon = nullptr;
+              ATH_MSG_DEBUG("Muon duplicate found! Skipping.");
+              break;
+          }
+      }
+      if (closest_muon) {
+          matched_muons.push_back(closest_muon);
+          matched_muons_links.push_back(closest_muonEL);
+      }
+      if (m_decorate) muonsInFatJetLink(jet) = matched_muons_links;
+  }
+CERRD
+  // Step 4
+  xAOD::JetFourMom_t corrected_jet_p4 = getMuonCorrectedJetFourMom(jet, matched_muons, m_muonCorrectionScheme);
+  TLorentzVector corrected_jet(corrected_jet_p4.x(), corrected_jet_p4.y(), corrected_jet_p4.z(), corrected_jet_p4.t());
+  // delete the vector of pointers to muons after you have used them to correct the four vector
+  for(xAOD::Muon * muonPointer : calibratedMuons)
+    delete muonPointer;
+  if (m_decorate) correctedJetDecor(jet) = corrected_jet;
+CERRD
+  // Step 5
+  float jetMassMin = m_jetMassMinTF1->Eval(corrected_jet.Pt()/1.e3);
+  float jetMassMax = m_jetMassMaxTF1->Eval(corrected_jet.Pt()/1.e3);
+  if (corrected_jet.M()/1.e3 >= jetMassMin) pass_lowmass = true;
+  if (corrected_jet.M()/1.e3 <= jetMassMax) pass_highmass = true;
+  if (pass_lowmass && pass_highmass) {
+    ATH_MSG_DEBUG("Jet PASSED the mass window cut. Mass: " << corrected_jet.M()/1.e3 << " GeV, Mass Window: [ " << jetMassMin << ", " << jetMassMax << " ]");
+  } else {
+    ATH_MSG_DEBUG("Jet FAILED the mass window cut. Mass: " << corrected_jet.M()/1.e3 << " GeV, Mass Window: [ " << jetMassMin << ", " << jetMassMax << " ]");
+  }
+  if (m_decorate) {
+      jetMassMinDecor(jet) = jetMassMin;
+      jetMassMaxDecor(jet) = jetMassMax;
+  }
+CERRD
+  // step 6
+  float jsscut(0.);
+  float jssvar(0.);
+  if (m_jetSubCutTF1) {
+      if (!getJSSVar(jssvar, jet, m_jetSubVarStr)) {
+          ATH_MSG_DEBUG("Could not retrieve jet substructure variable.");
+          m_accept.setCutResult("ValidJetContent" , false);
+      }
+      jsscut = m_jetSubCutTF1->Eval(jet.pt()/1.e3);
+      pass_jss = (jssvar < jsscut);
+  }
+  if (m_decorate)
+    jssCutDecor(jet) = jsscut;
+  if (pass_jss) {
+    ATH_MSG_DEBUG("Jet PASSED the substructure cut. " << m_jetSubVarStr.c_str() << "=" << jssvar << ", cut=" << jsscut);
+  }
+  else {
+    ATH_MSG_DEBUG("Jet FAILED the substructure cut. " << m_jetSubVarStr.c_str() << "=" << jssvar << ", cut=" << jsscut);
+  }
+CERRD
+  // set the bits of the TAccept
+  if(pass_lowmass)
+    m_accept.setCutResult( "PassMassLow"    , true);
+
+  if(pass_highmass)
+    m_accept.setCutResult( "PassMassHigh"   , true);
+
+  if(pass_btag)
+    m_accept.setCutResult( "PassBTag"       , true);
+
+//   if(pass_jss)
+//     m_accept.setCutResult( "PassJSS"             , true);  //not enabled for the moment
+
+  // return the TAccept to be queried by the user
+  return m_accept;
+
+}
+
 StatusCode BoostedXbbTagger::decorateWithMuons(const xAOD::Jet& jet) const
 {
     // retrieve muons from StoreGate
@@ -235,6 +514,7 @@ StatusCode BoostedXbbTagger::decorateWithMuons(const xAOD::Jet& jet) const
     }
     return StatusCode::SUCCESS;
 }
+
 StatusCode BoostedXbbTagger::getMuonCorrectionScheme(std::string scheme_name, MuonCorrectionScheme& scheme) const {
     if (scheme_name == "Combined") scheme = Combined;
     else if (scheme_name == "Calorimeter") scheme =  Calorimeter;
@@ -247,6 +527,7 @@ StatusCode BoostedXbbTagger::getMuonCorrectionScheme(std::string scheme_name, Mu
     }
     return StatusCode::SUCCESS;;
 }
+
 std::string BoostedXbbTagger::getMuonCorrectionSchemeName(MuonCorrectionScheme scheme) const {
     if      (scheme == Combined)      return "Combined";
     else if (scheme == Calorimeter)   return "Calorimeter";
@@ -258,6 +539,7 @@ std::string BoostedXbbTagger::getMuonCorrectionSchemeName(MuonCorrectionScheme s
     }
     return "";
 }
+
 const xAOD::JetFourMom_t BoostedXbbTagger::getMuonCorrectedJetFourMom(const xAOD::Jet& jet, std::vector<const xAOD::Muon*> muons, MuonCorrectionScheme scheme, bool useJMSScale) const
 {
     xAOD::JetFourMom_t JetCorr_tlv = jet.jetP4();
@@ -319,239 +601,7 @@ const xAOD::JetFourMom_t BoostedXbbTagger::getMuonCorrectedJetFourMom(const xAOD
     }
     return JetCorr_tlv;
 }
-BoostedXbbTagger::Result BoostedXbbTagger::result(const xAOD::Jet& jet, bool decorate) const
-{
 
-  ATH_MSG_DEBUG( ": Obtaining Standard Xbb tagger result" );
-
-  // no associated muons available at the moment in DxAOD
-  // decorate track jets with muons using simple dR matching
-  if (decorateWithMuons(jet) == StatusCode::FAILURE) {
-      ATH_MSG_ERROR("No muon decoration for muon-in-jet correction available.");
-      return InvalidJet;
-  }
-  // check basic kinematic selection
-  if (std::fabs(jet.eta()) > m_jetEtaMax) {
-    ATH_MSG_DEBUG("Jet does not pass basic kinematic selection (|eta| < " << m_jetEtaMax << "). Jet eta = " << jet.eta());
-    return OutOfRangeEta;
-  }
-  if (jet.pt() < m_jetPtMin) {
-    ATH_MSG_DEBUG("Jet does not pass basic kinematic selection (pT > " << m_jetPtMin << "). Jet pT = " << jet.pt()/1.e3);
-    return OutOfRangeLowPt;
-  }
-  if (jet.pt() > m_jetPtMax) {
-    ATH_MSG_WARNING("Jet does not pass basic kinematic selection (pT < " << m_jetPtMax << "). Jet pT = " << jet.pt()/1.e3);
-    return OutOfRangeHighPt;
-  }
-  /* Steps:
-      1. Get all AntiKt2TrackJets asssociated with the ungroomed jet
-      2. B-tag the two leading track-jets
-        - if double b-tagging, require that both track-jets are b-tagged
-        - if single b-tagging, and there is more than one track-jet, take the highest MV2 of the leading two jets
-      3. Match the muon (if any) to these b-tagged track-jets
-        - if more than 1 muon matches a track jet (within the radius of the track jet), only use the muon closest in DR
-      4. Correct the fat-jet mass by putting the matched muon back (if there is a matched muon)
-      5. Set a cut on the corrected fat jet mass
-      6. Evaluate JSS cut (not there yet)
-  */
-  // global pass variables, set to false by default
-  bool pass_btag = false;
-  bool pass_lowmass = false;
-  bool pass_highmass = false;
-  bool pass_jss  = true; // always true for the moment
-  // Step 1
-//   std::vector<const xAOD::Jet*> associated_trackJets;
-  std::vector<ElementLink<xAOD::IParticleContainer> > associated_trackJets;
-
-  // get the track jets from the parent
-  bool problemWithParent = false;
-  ElementLink<xAOD::JetContainer> parentEL;
-  if(!parent.isAvailable(jet)) problemWithParent = true;
-  else parentEL = parent(jet);
-  if(problemWithParent || !parentEL.isValid()){
-    if(problemWithParent) ATH_MSG_ERROR("Parent decoration does not exist.");
-    if(!parentEL.isValid()) ATH_MSG_ERROR("Parent link is not valid.");
-    return InvalidJet;
-  } else {
-    const xAOD::Jet* parentJet = *parentEL;
-    // use accessor instead of getAssociatedObject in order to have EL
-    if (!ghostMatchedTrackJets.isAvailable(*parentJet)) {
-        ATH_MSG_ERROR("Ghostmatched jet collection does not exist.");
-    }
-    associated_trackJets = ghostMatchedTrackJets(*parentJet);
-
-  }
-  // decorate all trackjets by default
-  // filter out the track jets we do not want (pT > 10 GeV and |eta| < 2.5 and at least 2 constituents)
-  std::vector<ElementLink<xAOD::IParticleContainer> > associated_trackJets_filtered;
-  for(const auto& trackJetEL: associated_trackJets) {
-    if(!trackJetEL.isValid()) {
-        ATH_MSG_ERROR("Track jet link is not valid.");
-        return InvalidJet;
-    }
-    const xAOD::Jet *trackJet(static_cast<const xAOD::Jet*>(*trackJetEL));
-    if (trackJet->pt() < m_trackJetPtMin) continue;
-    if (fabs(trackJet->eta()) > m_trackJetEtaMax) continue;
-    if (trackJet->numConstituents() < m_trackJetNConst) continue;
-    associated_trackJets_filtered.push_back(trackJetEL);
-  }
-  std::sort(associated_trackJets_filtered.begin(), associated_trackJets_filtered.end(), [](ElementLink<xAOD::IParticleContainer> lhs, ElementLink<xAOD::IParticleContainer> rhs) -> bool { return ((static_cast<const xAOD::IParticle*>(*lhs))->pt() > (static_cast<const xAOD::IParticle*>(*rhs))->pt()); });
-  if ((int)associated_trackJets_filtered.size() < m_numBTags) {
-      ATH_MSG_DEBUG("Number of associated track jets below number of required b-tags for this working point.");
-      return InvalidJet;
-  }
-  if (associated_trackJets_filtered.size() < 1) {
-     ATH_MSG_DEBUG("Number of associated track jets is zero."); // only happens when b-tagging is switched off.
-    return InvalidJet;
-  }
-  // Step 2
-  int num_bTags(0);
-  int num_trackJets(0);
-  std::vector<ElementLink<xAOD::IParticleContainer> > associated_trackJets_links;
-  for (const auto& trackJetEL: associated_trackJets_filtered) {
-    if (num_trackJets >= 2) break; // make configurable?
-    const xAOD::Jet *trackJet(static_cast<const xAOD::Jet*>(*trackJetEL));
-    double bTagWeight(FLT_MIN);
-    if(!trackJet->btagging()->MVx_discriminant(m_bTagAlg, bTagWeight)){
-      ATH_MSG_ERROR("Could not retrieve the discriminant for " << m_bTagAlg << ".");
-      return InvalidJet;
-    }
-    if (bTagWeight > m_bTagCut) {
-      num_bTags++;
-      associated_trackJets_links.push_back(trackJetEL);  // only keep track jets that are b-tagged
-    }
-    num_trackJets++;
-  }
-  if( num_bTags < m_numBTags ){
-    ATH_MSG_DEBUG("Jet FAILED the b-tagging: b-tags found = " << num_bTags << ", b-tags required = " << m_numBTags << ".");
-  } else {
-    ATH_MSG_DEBUG("Jet PASSED the b-tagging: b-tags found = " << num_bTags << ", b-tags required = " << m_numBTags << ".");
-    pass_btag = true;
-  }
-  if (decorate) trackJetsInFatJet(jet) = associated_trackJets_links;
-
-  // Step 3
-  std::vector<xAOD::Muon*> calibratedMuons;
-  std::vector<const xAOD::Muon*> matched_muons;
-  std::vector<ElementLink<xAOD::IParticleContainer> > matched_muons_links;
-  for (const auto& trackJetEL: associated_trackJets_links) {
-      const xAOD::Jet *trackJet(static_cast<const xAOD::Jet*>(*trackJetEL));
-      float maxDR(m_muonMatchDR);
-//       trackJet->getAttribute("SizeParameter", maxDR);
-      const xAOD::Muon *closest_muon(nullptr);
-      ElementLink<xAOD::IParticleContainer> closest_muonEL;
-      // get muons from jet decoration
-      if( ! muonsInTrackJetLink.isAvailable( *trackJet ) ) {
-          ATH_MSG_ERROR("No muons link found for jet.");
-          return InvalidJet;
-      }
-      for (auto muonLink : muonsInTrackJetLink( *trackJet)) {
-          if(!muonLink.isValid()) {
-              ATH_MSG_DEBUG("Muon link not valid."); // ok to continue?
-              continue;
-          }
-          const xAOD::Muon *muon(static_cast<const xAOD::Muon*>(*muonLink));
-          // apply muon correction if not calibrated yet
-          static SG::AuxElement::Accessor<float> acc_muonSpectrometerPt ("MuonSpectrometerPt");
-          static SG::AuxElement::Accessor<float> acc_innerDetectorPt ("InnerDetectorPt");
-          if (!(acc_innerDetectorPt.isAvailable(*muon) && acc_muonSpectrometerPt.isAvailable(*muon))) {
-              ATH_MSG_DEBUG("No decorators for MuonSpectrometerPt or InnerDetectorPt found. Calibrate muons on-the-fly.");
-              xAOD::Muon *muon_calib(nullptr);
-
-	      if (!m_muonCalibrationAndSmearingTool->correctedCopy( *muon, muon_calib)) {
-                  ATH_MSG_ERROR("Could not get calibrated copy of muon.");
-                  return InvalidJet;
-              }
-              if (decorate) calibratedMuonDecor(*muon) = muon_calib->p4();
-	      // save the pointers for deletion later
-	      calibratedMuons.push_back(muon_calib);
-              // work with calibrated muon
-              muon = muon_calib;
-	  }
-          // muon quality selection
-          if (muon->pt() < m_muonPtMin) continue;
-          if (m_muonSelectionTool->getQuality(*muon) > xAOD::Muon::Medium) continue;
-          if (fabs(muon->eta()) > m_muonEtaMax) continue;
-          // find clostest muon
-          float DR( trackJet->p4().DeltaR(muon->p4()) );
-          if (DR > maxDR) continue;
-          maxDR = DR;
-          closest_muon = muon;
-          closest_muonEL = muonLink;
-      }
-
-      // check if the closest muon was already selected
-      for (const auto muon: matched_muons){
-          if(closest_muon == muon){
-              closest_muon = nullptr;
-              ATH_MSG_DEBUG("Muon duplicate found! Skipping.");
-              break;
-          }
-      }
-      if (closest_muon) {
-          matched_muons.push_back(closest_muon);
-          matched_muons_links.push_back(closest_muonEL);
-      }
-      if (decorate) muonsInFatJetLink(jet) = matched_muons_links;
-  }
-  // Step 4
-  xAOD::JetFourMom_t corrected_jet_p4 = getMuonCorrectedJetFourMom(jet, matched_muons, m_muonCorrectionScheme);
-  TLorentzVector corrected_jet(corrected_jet_p4.x(), corrected_jet_p4.y(), corrected_jet_p4.z(), corrected_jet_p4.t());
-  // delete the vector of pointers to muons after you have used them to correct the four vector
-  for(xAOD::Muon * muonPointer : calibratedMuons)
-    delete muonPointer;
-  if (decorate) correctedJetDecor(jet) = corrected_jet;
-  // Step 5
-  float jetMassMin = m_jetMassMinTF1->Eval(corrected_jet.Pt()/1.e3);
-  float jetMassMax = m_jetMassMaxTF1->Eval(corrected_jet.Pt()/1.e3);
-  if (corrected_jet.M()/1.e3 >= jetMassMin) pass_lowmass = true;
-  if (corrected_jet.M()/1.e3 <= jetMassMax) pass_highmass = true;
-  if (pass_lowmass && pass_highmass) {
-    ATH_MSG_DEBUG("Jet PASSED the mass window cut. Mass: " << corrected_jet.M()/1.e3 << " GeV, Mass Window: [ " << jetMassMin << ", " << jetMassMax << " ]");
-  } else {
-    ATH_MSG_DEBUG("Jet FAILED the mass window cut. Mass: " << corrected_jet.M()/1.e3 << " GeV, Mass Window: [ " << jetMassMin << ", " << jetMassMax << " ]");
-  }
-  if (decorate) {
-      jetMassMinDecor(jet) = jetMassMin;
-      jetMassMaxDecor(jet) = jetMassMax;
-  }
-  // step 6
-  float jsscut(0.);
-  float jssvar(0.);
-  if (m_jetSubCutTF1) {
-      if (!getJSSVar(jssvar, jet, m_jetSubVarStr)) {
-          ATH_MSG_DEBUG("Could not retrieve jet substructure variable.");
-          return InvalidJet;
-      }
-//       jsscut = m_jetSubCutTF1->Eval(corrected_jet.Pt()/1.e3);
-      jsscut = m_jetSubCutTF1->Eval(jet.pt()/1.e3);
-      pass_jss = (jssvar < jsscut);
-  }
-  if (decorate) jssCutDecor(jet) = jsscut;
-  if (pass_jss) {
-    ATH_MSG_DEBUG("Jet PASSED the substructure cut. " << m_jetSubVarStr.c_str() << "=" << jssvar << ", cut=" << jsscut);
-  } else {
-    ATH_MSG_DEBUG("Jet FAILED the substructure cut. " << m_jetSubVarStr.c_str() << "=" << jssvar << ", cut=" << jsscut);
-  }
-  // return result
-  if (  pass_btag &&  pass_lowmass  &&  pass_highmass &&  pass_jss) return MassPassBTagPassJSSPass;
-  if (  pass_btag &&  pass_lowmass  &&  pass_highmass && !pass_jss) return MassPassBTagPassJSSFail;
-  if ( !pass_btag &&  pass_lowmass  &&  pass_highmass &&  pass_jss) return MassPassBTagFailJSSPass;
-  if ( !pass_btag &&  pass_lowmass  &&  pass_highmass && !pass_jss) return MassPassBTagFailJSSFail;
-  if (  pass_btag && !pass_lowmass  &&  pass_highmass &&  pass_jss) return LowMassFailBTagPassJSSPass;
-  if (  pass_btag && !pass_lowmass  &&  pass_highmass && !pass_jss) return LowMassFailBTagPassJSSFail;
-  if ( !pass_btag && !pass_lowmass  &&  pass_highmass &&  pass_jss) return LowMassFailBTagFailJSSPass;
-  if ( !pass_btag && !pass_lowmass  &&  pass_highmass && !pass_jss) return LowMassFailBTagFailJSSFail;
-  if (  pass_btag &&  pass_lowmass  && !pass_highmass &&  pass_jss) return HighMassFailBTagPassJSSPass;
-  if (  pass_btag &&  pass_lowmass  && !pass_highmass && !pass_jss) return HighMassFailBTagPassJSSFail;
-  if ( !pass_btag &&  pass_lowmass  && !pass_highmass &&  pass_jss) return HighMassFailBTagFailJSSPass;
-  if ( !pass_btag &&  pass_lowmass  && !pass_highmass && !pass_jss) return HighMassFailBTagFailJSSFail;
-  return InvalidJet;
-}
-StatusCode BoostedXbbTagger::finalize(){
-    /* Delete or clear anything */
-    return StatusCode::SUCCESS;
-}
 StatusCode BoostedXbbTagger::getJSSVar(float& jssvar, const xAOD::Jet& jet, std::string name) const {
     jssvar = 0.;
     static SG::AuxElement::ConstAccessor<float>acc_jssvar(name);
@@ -575,6 +625,7 @@ StatusCode BoostedXbbTagger::getJSSVar(float& jssvar, const xAOD::Jet& jet, std:
     }
     return StatusCode::FAILURE;
 }
+
 std::vector<const xAOD::Muon*> BoostedXbbTagger::getCorrectionMuons(const xAOD::Jet& jet) const {
     std::vector<const xAOD::Muon*> muons;
     std::string accName = m_name+"CorrectionMuons";
@@ -591,6 +642,7 @@ std::vector<const xAOD::Muon*> BoostedXbbTagger::getCorrectionMuons(const xAOD::
     }
     return muons;
 }
+
 std::vector<const xAOD::Jet*> BoostedXbbTagger::getTrackJets(const xAOD::Jet& jet) const {
     std::vector<const xAOD::Jet*> trackJets;
     std::string accName = m_name+"TrackJets";
@@ -607,15 +659,19 @@ std::vector<const xAOD::Jet*> BoostedXbbTagger::getTrackJets(const xAOD::Jet& je
     }
     return trackJets;
 }
+
 TLorentzVector BoostedXbbTagger::getCorrectedJetTLV(const xAOD::Jet& jet) const {
   return correctedJetDecor(jet);
 }
+
 TLorentzVector BoostedXbbTagger::getCalibratedMuonTLV(const xAOD::Muon& muon) const {
   return calibratedMuonDecor(muon);
 }
+
 float BoostedXbbTagger::getMassMin(const xAOD::Jet& jet) const {
   return jetMassMinDecor(jet);
 }
+
 float BoostedXbbTagger::getMassMax(const xAOD::Jet& jet) const {
   return jetMassMaxDecor(jet);
 }

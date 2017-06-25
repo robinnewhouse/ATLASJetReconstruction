@@ -1,3 +1,11 @@
+2017-05-24 meehan
+	* small change to CMakeLists
+	* tagging as BoostedJetTaggers-00-00-41
+
+2017-05-24 meehan
+	* Make tag in preparation for import to Git and release
+	* tagging as BoostedJetTaggers-00-00-40
+
 2017-04-19  Pierre-Antoine Delsart  <delsart At in2p3.fr>
 
 	* Add new SmoothedNotContainedTopTagger config file o.b.o Frederica Fabbri

@@ -38,6 +38,11 @@ namespace CP {
                   m_jetTrackFilterTool(name+"_jettrackfiltertool",this),
                   m_originTool(name+"_origintool",this)
   {
+
+    declareProperty( "ConfigFile",   m_configFile="");
+    declareProperty( "NTrackCut",    m_NTrackCut=-1);
+    declareProperty( "DecorateJet",  m_decorate = true);
+
     declareProperty( "Tagger", m_taggername = "ntrack");
     declareProperty( "CalibArea",     m_calibarea = "BoostedJetTaggers/QGTagger/Moriond2017/");
     declareProperty( "TopoWeightFile", m_topofile = "");
@@ -49,8 +54,6 @@ namespace CP {
     declareProperty( "WeightDecorationName", m_weight_decoration_name = "qgTaggerWeight");
     declareProperty( "TaggerDecorationName", m_tagger_decoration_name = "qgTagger");
 
-    declareProperty( "ConfigFile",   m_configFile="");
-    declareProperty( "NTrackCut",    m_NTrackCut=-1);
 
     applySystematicVariation(SystematicSet()).ignore();
   }
@@ -171,7 +174,7 @@ namespace CP {
 
     // load in the histograms that store the ntrack systematics
     if(m_topofile!="")//load topology file only if explicitly configured (default is "")
-      assert( this->loadHist(m_topo_hquark,  m_topofile,"h2dquark") );
+    assert( this->loadHist(m_topo_hquark,    m_topofile,"h2dquark") );
     assert( this->loadHist(m_exp_hquark_up,  m_expfile,"h2dquark_up")  );
     assert( this->loadHist(m_exp_hquark_down,m_expfile,"h2dquark_down"));
     assert( this->loadHist(m_exp_hgluon_up,  m_expfile,"h2dgluon_up")  );
@@ -187,6 +190,22 @@ namespace CP {
 
     ATH_MSG_INFO( ": JetQGTagger tool initialized" );
     ATH_MSG_INFO( "  NTrackCut   : "<< m_NTrackCut );
+
+    //initialize the tagger states
+    m_accept.addCut( "ValidPtRangeHigh"    , "True if the jet is not too high pT"  );
+    m_accept.addCut( "ValidPtRangeLow"     , "True if the jet is not too low pT"   );
+    m_accept.addCut( "ValidEtaRange"       , "True if the jet is not too forward"     );
+    m_accept.addCut( "ValidJetContent"     , "True if the jet is alright technicall (e.g. all attributes necessary for tag)"        );
+    m_accept.addCut( "ValidEventContent"   , "True if the event is alright technicall (e.g. primary vertices)"        );
+    m_accept.addCut( "QuarkJet"            , "True if the jet is deemed a quark jet because NTrack<NCut"       );
+    m_accept.addCut( "GluonJet"            , "True if the jet is deemed a quark jet because NTrack>NCut"       );
+
+    //loop over and print out the cuts that have been configured
+    ATH_MSG_INFO( "After tagging, you will have access to the following cuts as a Root::TAccept : (<NCut>) <cut> : <description>)" );
+    showCuts();
+
+
+
 
     return StatusCode::SUCCESS;
   }
@@ -213,9 +232,19 @@ namespace CP {
     return StatusCode::SUCCESS;
   }
 
-  CP::JetQGTagger::Result JetQGTagger::result(const xAOD::Jet& jet, const bool decorate, const xAOD::Vertex * _pv) const {
+  Root::TAccept JetQGTagger::tag(const xAOD::Jet& jet, const xAOD::Vertex * _pv) const {
 
     ATH_MSG_DEBUG( "Obtaining JetQGTagger decision" );
+
+    // reset the TAccept cut results to false
+    m_accept.clear();
+
+    // set the jet validity bits to 1 by default
+    m_accept.setCutResult( "ValidPtRangeHigh", true);
+    m_accept.setCutResult( "ValidPtRangeLow" , true);
+    m_accept.setCutResult( "ValidEtaRange"   , true);
+    m_accept.setCutResult( "ValidJetContent" , true);
+    m_accept.setCutResult( "ValidEventContent" , true);
 
     // if no primary vertex is specified, then the 0th primary vertex is used
     const xAOD::Vertex *pv = _pv ;
@@ -223,11 +252,11 @@ namespace CP {
       const xAOD::VertexContainer* vxCont = 0;
       if(evtStore()->retrieve( vxCont, "PrimaryVertices" ).isFailure()){
         ATH_MSG_WARNING("Unable to retrieve primary vertex container PrimaryVertices");
-        return InvalidJet;
+        m_accept.setCutResult("ValidEventContent", false);
       }
       else if(vxCont->empty()){
         ATH_MSG_WARNING("Event has no primary vertices!");
-        return InvalidJet;
+        m_accept.setCutResult("ValidEventContent", false);
       }
       else{
         for(const auto& vx : *vxCont){
@@ -246,33 +275,41 @@ namespace CP {
     double jetWeight = -1;
     int    jetNTrack = -1;
 
-    if(jet.pt()<m_minpt || fabs(jet.eta())>m_maxeta){
-      ATH_MSG_INFO("Jet pT or eta is out of allowable range");
-      ATH_MSG_INFO( ": Bounds : pt=["<<m_minpt<<",Inf] , |eta|<"<<m_maxeta<<" | ThisJet : pt="<<std::to_string(jet.pt()/1000.0)<<" , eta="<<std::to_string(jet.eta()) ) ;
-      return OutOfRange;
+    // check basic kinematic selection
+    if (std::fabs(jet.eta()) > m_jetEtaMax) {
+      ATH_MSG_DEBUG("Jet does not pass basic kinematic selection (|eta| < " << m_jetEtaMax << "). Jet eta = " << jet.eta());
+      m_accept.setCutResult("ValidEtaRange", false);
     }
-    else{
+    if (jet.pt() < m_jetPtMin) {
+      ATH_MSG_DEBUG("Jet does not pass basic kinematic selection (pT > " << m_jetPtMin << "). Jet pT = " << jet.pt()/1.e3);
+      m_accept.setCutResult("ValidPtRangeLow", false);
+    }
+
+    if( m_accept.getCutResult("ValidEtaRange") && m_accept.getCutResult("ValidPtRangeLow") ){
       assert( getNTrack(&jet, pv, jetNTrack)  );
       assert( getNTrackWeight(&jet, jetWeight));
     }
 
     // decorate the cut value if specified
-    if(decorate){
+    if(m_decorate){
       (*m_taggerdec)(jet) = jetNTrack;
       (*m_weightdec)(jet) = jetWeight;
     }
 
-    // determine the tagging type
+    // fill the TAccept
     if(jetNTrack<0){
       ATH_MSG_WARNING("This jet has a negative number of tracks");
-      return InvalidJet;
+      m_accept.setCutResult("ValidJetContent", false);
     }
     else if(jetNTrack<m_NTrackCut){
-      return QuarkTag;
+      m_accept.setCutResult("QuarkJetTag", true);
     }
     else{
-      return GluonTag;
+      m_accept.setCutResult("GluonJetTag", true);
     }
+
+    // return the m_accept object
+    return m_accept;
 
   }
 
@@ -372,7 +409,7 @@ namespace CP {
       ATH_MSG_WARNING("Cannot access truth: setting weight to 1");
       return StatusCode::SUCCESS;
     }//endelse isAvailable
-    
+
     // if the jet is outside of the measurement fiducial region
     // the systematic uncertainty is set to 0
     double tjetpt = tjet->pt()*0.001;
@@ -505,6 +542,21 @@ namespace CP {
     hist->SetDirectory(0);
     return StatusCode::SUCCESS;
   }
+
+
+  void JetQGTagger::showCuts() const{
+    int nCuts = m_accept.getNCuts();
+    for(int iCut=0; iCut<nCuts; iCut++){
+      std::string cut_string = "";
+      cut_string += "  (";
+      cut_string += std::to_string(iCut);
+      cut_string += ")  ";
+      cut_string += m_accept.getCutName(iCut).Data();
+      cut_string += " : ";
+      cut_string += m_accept.getCutDescription(iCut).Data();
+      ATH_MSG_INFO( cut_string );
+    }
+}
 
 
 } /* namespace CP */

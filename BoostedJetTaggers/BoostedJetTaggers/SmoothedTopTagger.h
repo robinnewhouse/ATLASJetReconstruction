@@ -2,12 +2,6 @@
 #ifndef BOOSTEDJETSTAGGERS_SMOOTHEDTOPTAGGER_H_
 #define BOOSTEDJETSTAGGERS_SMOOTHEDTOPTAGGER_H_
 
-#include "BoostedJetTaggers/JSSTaggerBase.h"
-#include "AsgTools/AsgTool.h"
-
-
-class TF1;
-
 ////////////////////////////////////////////////
 /// \class SmoothedTopTagger
 ///
@@ -35,57 +29,22 @@ class TF1;
 ///
 //////////////////////////////////
 
+#include "BoostedJetTaggers/JSSTaggerBase.h"
+#include "AsgTools/AsgTool.h"
+
+class TF1;
+
 class SmoothedTopTagger : public JSSTaggerBase {
   ASG_TOOL_CLASS0(SmoothedTopTagger)
   public:
 
   // Top tagging can run in different mode.
-  //  the mode is determined by the configuration.
+  // the mode is determined by the configuration.
   enum Mode {
     MassTau32,
     MassSplit23,
     Tau32Split23,
     QwTau32,
-  };
-
-
-  /// detailed information on the result
-  class Result {
-  public:
-    enum Validity {
-      Ok = 1, // tagging procedure proceeded normally.
-      OutOfRangeHighPt = -3,
-      OutOfRangeLowPt = -2,
-      OutOfRangeEta = -1,
-      InvalidJet = 0, //  Jet is missing variable or is corrupted
-    };
-
-    Result(Validity v, Mode m) : m_v1(false), m_v2(false), m_mode(m), m_validity(v) {}
-    Result( bool v1, bool v2, Mode m) : m_v1(v1), m_v2(v2), m_mode(m), m_validity(Ok) {}
-
-
-
-    operator bool() const  {return allPassed();}
-    bool allPassed() const {return (m_v1&&m_v2);}
-    bool outOfRange()const {return (m_validity==OutOfRangeEta || m_validity==OutOfRangeLowPt || m_validity==OutOfRangeHighPt);}
-    bool outOfRangeEta()const {return m_validity==OutOfRangeEta;}
-    bool outOfRangePtLow()const {return m_validity==OutOfRangeLowPt;}
-    bool outOfRangePtHigh()const {return m_validity==OutOfRangeHighPt;}
-    bool invalidJet()const {return m_validity==InvalidJet;}
-    bool ok() const {return m_validity==Ok;}
-
-    Validity getValidity() const {return m_validity;}
-
-    bool massPassed() const;
-    bool split23Passed() const;
-    bool tau32Passed() const ;
-    bool qwPassed() const;
-
-  protected:
-
-    bool m_v1, m_v2;
-    Mode m_mode;
-    Validity m_validity;
   };
 
   //Default - so root can load based on a name
@@ -94,13 +53,10 @@ class SmoothedTopTagger : public JSSTaggerBase {
   ~SmoothedTopTagger();
 
   // implement IJSSTagger interface. Returns true if all cuts pass
-  virtual bool tag(const xAOD::Jet& jet, bool decorate) const {return bool( result(jet,decorate) ); };
+  virtual Root::TAccept tag(const xAOD::Jet& jet) const;
 
   // Run once at the start of the job to setup everything
   StatusCode initialize();
-
-  // Get the tagging result -- run for every jet!
-  Result result(const xAOD::Jet& jet, bool decorate=true) const;
 
   StatusCode finalize();
 
@@ -116,12 +72,6 @@ class SmoothedTopTagger : public JSSTaggerBase {
   // need to set in initialization
   std::string m_wkpt;
   std::string m_configFile;
-
-  // the kinematic bounds for the jet - these are in MeV (not GeV!)
-  float m_jetPtMin;
-  float m_jetPtMax;
-  float m_jetEtaMax;
-
 
   // parameters for smooth fits
   std::string m_var1CutExpr;

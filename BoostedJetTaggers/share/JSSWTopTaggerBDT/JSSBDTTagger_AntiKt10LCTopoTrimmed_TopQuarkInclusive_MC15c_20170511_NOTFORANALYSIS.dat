@@ -1,6 +1,6 @@
 ####################################################################################
 # Title :
-# Dummy DNN Top Tagger Config
+# Dummy BDT Top Tagger Config
 #
 # Author :
 # Samuel Meehan <samuel.meeha@cern.ch>
@@ -13,16 +13,18 @@
 #
 ####################################################################################
 
-TaggerType: TopQuark
+TaggerType: TopQuarkInclusive
 
-DecorationName: DNNTaggerScoreTopQuark
+DecorationName: BDTTaggerScoreTopQuark
 
-KerasConfigFile: keras_top_dnn_BN_december11_contained.json
+CalibArea: BoostedJetTaggers/JSSWTopTaggerBDT/Moriond2017/
 
-KerasOutput: top_dnn_BN_dec11_contained
+TMVAConfigFile: TMVAClassification_BDTG.TOP_NvarS_pT200to2000GeV.weights.xml
+
+InputVariableSet: NvarS
 
 MassCutLow: 60.0
 
 MassCutHigh: 200.0
 
-DNNCut: 0.0
+ScoreCut: 0.0

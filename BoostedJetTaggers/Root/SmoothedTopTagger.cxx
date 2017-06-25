@@ -20,13 +20,12 @@
 
 
 SmoothedTopTagger::SmoothedTopTagger( const std::string& name ) :
-  JSSTaggerBase( name ),
-  m_jetPtMin(350000.),
-  m_jetPtMax(3000000.),
-  m_jetEtaMax(2.0){
+  JSSTaggerBase( name ){
+
+  declareProperty( "ConfigFile",   m_configFile="");
 
   declareProperty( "WorkingPoint", m_wkpt="" );
-  declareProperty( "ConfigFile",   m_configFile="");
+  declareProperty( "DecorateJet",  m_decorate=true);
 
   declareProperty( "JetPtMin",              m_jetPtMin = 350000.0);
   declareProperty( "JetPtMax",              m_jetPtMax = 3000000.0);
@@ -147,27 +146,64 @@ StatusCode SmoothedTopTagger::initialize(){
   ATH_MSG_INFO( m_var1CutName+"   cut : "<< m_var1CutExpr );
   ATH_MSG_INFO( m_var2CutName+"   cut : " << m_var2CutExpr );
 
+  //setting the possible states that the tagger can be left in after the JSSTaggerBase::tag() function is called
+  m_accept.addCut( "ValidPtRangeHigh"    , "True if the jet is not too high pT"  );
+  m_accept.addCut( "ValidPtRangeLow"     , "True if the jet is not too low pT"   );
+  m_accept.addCut( "ValidEtaRange"       , "True if the jet is not too forward"     );
+  m_accept.addCut( "ValidJetContent"     , "True if the jet is alright technicall (e.g. all attributes necessary for tag)"        );
+
+  switch(m_mode) {
+  case MassTau32 :{
+    m_accept.addCut( "PassMass"    , "mJet > mCut"  );
+    m_accept.addCut( "PassTau32"   , "Tau32Jet < Tau32Cut"   );
+  }
+  case MassSplit23:{
+    m_accept.addCut( "PassMass"    , "mJet > mCut"  );
+    m_accept.addCut( "PassSplit23" , "Split23Jet > Split23cut"   );
+  }
+  case Tau32Split23:{
+    m_accept.addCut( "PassTau32"    , "Tau32Jet < Tau32Cut"  );
+    m_accept.addCut( "PassSplit23"  , "Split23Jet > Split23Cut"   );
+  }
+  case QwTau32:{
+    m_accept.addCut( "PassQw"       , "QwJet > QwCut" );
+    m_accept.addCut( "PassTau32"    , "Tau32Jet < Tau32Cut"  );
+  }
+  default: break;
+  }
+
+  //loop over and print out the cuts that have been configured
+  ATH_MSG_INFO( "After tagging, you will have access to the following cuts as a Root::TAccept : (<NCut>) <cut> : <description>)" );
+  showCuts();
+
+
   return StatusCode::SUCCESS;
 } // end initialize()
 
 
 
-SmoothedTopTagger::Result SmoothedTopTagger::result(const xAOD::Jet& jet, bool decorate) const {
+Root::TAccept SmoothedTopTagger::tag(const xAOD::Jet& jet) const {
 
   ATH_MSG_DEBUG( ": Obtaining Smooth top result" );
+
+  // set the jet validity bits to 1 by default
+  m_accept.setCutResult( "ValidPtRangeHigh", true);
+  m_accept.setCutResult( "ValidPtRangeLow" , true);
+  m_accept.setCutResult( "ValidEtaRange"   , true);
+  m_accept.setCutResult( "ValidJetContent" , true);
 
   // check basic kinematic selection
   if (std::fabs(jet.eta()) > m_jetEtaMax) {
     ATH_MSG_DEBUG("Jet does not pass basic kinematic selection (|eta| < " << m_jetEtaMax << "). Jet eta = " << jet.eta());
-    return Result(Result::OutOfRangeEta, m_mode);
+    m_accept.setCutResult("ValidEtaRange", false);
   }
   if (jet.pt() < m_jetPtMin) {
     ATH_MSG_DEBUG("Jet does not pass basic kinematic selection (pT > " << m_jetPtMin << "). Jet pT = " << jet.pt()/1.e3);
-    return Result(Result::OutOfRangeLowPt, m_mode);
+    m_accept.setCutResult("ValidPtRangeLow", false);
   }
   if (jet.pt() > m_jetPtMax) {
     ATH_MSG_WARNING("Jet does not pass basic kinematic selection (pT < " << m_jetPtMax << "). Jet pT = " << jet.pt()/1.e3);
-    return Result(Result::OutOfRangeHighPt, m_mode);
+    m_accept.setCutResult("ValidPtRangeHigh", false);
   }
 
   // get the relevant attributes of the jet
@@ -187,33 +223,81 @@ SmoothedTopTagger::Result SmoothedTopTagger::result(const xAOD::Jet& jet, bool d
   static SG::AuxElement::Accessor<float>    acc_s23 ("Split23");
   static SG::AuxElement::Accessor<float>    acc_qw ("Qw");
 
-
+  //set the TAccept bitmask depending on the selection mode
   switch(m_mode) {
-  case MassTau32 :{
-    if(decorate) { dec_m(jet) = cut_var1; dec_tau32(jet) = cut_var2;}
-    float tau32 = buildTau32(jet);
-    return Result( (jet_mass > cut_var1) ,  (0<=tau32) && ( tau32 < cut_var2) , m_mode);
-  }
-  case MassSplit23:{
-    if(decorate) { dec_m(jet) = cut_var1; dec_s23(jet) = cut_var2;}
-    return Result( ( jet_mass > cut_var1) , ( acc_s23(jet)/1000. > cut_var2), m_mode );
-  }
-  case Tau32Split23:{
-    if(decorate) { dec_tau32(jet) = cut_var1; dec_s23(jet) = cut_var2;}
-    float tau32 = buildTau32(jet);
-    return Result(  (0<=tau32) && ( tau32 < cut_var1)  , ( acc_s23(jet)/1000.> cut_var2), m_mode );
-  }
-  case QwTau32:{
-    if(decorate) { dec_qw(jet) = cut_var1; dec_tau32(jet) = cut_var2;}
-    float tau32 = buildTau32(jet);
-    return Result( ( acc_qw(jet)/1000. > cut_var1)  , (0<=tau32) && (tau32 < cut_var2), m_mode );
-  }
-  default: break;
+    case MassTau32 :{
+      if(m_decorate) {
+        dec_m(jet) = cut_var1;
+        dec_tau32(jet) = cut_var2;
+      }
+      float tau32 = buildTau32(jet); // builds tau32 and checks for content
+
+      if(jet_mass>=cut_var1)
+        m_accept.setCutResult("PassMass",true);
+
+      if( (0<=tau32) && (tau32 < cut_var2) )
+        m_accept.setCutResult("PassTau32",true);
+
+    }
+    case MassSplit23:{
+      if(m_decorate) {
+        dec_m(jet) = cut_var1;
+        dec_s23(jet) = cut_var2;
+      }
+
+      if( !acc_s23.isAvailable(jet) ){
+        ATH_MSG_VERBOSE( "The Split23 variable is not available in your file" );
+        m_accept.setCutResult("ValidJetContent", false);
+      }
+
+      if( ( jet_mass > cut_var1) )
+        m_accept.setCutResult("PassMass",true);
+
+      if( ( acc_s23(jet)/1000. > cut_var2) )
+        m_accept.setCutResult("PassSplit23",true);
+    }
+    case Tau32Split23:{
+      if(m_decorate) {
+        dec_tau32(jet) = cut_var1;
+        dec_s23(jet) = cut_var2;
+      }
+      float tau32 = buildTau32(jet);
+
+      if( !acc_s23.isAvailable(jet) ){
+        ATH_MSG_VERBOSE( "The Split23 variable is not available in your file" );
+        m_accept.setCutResult("ValidJetContent", false);
+      }
+
+      if( (0<=tau32) && (tau32 < cut_var1) )
+        m_accept.setCutResult("PassTau32",true);
+
+      if( ( acc_s23(jet)/1000.> cut_var2) )
+        m_accept.setCutResult("PassSplit23",true);
+
+    }
+    case QwTau32:{
+      if(m_decorate) {
+        dec_qw(jet) = cut_var1;
+        dec_tau32(jet) = cut_var2;
+      }
+      float tau32 = buildTau32(jet);
+
+      if( !acc_qw.isAvailable(jet) ){
+        ATH_MSG_VERBOSE( "The Qw variable is not available in your file" );
+        m_accept.setCutResult("ValidJetContent", false);
+      }
+
+      if( (acc_qw(jet)/1000. > cut_var1) )
+        m_accept.setCutResult("PassQw",true);
+
+      if( (0<=tau32) && (tau32 < cut_var2) )
+        m_accept.setCutResult("PassTau32",true);
+    }
+    default:
+      break;
   }
 
-  // we should not arrive there !
-  return Result(false, false, m_mode);
-
+  return m_accept;
 }
 
 
@@ -223,18 +307,20 @@ float SmoothedTopTagger::buildTau32(const xAOD::Jet& jet) const {
   static SG::AuxElement::ConstAccessor<float>    acc_Tau2 ("Tau2_wta");
   static SG::AuxElement::ConstAccessor<float>    acc_Tau3 ("Tau3_wta");
   static SG::AuxElement::ConstAccessor<float>    acc_Tau32 ("Tau32_wta");
-  float jet_tau32;
-  if((!acc_Tau2.isAvailable(jet) || !acc_Tau3.isAvailable(jet))){
-    ATH_MSG_VERBOSE( ": The Tau# variables are not available in your file" );
-    return -1.; // this will always fail
-  }
+  float jet_tau32 = 0;
 
   if( acc_Tau32.isAvailable( jet ) ) {
     jet_tau32= acc_Tau32( jet ) ;
-  } else if( acc_Tau2(jet)>0.0 ){
+  }
+  else if((!acc_Tau2.isAvailable(jet) || !acc_Tau3.isAvailable(jet))){
+    ATH_MSG_VERBOSE( "The Tau# variables are not available in your file" );
+    m_accept.setCutResult("ValidJetContent", false);
+  }
+  else if( acc_Tau2(jet)>0.0 ){
     jet_tau32 = acc_Tau3(jet) / acc_Tau2(jet);
 
-  } else {
+  }
+  else {
     // set tau32 artificially to 0.  This is probably because the jet has one constituent, so it will fail the mass cut anyways
     jet_tau32 = 0;
   }
@@ -245,38 +331,6 @@ float SmoothedTopTagger::buildTau32(const xAOD::Jet& jet) const {
 StatusCode SmoothedTopTagger::finalize(){
   /* Delete or clear anything */
   return StatusCode::SUCCESS;
-}
-
-
-bool SmoothedTopTagger::Result::massPassed() const {
-  switch(m_mode) {
-  case MassTau32: case MassSplit23: return m_v1;
-  default:return false;
-  }
-}
-
-bool SmoothedTopTagger::Result::tau32Passed() const {
-  switch(m_mode) {
-  case MassTau32:
-  case QwTau32:       return m_v2;
-  case Tau32Split23:  return m_v1;
-  default:return false;
-  }
-}
-
-bool SmoothedTopTagger::Result::split23Passed() const {
-  switch(m_mode) {
-  case MassSplit23:   return m_v2;
-  case Tau32Split23:  return m_v2;
-  default:return false;
-  }
-}
-
-bool SmoothedTopTagger::Result::qwPassed() const {
-  switch(m_mode) {
-  case QwTau32:   return m_v1;
-  default:return false;
-  }
 }
 
 
