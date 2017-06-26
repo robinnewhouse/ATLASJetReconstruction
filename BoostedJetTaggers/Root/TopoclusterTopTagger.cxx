@@ -286,9 +286,6 @@ void TopoclusterTopTagger::preprocess(std::map<std::string,double> &clusters, co
     /* Adapted from Jannicke Pearkes */
     // We assume these constituents are sorted by pt
 
-    // Make new cluster map
-    std::map<std::string,double> T_clusters;
-
     // Extract jet properties
     // double jet_pt = jet.pt(); // unused
     // double jet_eta = jet.eta();

@@ -28,6 +28,7 @@ atlas_depends_on_subdirs(
    Reconstruction/Jet/JetInterface
    Reconstruction/Jet/JetCalibTools
    Reconstruction/Jet/JetRec
+   PhysicsAnalysis/Interfaces/JetAnalysisInterfaces
    PRIVATE
    Tools/PathResolver
    PhysicsAnalysis/JetMissingEtID/JetSelectorTools
@@ -44,12 +45,10 @@ find_package( ROOT COMPONENTS Matrix RooFit TMVA )
 find_package( Boost )
 
 # Build a dictionary for the library:
-if( XAOD_STANDALONE )
-   atlas_add_root_dictionary( BoostedJetTaggersLib _dictionarySource
-      #ROOT_HEADERS BoostedJetTaggers/*.h Root/LinkDef.h
-      ROOT_HEADERS Root/LinkDef.h
-      EXTERNAL_PACKAGES ROOT )
-endif()
+atlas_add_root_dictionary( BoostedJetTaggersLib _dictionarySource
+   #ROOT_HEADERS BoostedJetTaggers/*.h Root/LinkDef.h
+   ROOT_HEADERS Root/LinkDef.h
+   EXTERNAL_PACKAGES ROOT )
 
 # Build a shared library:
 atlas_add_library( BoostedJetTaggersLib
