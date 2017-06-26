@@ -1,12 +1,12 @@
 /**************************************************************
 //
 // Created:        8 November  2016
-// Last Updated:   11 May 2017
+// Last Updated:   26 June 2017
 //
 // Daniel Marley
 // daniel.edison.marley@cern.ch
 //
-// Work by: Ece Akilli, Dan Guest, Oliver Majersky, Sam Meehan
+// Work by: Ece Akilli, Dan Guest, Oliver Majersky, Sam Meehan, Robin Newhouse
 //
 // DNN Tagging of Large-R jets as W/top
 //

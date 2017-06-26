@@ -1,3 +1,21 @@
+/**************************************************************
+//
+// Created:        17 May  2017
+// Last Updated:   26 June 2017
+//
+// Robin Newhouse
+// robin.newhouse@cern.ch
+//
+// Work by: Robin Newhouse, Jannicke Pearkes
+//
+// DNN Tagging of Large-R jets as W/top
+//
+//   There are two components to the tagger:
+//    1. Load the weights from the trained tagger
+//    2. Determine if jet passes working point
+//       (use trained tagger info to get discriminant for new jet)
+//
+***************************************************************/
 #include "BoostedJetTaggers/TopoclusterTransform.h"
 
 
@@ -9,8 +27,8 @@ static const double MIN_PHI = 0; // confirm
 static const double MAX_PHI = M_PI;
 
 double TopoclusterTransform::pt_min_max_scale(double clust_pt, double jet_pt){
-		return (clust_pt - MIN_PT) / (MAX_PT - MIN_PT);
-	}
+        return (clust_pt - MIN_PT) / (MAX_PT - MIN_PT);
+    }
 
 double TopoclusterTransform::jet_pt_scale(double clust_pt, double jet_pt){
         return clust_pt / jet_pt;
@@ -68,25 +86,25 @@ double TopoclusterTransform::calculate_theta_for_rotations(std::map<std::string,
     double z_axis = 0.0;
 
     // Calculate principal axis
-	for (uint i = 0; i < clusters.size() / 3 ; ++i){
-		double pt_i = clusters["clust_"+std::to_string(i)+"_pt"];
-		double eta_i = clusters["clust_"+std::to_string(i)+"_eta"];
-		double phi_i = clusters["clust_"+std::to_string(i)+"_phi"];
-		double e_i = pt_i * cosh(eta_i);
+    for (uint i = 0; i < clusters.size() / 3 ; ++i){
+        double pt_i = clusters["clust_"+std::to_string(i)+"_pt"];
+        double eta_i = clusters["clust_"+std::to_string(i)+"_eta"];
+        double phi_i = clusters["clust_"+std::to_string(i)+"_phi"];
+        double e_i = pt_i * cosh(eta_i);
         double rad_i = sqrt(pow(eta_i,2) + pow(phi_i,2));
         if(rad_i != 0){
-            pt_axis += pt_i;						// This seems strange to me
-            phi_axis += (phi_i * e_i / rad_i);		// why do we add to the axis at every
-            eta_axis += (eta_i * e_i / rad_i);		// iteration. Not static? - RN 
+            pt_axis += pt_i;                        // This seems strange to me
+            phi_axis += (phi_i * e_i / rad_i);      // why do we add to the axis at every
+            eta_axis += (eta_i * e_i / rad_i);      // iteration. Not static? - RN 
         }
         // Calculate cartesian coordinates
-	    double px = pt_axis * cos(phi_axis);
-	    double py = pt_axis * sin(phi_axis);
-	    double pz = pt_axis * sinh(eta_axis);
-		y_axis = py;
-		z_axis = pz;
+        double px = pt_axis * cos(phi_axis);
+        double py = pt_axis * sin(phi_axis);
+        double pz = pt_axis * sinh(eta_axis);
+        y_axis = py;
+        z_axis = pz;
 
-	}
+    }
     // Calculate the rotation angle for this cluster
     return atan2(y_axis, z_axis) + M_PI / 2;
 }
