@@ -58,6 +58,9 @@ class TopoclusterTopTagger :  public JSSTaggerBase {
     // Preprocess the jet constituents by applying transformations
     void preprocess(std::map<std::string,double> &clusters, xAOD::Jet jet) const;
 
+    // Store jet data as csv for comparison to training
+    void store_jet_data(std::map<std::string,double> clusters, const xAOD::Jet jet, double score, std::string filename) const;
+
     // Retrieve score for a given DNN type (top/W)
     double getScore(const xAOD::Jet& jet) const;
 

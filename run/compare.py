@@ -167,4 +167,5 @@ if __name__ == '__main__':
     # display_side_by_side("testrun_short_10_pt_min_max_scale_pt_shift_prim_and_rotate_prim_eta_phiflip_everything.npz", "jet_data_scaled_shifted_rotated.csv")
     # display_side_by_side("testrun_short_10_pt_min_max_scale_pt_shift_prim_and_rotate_prim_and_flip_eta_phiflip_everything.npz", "jet_data_scaled_shifted_rotated_flipped.csv")
     display_side_by_side("testrun_short_10_pt_min_max_scale_pt_shift_prim_and_rotate_prim_and_flip_eta_phiflip_everything.npz", "jet_data_final.csv")
+    # display_side_by_side("npz_w_pred.npz", "jet_data_scored.csv")
 

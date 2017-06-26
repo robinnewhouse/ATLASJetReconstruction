@@ -30,7 +30,8 @@ get_column_name = {0: 'weight',
                    25:  '2 const phi',
 		       26:  '3 const pt',
                    27:  '3 const eta',
-                   28:  '4 const phi'
+                   28:  '4 const phi',
+                   51:  'score'
 			}
 
 get_column_no = dict((reversed(item) for item in get_column_name.items()))
