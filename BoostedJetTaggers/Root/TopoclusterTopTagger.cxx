@@ -278,10 +278,6 @@ double TopoclusterTopTagger::getScore(const xAOD::Jet& jet) const{
     double DNNscore(-666.);
     DNNscore = discriminant[m_kerasConfigOutputName];
 
-    // print to a file to compare with python-based preprocessing
-    store_jet_data(DNN_inputValues_clusters, jet, DNNscore, "jet_data_scored.csv");
-
-
     return DNNscore;
 }
 
@@ -330,47 +326,6 @@ void TopoclusterTopTagger::preprocess(std::map<std::string,double> &clusters, co
     TopoclusterTransform::flip(clusters);
 
     return;
-}
-
-void TopoclusterTopTagger::store_jet_data(std::map<std::string,double> clusters, const xAOD::Jet jet, double score, std::string filename) const {
-
-  std::ofstream jetData;
-  jetData.open (filename, std::ios_base::app); // append
-  jetData << 0.0 << ","; // weight
-  jetData << 1.0 << ","; // label
-  jetData << jet.m()/1000.0 << ","; // jet mass GeV
-  jetData << jet.pt()/1000.0 << ","; // jet pt GeV
-  jetData << jet.eta() << ","; // jet eta
-  jetData << jet.phi() << ","; // jet phi
-  jetData << 0.0 << ","; // Tau32_wta
-  jetData << 0.0 << ","; // Split23
-  jetData << 0.0 << ","; // NPV
-  jetData << 0.0 << ","; // C2
-  jetData << 0.0 << ","; // D2
-  jetData << 0.0 << ","; // subjet start
-  jetData << 0.0 << ","; // b eta
-  jetData << 0.0 << ","; // b phi
-  jetData << 0.0 << ","; // W_1 pt
-  jetData << 0.0 << ","; // W_1 eta
-  jetData << 0.0 << ","; // W_1 phi
-  jetData << 0.0 << ","; // W_2 pt
-  jetData << 0.0 << ","; // W_2 eta
-  jetData << 0.0 << ","; // W_2 phi
-  // Store constituents
-  for (int i = 0; i < N_CONSTITUENTS; ++i)
-  {
-    jetData << clusters["clust_"+std::to_string(i)+"_pt"]  << ","; // is this is GeV ???
-    jetData << clusters["clust_"+std::to_string(i)+"_eta"] << ",";
-    jetData << clusters["clust_"+std::to_string(i)+"_phi"] << ",";
-
-  }
-
-  jetData << score << ","; // W_2 phi
-
-
-  jetData << std::endl;
-  jetData.close();
-
 }
 
 void TopoclusterTopTagger::decorateJet(const xAOD::Jet& jet, float mcutH, float mcutL, float scoreCut, float scoreValue) const{
