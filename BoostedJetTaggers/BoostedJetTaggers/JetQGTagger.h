@@ -53,11 +53,13 @@ namespace CP {
       float m_jetEtaMax;
       ///////////////// =======================
 
-      virtual StatusCode initialize();
-      virtual StatusCode finalize();
+      StatusCode initialize();
+      StatusCode finalize();
 
       // Implement IJetSelectorTool interface
-      virtual Root::TAccept tag(const xAOD::Jet& jet, const xAOD::Vertex * _pv = NULL) const;
+      Root::TAccept tag(const xAOD::Jet& jet, const xAOD::Vertex * _pv = NULL) const;
+
+      Root::TAccept tag(const xAOD::Jet& jet) const {return tag(jet,NULL); }
 
       // functions for systematic variations
       bool isAffectedBySystematic(const SystematicVariation& var) const{return SystematicsTool::isAffectedBySystematic(var);}
