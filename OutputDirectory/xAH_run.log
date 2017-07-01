@@ -1,0 +1,35 @@
+[xAH-2.4.22-58-g9ab194f] xAH_run.py -f --files /afs/cern.ch/work/m/meehan/public/BoostedJetTaggersDev/mc15_13TeV.301497.MadGraphPythia8EvtGen_A14NNPDF23LO_RS_G_hh_bbbb_c10_M1200.merge.DAOD_FTAG1.e3820_s2608_s2183_r7772_r7676_p2711/DAOD_FTAG1.08911396._000010.pool.root.1 --nevents 1 --config JSSTutorial/scripts/config_Tutorial1.py --submitDir OutputDirectory direct
+Code:  https://github.com/UCATLAS/xAODAnaHelpers/tree/9ab194f
+Start: May 24 2017 11:10:02
+Stop:  May 24 2017 11:10:34
+Delta: 0:00:32.035060
+
+job runner options
+	input_filename                                      = ['/afs/cern.ch/work/m/meehan/public/BoostedJetTaggersDev/mc15_13TeV.301497.MadGraphPythia8EvtGen_A14NNPDF23LO_RS_G_hh_bbbb_c10_M1200.merge.DAOD_FTAG1.e3820_s2608_s2183_r7772_r7676_p2711/DAOD_FTAG1.08911396._000010.pool.root.1']
+	submit_dir                                          = OutputDirectory
+	num_events                                          = 1
+	skip_events                                         = 0
+	force_overwrite                                     = True
+	use_inputFileList                                   = False
+	use_scanDQ2                                         = False
+	use_scanRucio                                       = False
+	use_scanEOS                                         = False
+	use_scanXRD                                         = False
+	verbose                                             = 0
+	driver                                              = direct
+<class 'ROOT.BasicEventSelection'> algorithm options
+	setting <class 'ROOT.BasicEventSelection'>.m_truthLevelOnly               = False
+	setting <class 'ROOT.BasicEventSelection'>.m_debug                        = False
+	setting <class 'ROOT.BasicEventSelection'>.m_useMetaData                  = False
+	setting <class 'ROOT.BasicEventSelection'>.m_vertexContainerName          = PrimaryVertices
+	setting <class 'ROOT.BasicEventSelection'>.m_derivationName               = JETM8
+	setting <class 'ROOT.BasicEventSelection'>.m_applyGRLCut                  = False
+	setting <class 'ROOT.BasicEventSelection'>.m_PVNTrack                     = 2
+	setting <class 'ROOT.BasicEventSelection'>.m_isMC                         = True
+	setting <class 'ROOT.BasicEventSelection'>.m_doPUreweighting              = False
+	setting <class 'ROOT.BasicEventSelection'>.m_applyPrimaryVertexCut        = True
+<class 'ROOT.JSSTutorialAlgo'> algorithm options
+	setting <class 'ROOT.JSSTutorialAlgo'>.m_TreeName                     = JetTree
+	setting <class 'ROOT.JSSTutorialAlgo'>.m_debug                        = False
+	setting <class 'ROOT.JSSTutorialAlgo'>.m_MyNewVariable                = ThisGotLoadedIn
+	setting <class 'ROOT.JSSTutorialAlgo'>.m_name                         = JSSTutorialAlgo
