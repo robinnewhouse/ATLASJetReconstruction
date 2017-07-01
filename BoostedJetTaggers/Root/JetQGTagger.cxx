@@ -1,3 +1,7 @@
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #include "BoostedJetTaggers/JetQGTagger.h"
 
 #include <TRandom3.h>
@@ -232,9 +236,20 @@ namespace CP {
     return StatusCode::SUCCESS;
   }
 
+  Root::TAccept JetQGTagger::tag(const xAOD::Jet& jet) const {
+
+    ATH_MSG_DEBUG( "Obtaining JetQGTagger decision default" );
+
+    // call the IJetQGTagger version of tag
+    // uses the 0th primary vertex by default
+    m_accept = tag(jet, NULL);
+
+    return m_accept;
+  }
+
   Root::TAccept JetQGTagger::tag(const xAOD::Jet& jet, const xAOD::Vertex * _pv) const {
 
-    ATH_MSG_DEBUG( "Obtaining JetQGTagger decision" );
+    ATH_MSG_DEBUG( "Obtaining JetQGTagger decision with user specific primary vertex" );
 
     // reset the TAccept cut results to false
     m_accept.clear();
@@ -391,14 +406,13 @@ namespace CP {
       ATH_MSG_DEBUG("Accessing GhostTruthAssociationLink: is available");
       if(jet->auxdata< ElementLink<xAOD::JetContainer> >("GhostTruthAssociationLink").isValid() ){
         ATH_MSG_DEBUG("Accessing GhostTruthAssociationLink: is valid");
-	ElementLink<xAOD::JetContainer> truthlink = jet->auxdata< ElementLink<xAOD::JetContainer> >("GhostTruthAssociationLink");
-	// std::cout << "truthlink " << truthlink << std::endl;
-	if(truthlink)
-	  tjet = * truthlink;
-	else{
-	  ATH_MSG_WARNING("Cannot access truth: setting weight to 1");
-	  return StatusCode::SUCCESS;
-	}//endelse NULL pointer
+        ElementLink<xAOD::JetContainer> truthlink = jet->auxdata< ElementLink<xAOD::JetContainer> >("GhostTruthAssociationLink");
+        if(truthlink)
+          tjet = * truthlink;
+        else{
+          ATH_MSG_WARNING("Cannot access truth: setting weight to 1");
+          return StatusCode::SUCCESS;
+        }//endelse NULL pointer
       }
       else {
         ATH_MSG_WARNING("Cannot access truth: setting weight to 1");

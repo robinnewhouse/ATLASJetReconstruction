@@ -4,11 +4,11 @@ JetRec/
 JetRecTools/
 JetSubStructureMomentTools/
 Asg_FastJet/
-#BoostedJetTaggers/
+BoostedJetTaggers/
 
 PFlowUtils/
 RootCoreBin/
-# run/
+run/
 ShowerDeconstruction/
 TestPythonConfig/
 tmp/
@@ -19,20 +19,8 @@ ParticleJetTools/
 needed.txt
 
 # ignore everything not already tracked :
-#*/
+*/
 # except those :
 !JSSTutorial/
 !JSSTutorial/*
 !utils/
-
-#Robin's additions
-RootCore.par
-.RootCoreBin
-*.svn*
-mc15_13TeV*
-cmake-build-debug/
-cmake-build-debug/
-.idea/
-run/*.csv
-run/run.sh.*
-

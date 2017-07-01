@@ -1,4 +1,9 @@
-// this file is -*- C++ -*- 
+// this file is -*- C++ -*-
+
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #ifndef HEPTopTagger_H
 #define HEPTopTagger_H
 
@@ -13,7 +18,7 @@
  * https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/HEPTopTagger
  *
  * C++ only version: Christoph Eckardt (christoph.eckardt@cern.ch)
- * 
+ *
  * Re-written for Run2 Atlas software : P-A Delsart
  */
 
@@ -40,11 +45,11 @@ namespace HTTxAOD {
 
   ///******************************************************
   class HEPTopTagger : public asg::AsgTool,
-                       virtual public IJetModifier { 
+                       virtual public IJetModifier {
     ASG_TOOL_CLASS(HEPTopTagger, IJetModifier)
     public:
 
-    
+
     /// a set of quantities related to a top candidate.
     /// this is used as a return value from the main runTagger() function
     struct HTTResult {
@@ -68,12 +73,12 @@ namespace HTTxAOD {
     /// Implements IJetModifier
     /// Builds and records tagged jets from the input jet container.
     int modify(xAOD::JetContainer& jets) const;
-    
+
     /// Fills topCandidates
     int findTopCandidates(xAOD::JetContainer & input,
                           xAOD::JetContainer & topCandidates,
                           xAOD::JetContainer & topSubJets,
-			  xAOD::JetContainer & groomedFatJets) const ;
+                          xAOD::JetContainer & groomedFatJets) const ;
 
     HTTResult runTagger(const fastjet::PseudoJet &jet) const ;
 
@@ -85,7 +90,7 @@ namespace HTTxAOD {
     void UseAcutTagger();
     void UseDefR03Tagger();
     void UseDefR02Tagger();
-    void UseDefNf6Tagger();    
+    void UseDefNf6Tagger();
     void UseTightTagger();
     void UseLooseTagger();
     void UseSuperLooseTagger();

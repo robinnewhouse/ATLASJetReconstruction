@@ -1,5 +1,10 @@
 // this file is -*- C++ -*-
 
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
+
 ///////////////////////////////////////////
 /// This header is an example to demonstrate how to configure & use the HEPTopTagger
 /// within RootCore.

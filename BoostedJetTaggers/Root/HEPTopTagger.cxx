@@ -1,3 +1,7 @@
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 // Local include(s):
 #include "BoostedJetTaggers/HEPTopTagger.h"
 #include "xAODJet/JetAuxContainer.h"
@@ -85,11 +89,11 @@ namespace HTTxAOD {
     for(fastjet::PseudoJet& pj:vec ) if( f(pj) ) tmp.push_back(pj);
     tmp.swap(vec);
   }
-  
+
   // a filter operator implementing a pt cut
   // instantiation is : PtMinPJFilter filter{cutvalue}; (c++11)
   struct PtMinPJFilter {
-    bool operator()(const fastjet::PseudoJet &pj) const {return pj.perp()>ptcut;} 
+    bool operator()(const fastjet::PseudoJet &pj) const {return pj.perp()>ptcut;}
     const double ptcut;
   };
 
@@ -104,15 +108,15 @@ namespace HTTxAOD {
   // ************************************************************
   // HEPTopTagger implementation
   // ************************************************************
-  HEPTopTagger::HEPTopTagger(const std::string& name) :  
+  HEPTopTagger::HEPTopTagger(const std::string& name) :
     asg::AsgTool(name)
     , m_jetFromPJTool("")
     , m_jetCalibTools()
     , m_jetCalibToolsCA15()
     , m_preDefSettings("")
-    , m_topContName("")      
-    , m_topCandLink("HTTCandidate")    
-    , m_groomedFatJetLink("SetMe")  
+    , m_topContName("")
+    , m_topCandLink("HTTCandidate")
+    , m_groomedFatJetLink("SetMe")
     , m_CutCalibratedSubjetPt(true)             // set to True to apply the minimal_subjet_pt cut on the calibrated subjet
     , m_ExclusiveSubjets_Rparam(true)           // true  -> Rmax:   max. distance of constituent from jet axis)
     // false -> Rmerge: (smallest) R that would yield the same subjet in inclusive clustering
@@ -174,7 +178,7 @@ namespace HTTxAOD {
 
     declareProperty("TopContName", m_topContName);
     //    declareProperty("", m_topSubjetContName);
-    declareProperty("TopCandidateLink", m_topCandLink);      
+    declareProperty("TopCandidateLink", m_topCandLink);
 
     // there's no JetTool yet to filter on mass/eta. Do it here :
     declareProperty("MinFatJetMass", m_MinFatjetM);
@@ -200,14 +204,14 @@ namespace HTTxAOD {
     declareProperty("FilterNSubJets", m_FilterNSubJets);
     declareProperty("FilterR",        m_FilterR);
     declareProperty("FiltContainerName", m_groomedContName);
-  }  
+  }
 
   HEPTopTagger::~HEPTopTagger() {}
 
   StatusCode HEPTopTagger::initialize(){
-  
+
     ATH_CHECK(m_jetFromPJTool.retrieve());
-    
+
     if(m_preDefSettings=="normal") UseNormalTagger();
     if(m_preDefSettings=="def") UseDefTagger();
     if(m_preDefSettings=="tight") UseTightTagger();
@@ -217,7 +221,7 @@ namespace HTTxAOD {
     if(m_preDefSettings=="Ptord") UsePtordTagger();
     if(m_preDefSettings=="defR03") UseDefR03Tagger();
     if(m_preDefSettings=="defR02") UseDefR02Tagger();
-    if(m_preDefSettings=="defNf6") UseDefNf6Tagger();    
+    if(m_preDefSettings=="defNf6") UseDefNf6Tagger();
     if(m_preDefSettings.find("sjcalib") != std::string::npos) UseSJCalibXTagger();
     if(m_preDefSettings.find("sj2Dcalib") != std::string::npos) UseSJ2DCalibXTagger();
     if(m_preDefSettings.find("sj3Dcalib") != std::string::npos) UseSJ3DCalibXTagger();
@@ -233,7 +237,7 @@ namespace HTTxAOD {
 
     return StatusCode::SUCCESS;
   }
-  
+
 
   int HEPTopTagger::modify(xAOD::JetContainer& jets) const {
 
@@ -245,7 +249,7 @@ namespace HTTxAOD {
 
     xAOD::JetContainer* topSubJets = new xAOD::JetContainer();
     xAOD::JetAuxContainer* topsubaux = new xAOD::JetAuxContainer();
-    topSubJets->setStore(topsubaux);    
+    topSubJets->setStore(topsubaux);
     INT_CHECK( evtStore()->record(topSubJets, m_topContName+"SubJets") );
     INT_CHECK( evtStore()->record(topsubaux,  m_topContName+"SubJetsAux.") );
 
@@ -255,7 +259,7 @@ namespace HTTxAOD {
     if(getCalibratorCA15() != NULL || (m_preDefSettings.find("sj") != std::string::npos && m_preDefSettings.find("calib") != std::string::npos)) {
       groomedFatJets   = new xAOD::JetContainer();
       groomedFatAux    = new xAOD::JetAuxContainer();
-      groomedFatJets->setStore(groomedFatAux);    
+      groomedFatJets->setStore(groomedFatAux);
       std::string extraName = "";
       if(m_preDefSettings.find("sj") != std::string::npos && m_preDefSettings.find("calib") != std::string::npos)
 	extraName = m_preDefSettings;
@@ -273,10 +277,10 @@ namespace HTTxAOD {
     static  ElementLink<xAOD::IParticleContainer> el;
     j->setAttribute(m_topCandLink, el);
   }
-  
+
   int HEPTopTagger::findTopCandidates(xAOD::JetContainer & input,
                                       xAOD::JetContainer & topCandCont,
-                                      xAOD::JetContainer & topSubJetCont, 
+                                      xAOD::JetContainer & topSubJetCont,
 				      xAOD::JetContainer & groomedFatJetsCont
 				      ) const {
 
@@ -285,9 +289,9 @@ namespace HTTxAOD {
     for( xAOD::Jet *j : input) {
       // calibrate CA15 before threshold cuts
       if(calTool){
-        ATH_MSG_DEBUG("Calibration tool given, calibrating input fat jets." );        
+        ATH_MSG_DEBUG("Calibration tool given, calibrating input fat jets." );
         j->setAttribute<xAOD::JetFourMom_t>("JetPileupScaleMomentum", j->jetP4()); // This is to workaound JetCalibTools issue
-        StatusCode sc= calTool->applyCalibration(*j ) ; if(sc.isFailure()) continue;      
+        StatusCode sc= calTool->applyCalibration(*j ) ; if(sc.isFailure()) continue;
       }
 
       // a dirty trick to check if this is the first JetModifier. Skip otherwise, to avoid overwritng of the groomed jet collection
@@ -304,13 +308,13 @@ namespace HTTxAOD {
 	groomFatJet(j, groomed_jet, groomedFatJetsCont, 0.2, 0, 0.05);
       }
 
-      // there's no JetTool yet to filter on mass/eta. Do it here :      
+      // there's no JetTool yet to filter on mass/eta. Do it here :
       if( fabs(j->eta()) > m_MaxFatjetEta ) {notTagged(j); continue;}
       if( j->m() < m_MinFatjetM ) {notTagged(j); continue;}
-      
+
       ATH_MSG_DEBUG("Runing HTT for jet at "<< j->index() << "  "<<j->pt() );
       HTTResult cand = runTagger(*(j->getPseudoJet()) );
-      
+
       if( ! cand.validCandidate) {notTagged(j); continue;}
       if( ! cand.isTagged) {notTagged(j); continue;} // for now exclude untagged jets
       ATH_MSG_DEBUG(" HTT Found a candidate ! Saving it." );
@@ -328,8 +332,8 @@ namespace HTTxAOD {
 
       // Create top subjets and fill topSubJetCont :
       vector<const xAOD::Jet *> subjets; subjets.reserve(3); // will use as an association.
-      for(fastjet::PseudoJet &pjsub : cand.topSubJets) 
-        subjets.push_back(m_jetFromPJTool->add( pjsub , topSubJetCont, jtype, tmpv) ); 
+      for(fastjet::PseudoJet &pjsub : cand.topSubJets)
+        subjets.push_back(m_jetFromPJTool->add( pjsub , topSubJetCont, jtype, tmpv) );
 
       // do associations
       ATH_MSG_DEBUG("associating fatjet to top");
@@ -357,13 +361,13 @@ namespace HTTxAOD {
       top->setAttribute("M123", m123);
       top->setAttribute("Atan1312", atan1312);
 
-      top->setAttribute("n_top_cands",  cand.n_top_cands);      
-      top->setAttribute("HTTagged",  cand.isTagged);      
+      top->setAttribute("n_top_cands",  cand.n_top_cands);
+      top->setAttribute("HTTagged",  cand.isTagged);
 
       top->setAttribute("ptSub1", cand.topSubJets[0].pt());
       top->setAttribute("ptSub2", cand.topSubJets[1].pt());
       top->setAttribute("ptSub3", cand.topSubJets[2].pt());
-      
+
       // also get dr values
       top->setAttribute( "DrW1W2", cand.topSubJets[res.w1].delta_R(cand.topSubJets[res.w2] ) );
       top->setAttribute( "DrW1B", cand.topSubJets[res.w1].delta_R(cand.topSubJets[res.b] ) );
@@ -373,11 +377,11 @@ namespace HTTxAOD {
       top->setAttribute( "CosThetaW1W2",  // m12 is closest to mW
                          check_cos_theta(cand.top, cand.topSubJets[res.w1],cand.topSubJets[res.w2]) );
       top->setAttribute( "CosTheta12",// pt-ordering
-                         check_cos_theta(cand.top,cand.topSubJets[1],cand.topSubJets[2]) ); 
-      
-      
+                         check_cos_theta(cand.top,cand.topSubJets[1],cand.topSubJets[2]) );
+
+
     }
-    
+
     return 0;
   }
 
@@ -386,10 +390,10 @@ namespace HTTxAOD {
 
   HEPTopTagger::HTTResult HEPTopTagger::runTagger(const fastjet::PseudoJet &jet) const {
 
-  
+
     vector<fastjet::PseudoJet> top_parts;
     const fastjet::ClusterSequence* cs = jet.associated_cluster_sequence ();
-    
+
     static HTTResult noCandidate;
     noCandidate.validCandidate = false;
 
@@ -407,8 +411,8 @@ namespace HTTxAOD {
 
     // now we have the hard substructure of the fat jet
     size_t parts_size = top_parts.size();
-    
-    // these events are not interesting 
+
+    // these events are not interesting
     if(top_parts.size() < 3){return noCandidate;}
 
 
@@ -457,7 +461,7 @@ namespace HTTxAOD {
                                   0.5*sqrt(min(top_parts[kk].squared_distance(top_parts[ll]),
                                                min(top_parts[rr].squared_distance(top_parts[ll]),
                                                    top_parts[kk].squared_distance(top_parts[rr])))));
-        
+
           ATH_MSG_DEBUG( "filt_top_R = " << filt_top_R );
 
           // perform filtering
@@ -476,27 +480,25 @@ namespace HTTxAOD {
           //fastjet::GhostedAreaSpec ghost_area_spec = fastjet::GhostedAreaSpec(fatjet_rap-fatjet_r,fatjet_rap+fatjet_r , 1, 0.01, .0, 0.1, 1e-100);
           std::vector<int> vseed = {32,5434,342342};
           ghost_area_spec.set_random_status(vseed);
-          ghost_area_spec.set_fj2_placement(true);        
+          ghost_area_spec.set_fj2_placement(true);
           fastjet::AreaDefinition areaDefinition = fastjet::AreaDefinition(ghost_area_spec);
 
 
           //fastjet::ClusterSequenceArea cstopfilt(top_constits,  filtering_top_def, areaDefinition);
           // Area commented out : not sure it's relevant for small subjets+ very cpu intensive
           fastjet::ClusterSequence cstopfilt(top_constits,  filtering_top_def);
-                                                 
+
 
           // extract top subjets
           vector <fastjet::PseudoJet> filt_top_subjets = inclCsFunction(&cstopfilt);
 
-          // if (debug) {
-          //   if(filt_top_subjets.size() > 0) {
-          //     cout << "inclusive subjets:" );
-          //     for(unsigned ii = 0; ii<filt_top_subjets.size() ; ii++) {
-          //       cout << ii << " with pT: " << filt_top_subjets[ii].perp() << 
-          //         " and eta: " << filt_top_subjets[ii].eta() );
-          //     }
-          //   }
-          // }
+          // print block for debugging
+          if(filt_top_subjets.size() > 0) {
+            ATH_MSG_DEBUG("inclusive subjets:" );
+            for(unsigned ii = 0; ii<filt_top_subjets.size() ; ii++) {
+              ATH_MSG_DEBUG( "subjet : "<<ii << " with pT: " << filt_top_subjets[ii].perp() << " and eta: " << filt_top_subjets[ii].eta() );
+            }
+          }
 
           // --------------------------------------------------------------
           // Step 4: Keep five hardest subjets and test with top-quark mass
@@ -563,8 +565,8 @@ namespace HTTxAOD {
           //   all_cand_m13s.push_back(  (top_subs[0]+top_subs[2]).m() );
           //   all_cand_m23s.push_back(  (top_subs[1]+top_subs[2]).m() );
           //   all_cand_m123s.push_back( (top_subs[0]+top_subs[1]+top_subs[2]).m() );
-          //}        
-        
+          //}
+
           // ------------------------------
           // Step 6: Mass plane cut (A-cut)
           // ------------------------------
@@ -578,7 +580,7 @@ namespace HTTxAOD {
           // these are the 2d massplane cuts (A-cut)
           bool tmp_masscut_passed = check_mass_criteria(rmin,rmax,top_subs);
 
-	  count_top+=1;
+          count_top+=1;
           // Optional massplane BEFORE sorting
           if ( m_AcutBeforeSorting && (!tmp_masscut_passed) ) continue;
 
@@ -588,7 +590,7 @@ namespace HTTxAOD {
           bool isBestCandidate = false;
           if (m_SortTopCandInPt) {
             // transfer infos of the positively identified top to the outer world toppt = topcandidate.perp();
-	    toppt = topcandidate.pt();
+            toppt = topcandidate.pt();
             if(toppt > dummy) {
               isBestCandidate  = true ;
               ATH_MSG_DEBUG( "We have a good Pt candidate!" );
@@ -603,8 +605,8 @@ namespace HTTxAOD {
             }
           }
 
-          //isBestCandidate = isBestCandidate&& (topcandidate.perp() > m_MinCandPt)  ; 
-          if(isBestCandidate){          
+          //isBestCandidate = isBestCandidate&& (topcandidate.perp() > m_MinCandPt)  ;
+          if(isBestCandidate){
             bestCandidate.top = topcandidate;
             bestCandidate.topSubJets = top_subs;
             bestCandidate.topConstituents = topcand_constits;
@@ -626,7 +628,7 @@ namespace HTTxAOD {
 	    bestCandidate.n_top_cands = count_top;
 
           } // end if(isBestCandidate)
-          
+
         } // end kk
       } // end ll
     }// end rr
@@ -636,7 +638,7 @@ namespace HTTxAOD {
     }
 
     return bestCandidate;
-  }                             
+  }
 
 
 
@@ -648,17 +650,17 @@ namespace HTTxAOD {
       {
         t_parts.push_back(this_jet);
       }
-    else 
+    else
       {
         if (parent1.m() < parent2.m()) swap(parent1, parent2);
 
         // original HTT :
-        // FindHardSubst(parent1,t_parts);      
+        // FindHardSubst(parent1,t_parts);
         // if (parent1.m() < _mass_drop_threshold * this_jet.m())
         //   {
         //     FindHardSubst(parent2,t_parts);
         //   }
- 
+
         // the _max_subjet_mass cut above is probably replaced by the m_MassDrop tests below :
 
         if (parent1.m() < m_MassDrop * this_jet.m()) {
@@ -708,7 +710,7 @@ namespace HTTxAOD {
       fillJetContainer( subjetCont, out_v );
 
       double R_para = cs->jet_def().R();
-    
+
       ATH_MSG_DEBUG( "filtering. Incl: R_param = " << R_para << "  subjet size="<< subjetCont.size());
       const IJetCalibrationTool* calTool = getCalibrator(R_para);
       // loop over subjet, calibrate them
@@ -739,18 +741,18 @@ namespace HTTxAOD {
   // -----------------------------------------------------------
   vector<fastjet::PseudoJet> HEPTopTagger::exclCsFunction(fastjet::ClusterSequence *cs,
                                                           const int njets ) const {
-    
+
     //Find the Subjets
     vector<fastjet::PseudoJet> out_v = fastjet::sorted_by_pt(cs->exclusive_jets( njets ));
-  
+
     // Remove low pT jets
     double ptmin = m_MinSubjetPt;
     if (m_CutCalibratedSubjetPt) ptmin = m_MinSubjetPt*0.75;
     filterPseudoJets(out_v, PtMinPJFilter{ptmin});
-  
+
     // Remove high eta jets
     filterPseudoJets( out_v, AbsEtaPJFilter{m_MaxSubjetEta} );
-  
+
     //Calibrate the subjets
     if (m_CorrectSubjetJES) {
       // build a temporary JetContainer
@@ -761,19 +763,19 @@ namespace HTTxAOD {
       for (size_t i=0; i<out_v.size(); i++) {
         fastjet::PseudoJet &pj = out_v[i];
         ATH_MSG_DEBUG("Calibrating jet " << i << " with pT = " << pj.perp() << " GeV" );
-      
+
         double R_param = findTopSubJetsRparam(cs , pj );
         xAOD::Jet *j =  subjetCont[i];
         StatusCode sc= getCalibrator(R_param)->applyCalibration(* j ); if(sc.isFailure()) continue;
 
         out_v[i].reset_momentum( j->px(),j->py(),j->pz(),j->e() );
-        //out_v[i] *= m_ScaleFactor_JES; // can be 1.      
-	applyInSituJESRescale(out_v[i]);
+        //out_v[i] *= m_ScaleFactor_JES; // can be 1.
+        applyInSituJESRescale(out_v[i]);
       }
 
-      if (m_CutCalibratedSubjetPt) 
+      if (m_CutCalibratedSubjetPt)
         filterPseudoJets(out_v, PtMinPJFilter{m_MinSubjetPt});
-      
+
       // We must delete the aux store
       delete subjetCont.getStore();
     }
@@ -785,22 +787,23 @@ namespace HTTxAOD {
   // Helper functions
   // ----------------
   bool HEPTopTagger::inMassRange (double mass) const {
-    return m_lowerMassCut <= mass && mass <= m_upperMassCut; 
+    return m_lowerMassCut <= mass && mass <= m_upperMassCut;
   }
 
   double HEPTopTagger::findTopSubJetsRparam(const fastjet::ClusterSequence * cs , fastjet::PseudoJet & pj) const {
-  
+
     double R_param = -1;
 
     //see if the subjet consists of a single cluster
     // call the method of the cluster sequence
-    vector<fastjet::PseudoJet> constituents = cs->constituents(pj);        
-    
-    
+    vector<fastjet::PseudoJet> constituents = cs->constituents(pj);
+
+
     if (constituents.size() == 1) {
       //set radius parameter to a reasonable value
       R_param = 0.15;
-    } else {
+    }
+    else {
       if (m_ExclusiveSubjets_Rparam) {
         //Calculate the maximal deltaR between the jet axis and the constituents
         double R_max = -1;
@@ -808,17 +811,18 @@ namespace HTTxAOD {
           R_max = max(R_max, pj.squared_distance(constituents[i]));
         }
         R_param = std::sqrt(R_max);
-      } else {
+      }
+      else {
         //use the radius parameter that would have to be used with inclusive
         //clustering to obtain the same subjet
         //repeat the exclusive clustering, but for more than 3 jets
-        //if the jet disappears use FastJet to get the corresponding radius          
+        //if the jet disappears use FastJet to get the corresponding radius
         int nj = 3;
         bool pj_stillhere = true;
         while (pj_stillhere) {
           nj += 1;
           vector<fastjet::PseudoJet> l_pj_ptsorted_nj = fastjet::sorted_by_pt(cs->exclusive_jets( nj ));
-            
+
           //go through the list of returned jets and see if pj is in the list
           pj_stillhere = false;
           for (size_t i=0; i<l_pj_ptsorted_nj.size(); i++) {
@@ -837,10 +841,9 @@ namespace HTTxAOD {
         // dcut=dmerge => nj-1 jets    # the jet is not yet split
         // 3.14/2*sqrt(dmerge) is the smallest radius parameter that would
         // have to be used in inclusive clustering to obtain the same jet
-      
+
         double R_exclusive = 3.14/2;   // hardcoded in TopTagger.cpp
         R_param = R_exclusive*sqrt(dmerge);
-
 
       } // end not m_ExclusiveSubjets_Rparam
 
@@ -851,66 +854,77 @@ namespace HTTxAOD {
 
 
   void HEPTopTagger::groomFatJet(xAOD::Jet *j, xAOD::Jet *&groomedJet, xAOD::JetContainer &groomedFatJetsCont, float Rjet, int NFiltJets, float fracPt) const {
-	xAOD::JetInput::Type jtype= xAOD::JetInput::LCTopo;
+    xAOD::JetInput::Type jtype= xAOD::JetInput::LCTopo;
 
-	ATH_MSG_DEBUG("Start grooming" ); 
-        // add filtering to fatjets 
-        const fastjet::PseudoJet &fj_jet = *(j->getPseudoJet()); // "atlas" jet -> "fastjet" jet  
-	fastjet::Filter filter_fj;    
-	if(NFiltJets !=0 && fracPt < 0.01)
-          filter_fj = fastjet::Filter( fastjet::JetDefinition( fastjet::JetAlgorithm(m_TaggerAlgorithm) , Rjet ),  
-  				     fastjet::SelectorNHardest(NFiltJets) ); // give C/A and R=0.3 for filtering 
-	else if (NFiltJets ==0 && fracPt >= 0.01)
-          filter_fj = fastjet::Filter( fastjet::JetDefinition( fastjet::JetAlgorithm(m_TaggerAlgorithm) , Rjet ),  
-  				     fastjet::SelectorPtFractionMin(fracPt) ); // give C/A and R=0.3 for trimming 
-	else
-	  ATH_MSG_ERROR("NFiltJets and fracPt can not be both 0 or non-zero");
+    ATH_MSG_DEBUG("Start grooming" );
+    // add filtering to fatjets
+    const fastjet::PseudoJet &fj_jet = *(j->getPseudoJet()); // "atlas" jet -> "fastjet" jet
+    fastjet::Filter filter_fj;
+    if(NFiltJets !=0 && fracPt < 0.01){
+      // give C/A and R=0.3 for filtering
+      filter_fj = fastjet::Filter( fastjet::JetDefinition( fastjet::JetAlgorithm(m_TaggerAlgorithm) , Rjet ), fastjet::SelectorNHardest(NFiltJets) );
+    }
+    else if (NFiltJets ==0 && fracPt >= 0.01){
+      // give C/A and R=0.3 for trimming
+      filter_fj = fastjet::Filter( fastjet::JetDefinition( fastjet::JetAlgorithm(m_TaggerAlgorithm) , Rjet ), fastjet::SelectorPtFractionMin(fracPt) );
+    }
+    else{
+      // print error message if you get here
+      ATH_MSG_ERROR("NFiltJets and fracPt can not be both 0 or non-zero");
+    }
 
-        fastjet::PseudoJet groomed_fj_jet = filter_fj(fj_jet);
-        vector<fastjet::PseudoJet> keptsubjets = groomed_fj_jet.pieces(); // get N PJ subjets from filtering procedure. These subjets we can calibrate.
-	ATH_MSG_DEBUG("Finish Filtering fat PJ" );
-  
-        // build a temporary JetContainer
-        xAOD::JetContainer groomedCont;
-        // SET an AUX STORE !
-        // convert PJ's into xAOD::Jet's
-        fillJetContainer( groomedCont, keptsubjets );
-        const IJetCalibrationTool* calToolRFilt = getCalibrator(Rjet); // get calibration tool for C/A R=0.3 jets
-  
-        // calibrate subjets resulting from filtering procedure
-        fastjet::PseudoJet calib_groomed_fj_jet;
-        for (size_t i=0; i<groomedCont.size(); i++) {
-          xAOD::Jet *sj =  groomedCont[i];
-          StatusCode sc= calToolRFilt->applyCalibration(*sj ) ; if(sc.isFailure()) continue;
-          keptsubjets[i].reset_momentum( sj->px(),sj->py(),sj->pz(),sj->e() );
-	  //keptsubjets[i] *= m_ScaleFactor_JES; // can be 1.
-	  applyInSituJESRescale( keptsubjets[i] );
-          calib_groomed_fj_jet += keptsubjets[i]; // add them to get calibrated groomed fat jet
-        } 
-	delete groomedCont.getStore();
-	ATH_MSG_DEBUG("Finish calibration of subjets and construction of a calibrated filtered fat PJ");
+    fastjet::PseudoJet groomed_fj_jet = filter_fj(fj_jet);
+    vector<fastjet::PseudoJet> keptsubjets = groomed_fj_jet.pieces(); // get N PJ subjets from filtering procedure. These subjets we can calibrate.
+    ATH_MSG_DEBUG("Finish Filtering fat PJ" );
 
-        std::vector<std::string> tmpv;
-        // fill groomed xAOD::Jet container with uncalibrated jets
-        groomedJet =  m_jetFromPJTool->add( groomed_fj_jet , groomedFatJetsCont, jtype, tmpv ) ;
-	ATH_MSG_DEBUG("Finish transformation uncalibrated filtered fat PJ --> uncalibrated filtered fat xAOD::Jet");
+    // build a temporary JetContainer
+    xAOD::JetContainer groomedCont;
 
-	// a trick to keep internal structure from groomed_fj_jet, but rescale 4-momentum to calib_groomed_fj_jet
-	xAOD::JetFourMom_t calibP4;
-	calibP4.SetPxPyPzE( calib_groomed_fj_jet.px(), calib_groomed_fj_jet.py(), calib_groomed_fj_jet.pz(), calib_groomed_fj_jet.E() );
-	groomedJet->setJetP4(calibP4);
-	ATH_MSG_DEBUG("Finish adjusting for calibration the 4-momentum of the uncalibrated groomed xAOD::Jet");
+    // SET an AUX STORE !
+    // convert PJ's into xAOD::Jet's
+    fillJetContainer( groomedCont, keptsubjets );
 
-	std::string linkName = m_groomedFatJetLink;
-	if(NFiltJets !=0 && fracPt < 0.01)
-	  linkName +=  "FiltR"+std::to_string(int(Rjet*100))+"N"+std::to_string(NFiltJets);
-	else
-	  linkName +=  "TrimR"+std::to_string(int(Rjet*100))+"F"+std::to_string(int(fracPt*100));
-	if(m_preDefSettings.find("sj") != std::string::npos && m_preDefSettings.find("calib") != std::string::npos)
-	  linkName += m_preDefSettings;
+    const IJetCalibrationTool* calToolRFilt = getCalibrator(Rjet); // get calibration tool for C/A R=0.3 jets
 
-        j->setAssociatedObject(linkName, groomedJet); 
-	ATH_MSG_DEBUG("Finish linking and grooming in general");
+    // calibrate subjets resulting from filtering procedure
+    fastjet::PseudoJet calib_groomed_fj_jet;
+    for (size_t i=0; i<groomedCont.size(); i++) {
+      xAOD::Jet *sj = groomedCont[i];
+      StatusCode sc = calToolRFilt->applyCalibration(*sj ) ; if(sc.isFailure()) continue;
+      keptsubjets[i].reset_momentum( sj->px(),sj->py(),sj->pz(),sj->e() );
+      //keptsubjets[i] *= m_ScaleFactor_JES; // can be 1.
+      applyInSituJESRescale( keptsubjets[i] );
+      calib_groomed_fj_jet += keptsubjets[i]; // add them to get calibrated groomed fat jet
+    }
+    delete groomedCont.getStore();
+    ATH_MSG_DEBUG("Finish calibration of subjets and construction of a calibrated filtered fat PJ");
+
+    std::vector<std::string> tmpv;
+    // fill groomed xAOD::Jet container with uncalibrated jets
+    groomedJet =  m_jetFromPJTool->add( groomed_fj_jet , groomedFatJetsCont, jtype, tmpv ) ;
+    ATH_MSG_DEBUG("Finish transformation uncalibrated filtered fat PJ --> uncalibrated filtered fat xAOD::Jet");
+
+    // a trick to keep internal structure from groomed_fj_jet, but rescale 4-momentum to calib_groomed_fj_jet
+    xAOD::JetFourMom_t calibP4;
+    calibP4.SetPxPyPzE( calib_groomed_fj_jet.px(), calib_groomed_fj_jet.py(), calib_groomed_fj_jet.pz(), calib_groomed_fj_jet.E() );
+    groomedJet->setJetP4(calibP4);
+    ATH_MSG_DEBUG("Finish adjusting for calibration the 4-momentum of the uncalibrated groomed xAOD::Jet");
+
+    std::string linkName = m_groomedFatJetLink;
+    if(NFiltJets !=0 && fracPt < 0.01){
+      linkName +=  "FiltR"+std::to_string(int(Rjet*100))+"N"+std::to_string(NFiltJets);
+    }
+    else{
+      linkName +=  "TrimR"+std::to_string(int(Rjet*100))+"F"+std::to_string(int(fracPt*100));
+    }
+
+    if(m_preDefSettings.find("sj") != std::string::npos && m_preDefSettings.find("calib") != std::string::npos){
+      linkName += m_preDefSettings;
+    }
+
+    j->setAssociatedObject(linkName, groomedJet);
+
+    ATH_MSG_DEBUG("Finish linking and grooming in general");
 
   }
 
@@ -943,7 +957,7 @@ namespace HTTxAOD {
     else if (R <= 0.6)  index = 8;
     // Otherwise return the maximum available ('normal') radius
     else                index = 8;
-    
+
     return m_jetCalibTools[index].operator->();
   }
 
@@ -955,7 +969,7 @@ namespace HTTxAOD {
     else return NULL;
   }
 
-  
+
 
   void HEPTopTagger::UseNormalTagger() {
     m_MassCutoff   = 50000.;
@@ -963,17 +977,17 @@ namespace HTTxAOD {
     m_NJetsFilter  = 5;
     m_RelMassWidth = 0.3;
   }
-  
+
   void HEPTopTagger::UseDefTagger() {
-    cout << "Using def HTT" << endl;
+    ATH_MSG_DEBUG("Using def HTT");
     m_MassCutoff   = 50000.;
     m_RadiusFilter = 0.25;
     m_NJetsFilter  = 5;
     m_RelMassWidth = 0.3;
   }
-  
+
   void HEPTopTagger::UsePtordTagger() {
-    cout << "Using ptordered HTT" << endl;
+    ATH_MSG_DEBUG("Using ptordered HTT");
     m_MassCutoff   = 50000.;
     m_RadiusFilter = 0.25;
     m_NJetsFilter  = 5;
@@ -982,7 +996,7 @@ namespace HTTxAOD {
   }
 
     void HEPTopTagger::UseAcutTagger() {
-    cout << "Using Acut first" << endl;
+    ATH_MSG_DEBUG("Using Acut first");
     m_MassCutoff   = 50000.;
     m_RadiusFilter = 0.25;
     m_NJetsFilter  = 5;
@@ -991,7 +1005,7 @@ namespace HTTxAOD {
   }
 
   void HEPTopTagger::UseDefR02Tagger() {
-    cout << "Using normal HTT" << endl;
+    ATH_MSG_DEBUG("Using normal HTT");
     m_MassCutoff   = 50000.;
     m_RadiusFilter = 0.20;
     m_NJetsFilter  = 5;
@@ -999,7 +1013,7 @@ namespace HTTxAOD {
   }
 
   void HEPTopTagger::UseDefR03Tagger() {
-    cout << "Using def R03 HTT" << endl;
+    ATH_MSG_DEBUG("Using def R03 HTT");
     m_MassCutoff   = 50000.;
     m_RadiusFilter = 0.30;
     m_NJetsFilter  = 5;
@@ -1007,7 +1021,7 @@ namespace HTTxAOD {
   }
 
   void HEPTopTagger::UseDefNf6Tagger() {
-    cout << "Using def Nf6HTT" << endl;
+    ATH_MSG_DEBUG("Using def Nf6HTT");
     m_MassCutoff   = 50000.;
     m_RadiusFilter = 0.25;
     m_NJetsFilter  = 6;
@@ -1040,7 +1054,7 @@ namespace HTTxAOD {
 
   void HEPTopTagger::UseSJCalibXTagger() {
     float tmp_sj_rescale = atoi(m_preDefSettings.substr(7).c_str()) / 1000.;
-    cout << "Using def-like HTT with sub-jet calibration scaled by " << tmp_sj_rescale << endl;
+    ATH_MSG_DEBUG("Using def-like HTT with sub-jet calibration scaled by " << tmp_sj_rescale);
     m_MassCutoff   = 50000.;
     m_RadiusFilter = 0.25;
     m_NJetsFilter  = 5;
@@ -1049,16 +1063,19 @@ namespace HTTxAOD {
   }
 
   void HEPTopTagger::UseSJ2DCalibXTagger() {
-    cout<<m_preDefSettings.substr(9,4).c_str()<<" "<<m_preDefSettings.substr(14,4)<<endl;
+
+    ATH_MSG_DEBUG(m_preDefSettings.substr(9,4).c_str()<<" "<<m_preDefSettings.substr(14,4));
     m_ScaleFactor_JES_EtaPT.push_back( std::stoi(m_preDefSettings.substr(9,4)) / 1000.);
     m_ScaleFactor_JES_EtaPT.push_back( std::stoi(m_preDefSettings.substr(14,4)) / 1000.);
     m_ScaleFactor_JES_ptmin.push_back(0);
     m_ScaleFactor_JES_ptmin.push_back(100e3);
     m_ScaleFactor_JES_ptmax.push_back(100e3);
     m_ScaleFactor_JES_ptmax.push_back(1e6);
-    cout << "Using def-like HTT with 2D sub-jet calibration scaled by: " 
-	<< m_ScaleFactor_JES_EtaPT[0] << " for " << m_ScaleFactor_JES_ptmin[0]/1e3 << " < pT < " << m_ScaleFactor_JES_ptmax[0]/1e3 << " GeV and " 
-	<< m_ScaleFactor_JES_EtaPT[1] << " for " << m_ScaleFactor_JES_ptmin[1]/1e3 << " < pT < " << m_ScaleFactor_JES_ptmax[1]/1e3 << " GeV" << endl;
+
+    ATH_MSG_DEBUG("Using def-like HTT with 2D sub-jet calibration scaled by: ");
+    ATH_MSG_DEBUG("sj0 : "<<m_ScaleFactor_JES_EtaPT[0] << " for " << m_ScaleFactor_JES_ptmin[0]/1e3 << " < pT < " << m_ScaleFactor_JES_ptmax[0]/1e3 << " GeV");
+    ATH_MSG_DEBUG("sj1 : "<<m_ScaleFactor_JES_EtaPT[1] << " for " << m_ScaleFactor_JES_ptmin[1]/1e3 << " < pT < " << m_ScaleFactor_JES_ptmax[1]/1e3 << " GeV");
+
     m_MassCutoff   = 50000.;
     m_RadiusFilter = 0.25;
     m_NJetsFilter  = 5;
@@ -1067,7 +1084,8 @@ namespace HTTxAOD {
   }
 
   void HEPTopTagger::UseSJ3DCalibXTagger() {
-    cout<<m_preDefSettings.substr(9,4).c_str()<<" "<<m_preDefSettings.substr(14,4)<<" "<<m_preDefSettings.substr(19,4)<<endl;
+
+    ATH_MSG_DEBUG(m_preDefSettings.substr(9,4).c_str()<<" "<<m_preDefSettings.substr(14,4)<<" "<<m_preDefSettings.substr(19,4));
     m_ScaleFactor_JES_EtaPT.push_back( std::stoi(m_preDefSettings.substr(9,4)) / 1000.);
     m_ScaleFactor_JES_EtaPT.push_back( std::stoi(m_preDefSettings.substr(14,4)) / 1000.);
     m_ScaleFactor_JES_EtaPT.push_back( std::stoi(m_preDefSettings.substr(19,4)) / 1000.);
@@ -1077,10 +1095,12 @@ namespace HTTxAOD {
     m_ScaleFactor_JES_ptmax.push_back(60e3);
     m_ScaleFactor_JES_ptmax.push_back(125e3);
     m_ScaleFactor_JES_ptmax.push_back(1e6);
-    cout << "Using def-like HTT with 3D sub-jet calibration scaled by: "
-        << m_ScaleFactor_JES_EtaPT[0] << " for " << m_ScaleFactor_JES_ptmin[0]/1e3 << " < pT < " << m_ScaleFactor_JES_ptmax[0]/1e3 << " GeV and "
-        << m_ScaleFactor_JES_EtaPT[1] << " for " << m_ScaleFactor_JES_ptmin[1]/1e3 << " < pT < " << m_ScaleFactor_JES_ptmax[1]/1e3 << " GeV and "
-        << m_ScaleFactor_JES_EtaPT[2] << " for " << m_ScaleFactor_JES_ptmin[2]/1e3 << " < pT < " << m_ScaleFactor_JES_ptmax[2]/1e3 << " GeV" << endl;
+
+    ATH_MSG_DEBUG("Using def-like HTT with 3D sub-jet calibration scaled by: ");
+    ATH_MSG_DEBUG("sj0 : "<<m_ScaleFactor_JES_EtaPT[0] << " for " << m_ScaleFactor_JES_ptmin[0]/1e3 << " < pT < " << m_ScaleFactor_JES_ptmax[0]/1e3 << " GeV");
+    ATH_MSG_DEBUG("sj1 : "<<m_ScaleFactor_JES_EtaPT[1] << " for " << m_ScaleFactor_JES_ptmin[1]/1e3 << " < pT < " << m_ScaleFactor_JES_ptmax[1]/1e3 << " GeV");
+    ATH_MSG_DEBUG("sj2 : "<<m_ScaleFactor_JES_EtaPT[2] << " for " << m_ScaleFactor_JES_ptmin[2]/1e3 << " < pT < " << m_ScaleFactor_JES_ptmax[2]/1e3 << " GeV");
+
     m_MassCutoff   = 50000.;
     m_RadiusFilter = 0.25;
     m_NJetsFilter  = 5;
@@ -1092,8 +1112,9 @@ namespace HTTxAOD {
     std::string sjJESConfig = m_preDefSettings.substr(9);
     int binningVersion = 0;
     // extract pT binning version
-    if(sjJESConfig.find("v",0,3) != std::string::npos ) 
-	std::cout << "N-dimensional configuration has to have v[00-99] to define binning version. Assume v00..." << std::endl; 
+    if(sjJESConfig.find("v",0,3) != std::string::npos ){
+      ATH_MSG_DEBUG("N-dimensional configuration has to have v[00-99] to define binning version. Assume v00...");
+    }
     else {
         binningVersion = std::stoi(sjJESConfig.substr(1,2));
         sjJESConfig.erase(0,4);
@@ -1111,10 +1132,10 @@ namespace HTTxAOD {
     // set pT bins
     setSJNDCalibPtEtaBins(binningVersion);
     // information about configured HTT setup
-    cout << "Using def-like HTT with 3D sub-jet calibration scaled by: ";
-    for( int i = 0; i < m_ScaleFactor_JES_EtaPT.size(); i++ )
-        cout << m_ScaleFactor_JES_EtaPT[i] << " for " << m_ScaleFactor_JES_ptmin[i]/1e3 << " < pT < " << m_ScaleFactor_JES_ptmax[i]/1e3 << " GeV; ";
-    cout << endl;
+    ATH_MSG_DEBUG("Using def-like HTT with 3D sub-jet calibration scaled by: ");
+    for( int i = 0; i < m_ScaleFactor_JES_EtaPT.size(); i++ ){
+      ATH_MSG_DEBUG(m_ScaleFactor_JES_EtaPT[i] << " for " << m_ScaleFactor_JES_ptmin[i]/1e3 << " < pT < " << m_ScaleFactor_JES_ptmax[i]/1e3 << " GeV ");
+    }
 
     m_MassCutoff   = 50000.;
     m_RadiusFilter = 0.25;
@@ -1125,7 +1146,7 @@ namespace HTTxAOD {
 
 
   void HEPTopTagger::UseNoAShapeTagger() {
-    cout << "Using def HTT w/o A-shape cuts" << endl;
+    ATH_MSG_DEBUG("Using def HTT w/o A-shape cuts");
     m_MassCutoff   = 50000.;
     m_RadiusFilter = 0.25;
     m_NJetsFilter  = 5;
@@ -1191,7 +1212,7 @@ namespace HTTxAOD {
         m_ScaleFactor_JES_ptmax.push_back(100e3);
         m_ScaleFactor_JES_ptmax.push_back(150e3);
         m_ScaleFactor_JES_ptmax.push_back(1e6);
-      } 
+      }
     }
   }
 
@@ -1282,12 +1303,12 @@ namespace HTTxAOD {
     result.m12=(top_subs[0]+top_subs[1]).m();
     result.m13=(top_subs[0]+top_subs[2]).m();
     result.m23=(top_subs[1]+top_subs[2]).m();
-    
+
     double dm12=abs(result.m12-m_WMass);
     double dm13=abs(result.m13-m_WMass);
     double dm23=abs(result.m23-m_WMass);
     double dm_min=min(dm12,min(dm13,dm23));
-    if(dm_min==dm23){      
+    if(dm_min==dm23){
       result.b=0;
       result.w1=1;
       result.w2=2;

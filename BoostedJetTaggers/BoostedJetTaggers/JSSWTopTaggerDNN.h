@@ -1,4 +1,9 @@
 // for editors : this file is -*- C++ -*-
+
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #ifndef JSSWTOPTAGGERDNN_H_
 #define JSSWTOPTAGGERDNN_H_
 

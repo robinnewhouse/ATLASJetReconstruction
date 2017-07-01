@@ -58,7 +58,28 @@
 #include <fastjet/contrib/Nsubjettiness.hh>
 
 //include the headers of relevance
+#include "AsgTools/AnaToolHandle.h"
+#include "JetAnalysisInterfaces/IJetSelectorTool.h"
+#include "BoostedJetTaggers/SmoothedWZTagger.h"
+
+//include the headers of relevance
+#include "BoostedJetTaggers/SmoothedTopTagger.h"
+
+//include the headers of relevance
+#include "BoostedJetTaggers/BoostedXbbTagger.h"
+
+//include the headers of relevance
+#include "BoostedJetTaggers/JSSWTopTaggerDNN.h"
+
+//include the headers of relevance
+#include "BoostedJetTaggers/JSSWTopTaggerBDT.h"
+
+//include the headers of relevance
 #include "BoostedJetTaggers/TopoclusterTopTagger.h"
+
+//include the headers of relevance
+// #include "BoostedJetTaggers/IJetQGTagger.h"
+// #include "BoostedJetTaggers/JetQGTagger.h"
 
 // root includes
 #include "TH1D.h"
@@ -141,8 +162,25 @@ private:
   JetCalibrationTool* m_jetCalibration; //!
 
   //declare the tagger
-  std::unique_ptr<TopoclusterTopTagger> m_topoclusterTopTagger;    //!
+  asg::AnaToolHandle<IJetSelectorTool> m_smoothedWZTagger; //!
 
+  //declare the tagger
+  asg::AnaToolHandle<IJetSelectorTool> m_smoothedTopTagger; //!
+
+  //declare the tagger
+  asg::AnaToolHandle<IJetSelectorTool> m_BoostedXbbTagger; //!
+
+  //declare the tagger
+  asg::AnaToolHandle<IJetSelectorTool> m_JSSWTopTaggerDNN; //!
+
+  //declare the tagger
+  asg::AnaToolHandle<IJetSelectorTool> m_JSSWTopTaggerBDT; //!
+
+  //declare the tagger
+  asg::AnaToolHandle<IJetSelectorTool> m_TopoclusterTopTagger; //!
+
+  //declare the tagger
+//  asg::AnaToolHandle<CP::IJetQGTagger> m_JetQGTagger;
 
 //FUNCTION DECLARATIONS
 public:

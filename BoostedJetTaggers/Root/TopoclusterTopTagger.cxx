@@ -1,21 +1,7 @@
-/**************************************************************
-//
-// Created:        8 November  2016
-// Last Updated:   11 May 2017
-//
-// Daniel Marley
-// daniel.edison.marley@cern.ch
-//
-// Work by: Ece Akilli, Dan Guest, Oliver Majersky, Sam Meehan
-//
-// DNN Tagging of Large-R jets as W/top
-//
-//   There are two components to the tagger:
-//    1. Load the weights from the trained tagger
-//    2. Determine if jet passes working point
-//       (use trained tagger info to get discriminant for new jet)
-//
-***************************************************************/
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #include "BoostedJetTaggers/TopoclusterTopTagger.h"
 
 #include "PathResolver/PathResolver.h"
@@ -28,8 +14,6 @@
 
 #define N_CONSTITUENTS 10
 #define EMPTY_CONSTITUENT 0.0
-
-#define CERRD std::cout<<"SAM Error : "<<__FILE__<<"  "<<__LINE__<<std::endl;
 
 TopoclusterTopTagger::TopoclusterTopTagger( const std::string& name ) :
   JSSTaggerBase( name ),
@@ -113,15 +97,14 @@ StatusCode TopoclusterTopTagger::initialize(){
     m_decorationName = configReader.GetValue("DecorationName" ,"");
 
 
-    std::cout<<"Configurations Loaded  :"<<std::endl
-             <<"tagType                : "<<m_tagType <<std::endl
-             <<"kerasConfigFileName    : "<<m_kerasConfigFileName <<std::endl
-             <<"kerasConfigOutputName  : "<<m_kerasConfigOutputName <<std::endl
-             <<"strMassCutLow          : "<<m_strMassCutLow  <<std::endl
-             <<"strMassCutHigh         : "<<m_strMassCutHigh <<std::endl
-             <<"strScoreCut              : "<<m_strScoreCut      <<std::endl
-             <<"decorationName      : "<<m_decorationName <<std::endl
-    <<std::endl;
+    ATH_MSG_INFO( "Configurations Loaded  :");
+    ATH_MSG_INFO( "tagType                : "<<m_tagType );
+    ATH_MSG_INFO( "kerasConfigFileName    : "<<m_kerasConfigFileName );
+    ATH_MSG_INFO( "kerasConfigOutputName  : "<<m_kerasConfigOutputName );
+    ATH_MSG_INFO( "strMassCutLow          : "<<m_strMassCutLow  );
+    ATH_MSG_INFO( "strMassCutHigh         : "<<m_strMassCutHigh );
+    ATH_MSG_INFO( "strScoreCut              : "<<m_strScoreCut );
+    ATH_MSG_INFO( "decorationName      : "<<m_decorationName );
 
   }
   else { // no config file
@@ -244,7 +227,7 @@ Root::TAccept TopoclusterTopTagger::tag(const xAOD::Jet& jet) const{
 
   // decorate the cut value if needed;
   if(m_decorate){
-    std::cout<<"Decorating with score"<<std::endl;
+    ATH_MSG_DEBUG("Decorating with score");
     decorateJet(jet, cut_mass_high, cut_mass_low, cut_score, jet_score);
   }
 
@@ -278,10 +261,6 @@ double TopoclusterTopTagger::getScore(const xAOD::Jet& jet) const{
     double DNNscore(-666.);
     DNNscore = discriminant[m_kerasConfigOutputName];
 
-    // print to a file to compare with python-based preprocessing
-    store_jet_data(DNN_inputValues_clusters, jet, DNNscore, "jet_data_scored.csv");
-
-
     return DNNscore;
 }
 
@@ -290,89 +269,39 @@ void TopoclusterTopTagger::preprocess(std::map<std::string,double> &clusters, co
     /* Adapted from Jannicke Pearkes */
     // We assume these constituents are sorted by pt
 
-    // Make new cluster map
-    std::map<std::string,double> T_clusters;
-
     // Extract jet properties
-    // double jet_pt = jet.pt(); // unused
-    // double jet_eta = jet.eta();
-    // double jet_phi = jet.phi();
-    // double prim_pt = clusters["clust_0_pt"];
     double prim_eta = clusters["clust_0_eta"];
     double prim_phi = clusters["clust_0_phi"];
 
     // Instructions from Jannicke
-    //- min max scaling (this is actually has a hard-coded min and max) 
+    //- min max scaling (this is actually has a hard-coded min and max)
     for (int i = 0; i < N_CONSTITUENTS; ++i) {
       clusters["clust_"+std::to_string(i)+"_pt"] = TopoclusterTransform::pt_min_max_scale(clusters["clust_"+std::to_string(i)+"_pt"], 0);
     }
-
     // -  shift prim (translation about primary jet constituent)
     for (int i = 0; i < N_CONSTITUENTS; ++i) {
       clusters["clust_"+std::to_string(i)+"_eta"] = TopoclusterTransform::eta_shift(clusters["clust_"+std::to_string(i)+"_eta"], prim_eta);
       clusters["clust_"+std::to_string(i)+"_phi"] = TopoclusterTransform::phi_shift(clusters["clust_"+std::to_string(i)+"_phi"], prim_phi);
     }
 
-    // - rotate 
-    // //// Code under "Calculating thetas for rotation” and “Rotating”, 
-    // //// the rotation part is just a python translation of TLorentzVector’s rotate method  
+    // - rotate
+    // //// Code under "Calculating thetas for rotation” and “Rotating”,
+    // //// the rotation part is just a python translation of TLorentzVector’s rotate method
     // //// https://root.cern.ch/doc/master/classTLorentzVector.html
     // Calculate axes of rotation
     double theta = 0.0;
-    if (jet.getConstituents().size() >= 2){ // need at least 2 constituents 
+    if (jet.getConstituents().size() >= 2){ // need at least 2 constituents
       theta = TopoclusterTransform::calculate_theta_for_rotations(clusters);
     }
     // Perform the rotation // TODO do we rotate if the theta == 0.0 ?
-    TopoclusterTransform::rotate_about_primary(clusters, theta);
+    TopoclusterTransform::rotate_jet(clusters, theta);
 
-    // - flip     
+    // - flip
     // Code under  elif "flip" in eta_phi_prep_type:
     TopoclusterTransform::flip(clusters);
 
     return;
 }
-
-void TopoclusterTopTagger::store_jet_data(std::map<std::string,double> clusters, const xAOD::Jet jet, double score, std::string filename) const {
-
-  std::ofstream jetData;
-  jetData.open (filename, std::ios_base::app); // append
-  jetData << 0.0 << ","; // weight
-  jetData << 1.0 << ","; // label
-  jetData << jet.m()/1000.0 << ","; // jet mass GeV
-  jetData << jet.pt()/1000.0 << ","; // jet pt GeV
-  jetData << jet.eta() << ","; // jet eta
-  jetData << jet.phi() << ","; // jet phi
-  jetData << 0.0 << ","; // Tau32_wta
-  jetData << 0.0 << ","; // Split23
-  jetData << 0.0 << ","; // NPV
-  jetData << 0.0 << ","; // C2
-  jetData << 0.0 << ","; // D2
-  jetData << 0.0 << ","; // subjet start
-  jetData << 0.0 << ","; // b eta
-  jetData << 0.0 << ","; // b phi
-  jetData << 0.0 << ","; // W_1 pt
-  jetData << 0.0 << ","; // W_1 eta
-  jetData << 0.0 << ","; // W_1 phi
-  jetData << 0.0 << ","; // W_2 pt
-  jetData << 0.0 << ","; // W_2 eta
-  jetData << 0.0 << ","; // W_2 phi
-  // Store constituents
-  for (int i = 0; i < N_CONSTITUENTS; ++i)
-  {
-    jetData << clusters["clust_"+std::to_string(i)+"_pt"]  << ","; // is this is GeV ???
-    jetData << clusters["clust_"+std::to_string(i)+"_eta"] << ",";
-    jetData << clusters["clust_"+std::to_string(i)+"_phi"] << ",";
-
-  }
-
-  jetData << score << ","; // W_2 phi
-
-
-  jetData << std::endl;
-  jetData.close();
-
-}
-
 void TopoclusterTopTagger::decorateJet(const xAOD::Jet& jet, float mcutH, float mcutL, float scoreCut, float scoreValue) const{
     /* decorate jet with attributes */
 
@@ -415,12 +344,9 @@ std::map<std::string,double> TopoclusterTopTagger::getJetConstituents(const xAOD
     int count = std::min(N_CONSTITUENTS, int(clusters.size()));
     for (int i = 0; i < count; ++i)
     {
-      DNN_inputValues["clust_"+std::to_string(i)+"_pt"] = clusters.at(i)->pt() / 1000.0; // convert to GeV
-      // std::cout << clusters.at(i)->pt();
+      DNN_inputValues["clust_"+std::to_string(i)+"_pt"] = clusters.at(i)->pt() / 1000; // convert to GeV
       DNN_inputValues["clust_"+std::to_string(i)+"_eta"] = clusters.at(i)->eta();
-      // std::cout << clusters.at(i)->eta();
       DNN_inputValues["clust_"+std::to_string(i)+"_phi"] = clusters.at(i)->phi();
-      // std::cout << clusters.at(i)->phi();
     }
 
     return DNN_inputValues;

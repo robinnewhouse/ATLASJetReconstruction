@@ -1,4 +1,9 @@
 // this file is -*- C++ -*-
+
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #ifndef JETQGTAGGER_H
 #define JETQGTAGGER_H
 
@@ -57,6 +62,9 @@ namespace CP {
       virtual StatusCode finalize();
 
       // Implement IJetSelectorTool interface
+      virtual Root::TAccept tag(const xAOD::Jet& jet) const;
+
+      // Implement IJetQGTagger interface
       virtual Root::TAccept tag(const xAOD::Jet& jet, const xAOD::Vertex * _pv = NULL) const;
 
       // functions for systematic variations

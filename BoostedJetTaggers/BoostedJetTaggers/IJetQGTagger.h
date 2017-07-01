@@ -1,4 +1,9 @@
 // this file is -*- C++ -*-
+
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #ifndef IJETQGTAGGER_H
 #define IJETQGTAGGER_H
 
@@ -29,6 +34,8 @@ namespace CP {
     public:
 
     virtual ~IJetQGTagger() {}
+
+    virtual Root::TAccept tag(const xAOD::Jet& jet) const = 0;
 
   };
 

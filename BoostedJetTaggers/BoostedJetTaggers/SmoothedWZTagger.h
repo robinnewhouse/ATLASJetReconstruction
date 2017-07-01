@@ -1,19 +1,11 @@
 // for editors : this file is -*- C++ -*-
+
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #ifndef BOOSTEDJETSTAGGERS_SMOOTHEDWZTAGGER_H_
 #define BOOSTEDJETSTAGGERS_SMOOTHEDWZTAGGER_H_
-
-//////////////////////////////////////////////////////
-// \class SmoothedWZTagger
-//
-// Tag xAOD::Jet as decaying from a W or Z according to the mass and the D2 substructure variable of the jet.
-//
-// Tagging results are obtain either with the IJSSTagger interface:
-//     bool ok = tool->tag( jet );
-// Or by running the Tagger::tag() function and then querying the tool :
-//     bool tagState = tool->getCutResult("TaggerState");
-// where "TaggerState" is one of the specific states that the tagger may end in
-//
-//////////////////////////////////////////////////////
 
 #include "BoostedJetTaggers/JSSTaggerBase.h"
 #include "AsgTools/AsgTool.h"

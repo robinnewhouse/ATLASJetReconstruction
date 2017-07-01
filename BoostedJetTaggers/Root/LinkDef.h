@@ -1,5 +1,10 @@
 // this file is -*- C++ -*-
 
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
+
 #include "JetAnalysisInterfaces/IJetSelectorTool.h"
 
 #include "BoostedJetTaggers/SmoothedWZTagger.h"

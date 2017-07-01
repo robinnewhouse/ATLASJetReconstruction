@@ -1,3 +1,7 @@
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 // WARNING: this code was copied automatically from
 // https://github.com/dguest/lwtnn.git (rev v1.0-76-gd837944)
 // Please don't edit it! To get the latest version, run
