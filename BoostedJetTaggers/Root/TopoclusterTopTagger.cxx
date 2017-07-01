@@ -206,19 +206,25 @@ Root::TAccept TopoclusterTopTagger::tag(const xAOD::Jet& jet) const{
       decorateJet(jet, -1., -1., -1., -666.);
   }
   if (jet.pt() > m_jetPtMax) {
-    ATH_MSG_WARNING("Jet does not pass basic kinematic selection (pT < " << m_jetPtMax << "). Jet pT = " << jet.pt()/1.e3);
+    ATH_MSG_DEBUG("Jet does not pass basic kinematic selection (pT < " << m_jetPtMax << "). Jet pT = " << jet.pt()/1.e3);
     m_accept.setCutResult("ValidPtRangeHigh", false);
     if(m_decorate)
       decorateJet(jet, -1., -1., -1., -666.);
+  }
+  float jet_score = -666.;
+  if (!jet.getConstituents().isValid()) {
+    ATH_MSG_DEBUG("Jet constituents not available for tagging");
+    m_accept.setCutResult("ValidJetContent", false);
+    if(m_decorate)
+      decorateJet(jet, -1., -1., -1., -666.);
+  } else {
+    jet_score = getScore(jet);
   }
 
   // get the relevant attributes of the jet
   // mass and pt - note that this will depend on the configuration of the calibration used
   float jet_pt   = jet.pt()/1000.0;
   float jet_mass = jet.m()/1000.0;
-
-  // get DNN score for the jet
-  float jet_score = getScore(jet);
 
   // evaluate the values of the upper and lower mass bounds and the d2 cut
   float cut_mass_low  = m_funcMassCutLow ->Eval(jet_pt);
@@ -340,7 +346,7 @@ std::map<std::string,double> TopoclusterTopTagger::getJetConstituents(const xAOD
           return a.pt() > b.pt();
       });
 
-    ATH_MSG_INFO("clusters size: " << clusters.size());
+    ATH_MSG_DEBUG("Clusters size: " << clusters.size());
     int count = std::min(N_CONSTITUENTS, int(clusters.size()));
     for (int i = 0; i < count; ++i)
     {

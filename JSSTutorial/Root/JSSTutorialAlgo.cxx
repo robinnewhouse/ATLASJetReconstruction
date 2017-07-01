@@ -340,6 +340,16 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
   for(const xAOD::Jet* jet : * myJets ){
     ijet++;
 
+    std::cout<<"Jet # "<<ijet<<"   ";
+    // try{
+    //   std::vector<xAOD::JetConstituent> clusters = jet->getConstituents().asSTLVector();
+    //   std::cout<<"Num clusters # "<<clusters.size()<<std::endl;
+    // } catch (...){
+    //   std::cout<<"Failed "<< std::endl;
+    //   continue;
+    // }
+    // continue;
+
     static SG::AuxElement::ConstAccessor<float>    acc_D2   ("D2");
     static SG::AuxElement::ConstAccessor<float>    acc_ECF1 ("ECF1");
     static SG::AuxElement::ConstAccessor<float>    acc_ECF2 ("ECF2");
