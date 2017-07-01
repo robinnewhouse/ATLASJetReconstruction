@@ -1,4 +1,9 @@
 // this file is -*- C++ -*-
+
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #ifndef JETQGTAGGER_H
 #define JETQGTAGGER_H
 
@@ -53,13 +58,14 @@ namespace CP {
       float m_jetEtaMax;
       ///////////////// =======================
 
-      StatusCode initialize();
-      StatusCode finalize();
+      virtual StatusCode initialize();
+      virtual StatusCode finalize();
 
       // Implement IJetSelectorTool interface
-      Root::TAccept tag(const xAOD::Jet& jet, const xAOD::Vertex * _pv = NULL) const;
+      virtual Root::TAccept tag(const xAOD::Jet& jet) const;
 
-      Root::TAccept tag(const xAOD::Jet& jet) const {return tag(jet,NULL); }
+      // Implement IJetQGTagger interface
+      virtual Root::TAccept tag(const xAOD::Jet& jet, const xAOD::Vertex * _pv = NULL) const;
 
       // functions for systematic variations
       bool isAffectedBySystematic(const SystematicVariation& var) const{return SystematicsTool::isAffectedBySystematic(var);}

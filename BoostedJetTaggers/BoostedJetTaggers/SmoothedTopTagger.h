@@ -1,33 +1,11 @@
 // for editors : this file is -*- C++ -*-
+
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #ifndef BOOSTEDJETSTAGGERS_SMOOTHEDTOPTAGGER_H_
 #define BOOSTEDJETSTAGGERS_SMOOTHEDTOPTAGGER_H_
-
-////////////////////////////////////////////////
-/// \class SmoothedTopTagger
-///
-/// Tag xAOD::Jet as decaying from a top according to some substructure variables of the jet.
-/// Which variables are used depends on the configuration of the tool.
-/// Currently 3 pairs of variable are supported : (mass, tau32), (Qw, tau32) and (tau32,split23).
-///
-/// Tagging results are obtain either with the IJSSTagger interface:
-///     bool ok = tool->tag( jet );
-/// Or full detailed results can be obtain using the 'result()' method and the helper class:
-///     SmoothedTopTagger::Result r = tool->result( jet );
-///     if( ! r.massPassed() ) { ... do things ... }
-///     if( r ) { ... r evaluates to true if the jet passed all cuts }
-///
-///
-/// If the `decorate=true` argument is given to `result()` then the jet will be decorated with 2 floats corresponding
-/// to the cut values which were tested for this jet.
-/// The decorations depends on pair of variable used and have the form "TopTagXXXCut" where XXX is
-/// "Mass", "Tau32" ot "Split23"
-///
-/// The tool should be configured by
-///   * setting the "ConfigFile" property to point to a relevant file or
-///   * OR setting the "TaggerMode" , "Var1CutFunc" and "Var2CutFunc" properties.
-/// See more info on :
-///
-//////////////////////////////////
 
 #include "BoostedJetTaggers/JSSTaggerBase.h"
 #include "AsgTools/AsgTool.h"

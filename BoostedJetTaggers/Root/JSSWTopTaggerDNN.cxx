@@ -1,21 +1,7 @@
-/**************************************************************
-//
-// Created:        8 November  2016
-// Last Updated:   11 May 2017
-//
-// Daniel Marley
-// daniel.edison.marley@cern.ch
-//
-// Work by: Ece Akilli, Dan Guest, Oliver Majersky, Sam Meehan
-//
-// DNN Tagging of Large-R jets as W/top
-//
-//   There are two components to the tagger:
-//    1. Load the weights from the trained tagger
-//    2. Determine if jet passes working point
-//       (use trained tagger info to get discriminant for new jet)
-//
-***************************************************************/
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #include "BoostedJetTaggers/JSSWTopTaggerDNN.h"
 
 #include "PathResolver/PathResolver.h"
@@ -25,8 +11,6 @@
 #include "TSystem.h"
 
 #define APP_NAME "JSSWTopTaggerDNN"
-
-#define CERRD std::cout<<"SAM Error : "<<__FILE__<<"  "<<__LINE__<<std::endl;
 
 JSSWTopTaggerDNN::JSSWTopTaggerDNN( const std::string& name ) :
   JSSTaggerBase( name ),
@@ -107,15 +91,14 @@ StatusCode JSSWTopTaggerDNN::initialize(){
     m_decorationName = configReader.GetValue("DecorationName" ,"");
 
 
-    std::cout<<"Configurations Loaded  :"<<std::endl
-             <<"tagType                : "<<m_tagType <<std::endl
-             <<"kerasConfigFileName    : "<<m_kerasConfigFileName <<std::endl
-             <<"kerasConfigOutputName  : "<<m_kerasConfigOutputName <<std::endl
-             <<"strMassCutLow          : "<<m_strMassCutLow  <<std::endl
-             <<"strMassCutHigh         : "<<m_strMassCutHigh <<std::endl
-             <<"strScoreCut              : "<<m_strScoreCut      <<std::endl
-             <<"decorationName      : "<<m_decorationName <<std::endl
-    <<std::endl;
+    ATH_MSG_INFO( "Configurations Loaded  :");
+    ATH_MSG_INFO( "tagType                : "<<m_tagType );
+    ATH_MSG_INFO( "kerasConfigFileName    : "<<m_kerasConfigFileName );
+    ATH_MSG_INFO( "kerasConfigOutputName  : "<<m_kerasConfigOutputName );
+    ATH_MSG_INFO( "strMassCutLow          : "<<m_strMassCutLow  );
+    ATH_MSG_INFO( "strMassCutHigh         : "<<m_strMassCutHigh );
+    ATH_MSG_INFO( "strScoreCut              : "<<m_strScoreCut );
+    ATH_MSG_INFO( "decorationName      : "<<m_decorationName );
 
   }
   else { // no config file
@@ -244,7 +227,7 @@ Root::TAccept JSSWTopTaggerDNN::tag(const xAOD::Jet& jet) const{
 
   // decorate the cut value if needed;
   if(m_decorate){
-    std::cout<<"Decorating with score"<<std::endl;
+    ATH_MSG_DEBUG("Decorating with score");
     decorateJet(jet, cut_mass_high, cut_mass_low, cut_score, jet_score);
   }
 

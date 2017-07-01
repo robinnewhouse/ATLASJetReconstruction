@@ -50,13 +50,14 @@ atlas_add_root_dictionary( BoostedJetTaggersLib _dictionarySource
    ROOT_HEADERS Root/LinkDef.h
    EXTERNAL_PACKAGES ROOT )
 
+
 # Build a shared library:
 atlas_add_library( BoostedJetTaggersLib
    BoostedJetTaggers/*.h Root/*.h Root/*.cxx ${_dictionarySource}
    PUBLIC_HEADERS BoostedJetTaggers
    INCLUDE_DIRS ${Boost_INCLUDE_DIRS} ${ROOT_INCLUDE_DIRS}
-   LINK_LIBRARIES ${Boost_LIBRARIES} ${ROOT_LIBRARIES} ${FASTJET_LIBRARIES} AsgTools xAODBase xAODJet JetInterface JetRecLib JetEDM JetSelectorToolsLib JetCalibToolsLib MuonSelectorToolsLib MuonMomentumCorrectionsLib PATCoreLib PATInterfaces ${extra_libs} 
-   PRIVATE_LINK_LIBRARIES PathResolver JetEDM JetSelectorToolsLib InDetTrackSelectionToolLib InDetTrackSystematicsToolsLib JetAnalysisInterfacesLib)
+   LINK_LIBRARIES ${Boost_LIBRARIES} ${ROOT_LIBRARIES} ${FASTJET_LIBRARIES} AsgTools xAODBase xAODJet JetInterface JetRecLib JetEDM JetSelectorToolsLib JetCalibToolsLib MuonSelectorToolsLib MuonMomentumCorrectionsLib PATCoreLib PATInterfaces JetAnalysisInterfacesLib InDetTrackSelectionToolLib InDetTrackSystematicsToolsLib JetAnalysisInterfacesLib ${extra_libs} 
+   PRIVATE_LINK_LIBRARIES PathResolver JetEDM )
 
 if( NOT XAOD_STANDALONE )
    atlas_add_component( BoostedJetTaggers

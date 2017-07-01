@@ -1,3 +1,7 @@
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #ifndef BOOSTEDJETTAGGERS_BOOSTEDJETTAGGERSDICT_H
 #define BOOSTEDJETTAGGERS_BOOSTEDJETTAGGERSDICT_H
 

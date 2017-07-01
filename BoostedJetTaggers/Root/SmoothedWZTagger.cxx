@@ -1,14 +1,7 @@
-/**************************************************************
-//
-// Created:       12 August    2016
-// Last Updated:   5 May       2017
-//
-// Samuel Meehan
-// samuel.meehan@cern.ch
-//
-// Implementation of simple smoothed W and Z taggers based on cut on mass and
-// a single substructure observables
-***************************************************************/
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #include "BoostedJetTaggers/SmoothedWZTagger.h"
 
 #include "PathResolver/PathResolver.h"

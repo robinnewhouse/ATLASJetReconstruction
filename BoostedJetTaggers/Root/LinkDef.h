@@ -1,5 +1,10 @@
 // this file is -*- C++ -*-
 
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
+
 #include "JetAnalysisInterfaces/IJetSelectorTool.h"
 
 #include "BoostedJetTaggers/SmoothedWZTagger.h"
@@ -27,13 +32,13 @@
 #pragma link C++ class TopoclusterTopTagger;
 #pragma link C++ class JetQGTagger;
 
-// #pragma link C++ class SubstructureTopTagger;
-// #pragma link C++ namespace STTHelpers;
+#pragma link C++ class SubstructureTopTagger;
+#pragma link C++ namespace STTHelpers;
 
-// #pragma link C++ class STTHelpers::TopTagSmoothMassCut;
-// #pragma link C++ class STTHelpers::TopTagSmoothTau32Cut;
+#pragma link C++ class STTHelpers::TopTagSmoothMassCut;
+#pragma link C++ class STTHelpers::TopTagSmoothTau32Cut;
 
-// #pragma link C++ function STTHelpers::configSubstTagger;
+#pragma link C++ function STTHelpers::configSubstTagger;
 
 
 #endif

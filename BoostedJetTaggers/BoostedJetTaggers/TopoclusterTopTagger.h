@@ -1,4 +1,9 @@
 // for editors : this file is -*- C++ -*-
+
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #ifndef TOPOCLUSTERTOPTAGGER_H_
 #define TOPOCLUSTERTOPTAGGER_H_
 #include "BoostedJetTaggers/JSSTaggerBase.h"

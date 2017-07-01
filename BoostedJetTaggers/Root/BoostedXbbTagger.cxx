@@ -1,3 +1,7 @@
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 /**************************************************************
 //
 //   Created:       18 November 2016
@@ -17,8 +21,6 @@
 #include "PathResolver/PathResolver.h"
 
 #include "TEnv.h"
-
-#define CERRD std::cout<<"SAMERROR : "<<__FILE__<<"  "<<__LINE__<<std::endl;
 
 // make all static accessors static to this file, like extern but hip
 SG::AuxElement::ConstAccessor<ElementLink<xAOD::JetContainer>> BoostedXbbTagger::parent("Parent");
@@ -209,6 +211,7 @@ StatusCode BoostedXbbTagger::initialize()
     m_accept.addCut( "PassMassLow"         , "True if the jet passes the lower mass bound : mJet>MCutLow"       );
     m_accept.addCut( "PassMassHigh"        , "True if the jet passes the upper mass bound : mJet<MCutHigh"      );
     m_accept.addCut( "PassBTag"            , "True if the jet is flagged with b-tagging - one or two tags depending on configuration"          );
+    // the substructure selection is not commissioned at this point, but will be added in the future
     //m_accept.addCut( "PassJSS"             , "True if the jet passes the substructure cut"           ); //not enabled for the moment
 
     //loop over and print out the cuts that have been configured
@@ -225,7 +228,6 @@ StatusCode BoostedXbbTagger::finalize(){
 
 Root::TAccept BoostedXbbTagger::tag(const xAOD::Jet& jet) const
 {
-CERRD
   ATH_MSG_DEBUG( ": Obtaining Standard Xbb tagger result" );
 
   // reset the TAccept cut results to false
@@ -275,7 +277,7 @@ CERRD
   // Step 1
   // std::vector<const xAOD::Jet*> associated_trackJets;
   std::vector<ElementLink<xAOD::IParticleContainer> > associated_trackJets;
-CERRD
+
   // get the track jets from the parent
   bool problemWithParent = false;
   ElementLink<xAOD::JetContainer> parentEL;
@@ -294,7 +296,7 @@ CERRD
     }
     associated_trackJets = ghostMatchedTrackJets(*parentJet);
   }
-CERRD
+
   // decorate all trackjets by default
   // filter out the track jets we do not want (pT > 10 GeV and |eta| < 2.5 and at least 2 constituents)
   std::vector<ElementLink<xAOD::IParticleContainer> > associated_trackJets_filtered;
@@ -318,7 +320,7 @@ CERRD
     ATH_MSG_DEBUG("Number of associated track jets is zero."); // only happens when b-tagging is switched off.
     m_accept.setCutResult("ValidJetContent" , false);
   }
-CERRD
+
   // Step 2
   int num_bTags(0);
   int num_trackJets(0);
@@ -345,7 +347,7 @@ CERRD
   }
   if (m_decorate)
     trackJetsInFatJet(jet) = associated_trackJets_links;
-CERRD
+
   // Step 3
   std::vector<xAOD::Muon*> calibratedMuons;
   std::vector<const xAOD::Muon*> matched_muons;
@@ -410,7 +412,7 @@ CERRD
       }
       if (m_decorate) muonsInFatJetLink(jet) = matched_muons_links;
   }
-CERRD
+
   // Step 4
   xAOD::JetFourMom_t corrected_jet_p4 = getMuonCorrectedJetFourMom(jet, matched_muons, m_muonCorrectionScheme);
   TLorentzVector corrected_jet(corrected_jet_p4.x(), corrected_jet_p4.y(), corrected_jet_p4.z(), corrected_jet_p4.t());
@@ -418,7 +420,7 @@ CERRD
   for(xAOD::Muon * muonPointer : calibratedMuons)
     delete muonPointer;
   if (m_decorate) correctedJetDecor(jet) = corrected_jet;
-CERRD
+
   // Step 5
   float jetMassMin = m_jetMassMinTF1->Eval(corrected_jet.Pt()/1.e3);
   float jetMassMax = m_jetMassMaxTF1->Eval(corrected_jet.Pt()/1.e3);
@@ -433,7 +435,7 @@ CERRD
       jetMassMinDecor(jet) = jetMassMin;
       jetMassMaxDecor(jet) = jetMassMax;
   }
-CERRD
+
   // step 6
   float jsscut(0.);
   float jssvar(0.);
@@ -453,7 +455,7 @@ CERRD
   else {
     ATH_MSG_DEBUG("Jet FAILED the substructure cut. " << m_jetSubVarStr.c_str() << "=" << jssvar << ", cut=" << jsscut);
   }
-CERRD
+
   // set the bits of the TAccept
   if(pass_lowmass)
     m_accept.setCutResult( "PassMassLow"    , true);
@@ -464,6 +466,7 @@ CERRD
   if(pass_btag)
     m_accept.setCutResult( "PassBTag"       , true);
 
+// the substructure selection is not commissioned at this point, but will be added in the future
 //   if(pass_jss)
 //     m_accept.setCutResult( "PassJSS"             , true);  //not enabled for the moment
 

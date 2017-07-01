@@ -1,4 +1,9 @@
 // for editors : this file is -*- C++ -*-
+
+/*
+  Copyright (C) 2002-2017 CERN for the benefit of the ATLAS collaboration
+*/
+
 #ifndef BOOSTEDJETSTAGGERS_JSSTAGGERBase_H_
 #define BOOSTEDJETSTAGGERS_JSSTAGGERBase_H_
 
