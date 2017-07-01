@@ -65,22 +65,10 @@ double TopoclusterTransform::phi_shift_and_scale(double clust_phi, double jet_ph
 
 
 double TopoclusterTransform::calculate_theta_for_rotations(std::map<std::string,double> clusters){
-
-  double phi_axis = 0.0;
-  double eta_axis = 0.0;
-  double pt_axis = 0.0;
-  double y_axis = 0.0;
-  double z_axis = 0.0;
-
   // Use secondary topocluster for rotation
-  double pt_i = clusters["clust_1_pt"];
-  double eta_i = clusters["clust_1_eta"];
-  double phi_i = clusters["clust_1_phi"];
-
   // Calculate cartesian coordinates
-  // double x_axis = pt_axis * cos(phi_axis);
-  double y_axis = pt_axis * sin(phi_axis);
-  double z_axis = pt_axis * sinh(eta_axis);
+  double y_axis = clusters["clust_1_pt"] * sin(clusters["clust_1_phi"]);
+  double z_axis = clusters["clust_1_pt"] * sinh(clusters["clust_1_eta"]);
 
   return atan2(y_axis, z_axis) + M_PI / 2;
 }

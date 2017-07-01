@@ -1,12 +1,13 @@
-#remove the directory where you previously output your test to
-rm -r OutputDirectory
+# xAH_run.py -f \
+# --files /afs/cern.ch/work/m/meehan/public/BoostedJetTaggersDev/mc15_13TeV.301267.Pythia8EvtGen_A14NNPDF23LO_Wprime_WZqqqq_m2000.merge.DAOD_JETM6.e3749_s2608_s2183_r7772_r7676_p2794/DAOD_JETM6.09386916._000001.pool.root.1  \
+# --nevents 1 \
+# --config JSSTutorial/scripts/config_Tutorial1.py \
+# --submitDir OutputDirectory \
+# direct
 
-#run your new test
-#xAH_run.py --files /afs/cern.ch/work/m/meehan/public/HCW2016Tutorial/InputFile/mc15_13TeV.301256.Pythia8EvtGen_A14NNPDF23LO_Wprime_WZqqqq_m800.merge.DAOD_JETM8.e3743_s2608_s2183_r7772_r7676_p2613/DAOD_JETM8* \
-
-xAH_run.py --files /afs/cern.ch/work/m/meehan/public/JSSTutorial2016/mc15_13TeV.361024.Pythia8EvtGen_A14NNPDF23LO_jetjet_JZ4W.merge.DAOD_JETM8.e3668_s2576_s2132_r7267_r6282_p2528/DAOD_JETM8* \
+xAH_run.py -f \
+--files /afs/cern.ch/work/m/meehan/public/BoostedJetTaggersDev/mc15_13TeV.301497.MadGraphPythia8EvtGen_A14NNPDF23LO_RS_G_hh_bbbb_c10_M1200.merge.DAOD_FTAG1.e3820_s2608_s2183_r7772_r7676_p2711/DAOD_FTAG1.08911396._000010.pool.root.1 \
 --nevents 1 \
---config config_example.py \
--v \
+--config JSSTutorial/scripts/config_Tutorial1.py \
 --submitDir OutputDirectory \
 direct

@@ -258,13 +258,55 @@ EL::StatusCode JSSTutorialAlgo :: initialize ()
   m_jetCalibration->initializeTool(name);
 
 
+  // Instantiation (if not using some ToolHandle)
+  std::cout<<"Initializing WZ Tagger"<<std::endl;
+  ASG_SET_ANA_TOOL_TYPE( m_smoothedWZTagger, SmoothedWZTagger);
+  m_smoothedWZTagger.setName("SmoothedWZTagger");
+  m_smoothedWZTagger.setProperty( "ConfigFile",   "SmoothedWZTaggers/SmoothedContainedWTagger_AntiKt10LCTopoTrimmed_FixedSignalEfficiency50_MC15c_20161215.dat");
+  m_smoothedWZTagger.retrieve();
+
+  // Instantiation (if not using some ToolHandle)
+  std::cout<<"Initializing top Tagger"<<std::endl;
+  ASG_SET_ANA_TOOL_TYPE( m_smoothedTopTagger, SmoothedTopTagger);
+  m_smoothedTopTagger.setName("SmoothedTopTagger");
+  m_smoothedTopTagger.setProperty( "ConfigFile",   "SmoothedTopTaggers/SmoothedTopTagger_AntiKt10LCTopoTrimmed_MassTau32FixedSignalEfficiency50_MC15c_20161209.dat");
+  m_smoothedTopTagger.retrieve();
+
   // Instantiation (if not using some ToolHandle )
-  std::cout<<"Initializing DNN top Tagger"<<std::endl;
-  m_topoclusterTopTagger = nullptr;
-  m_topoclusterTopTagger = std::unique_ptr<TopoclusterTopTagger>( new TopoclusterTopTagger( "DNN" ) );
-  m_topoclusterTopTagger->setProperty( "ConfigFile",   "TopoclusterTopTagger/TopoclusterTopTagger_AntiKt10LCTopoTrimmed_TopQuark_MC15c_20170511_NOTFORANALYSIS.dat");
-  // m_topoclusterTopTagger->setProperty( "TopTagger",   true); // maybe put in config file
-  m_topoclusterTopTagger->initialize();
+  std::cout<<"Initializing Xbb Tagger"<<std::endl;
+  ASG_SET_ANA_TOOL_TYPE( m_BoostedXbbTagger, BoostedXbbTagger);
+  m_BoostedXbbTagger.setName("BoostedXbbTagger");
+  m_BoostedXbbTagger.setProperty( "ConfigFile",   "XbbTagger/XbbTagger_AntiKt10LCTopoTrimmed_1BTag_MC15c_20161118.dat");
+  m_BoostedXbbTagger.retrieve();
+
+  // Instantiation (if not using some ToolHandle )
+  std::cout<<"Initializing DNN Tagger"<<std::endl;
+  ASG_SET_ANA_TOOL_TYPE( m_JSSWTopTaggerDNN, JSSWTopTaggerDNN);
+  m_JSSWTopTaggerDNN.setName("JSSWTopTaggerDNN");
+  m_JSSWTopTaggerDNN.setProperty( "ConfigFile",   "JSSWTopTaggerDNN/JSSDNNTagger_AntiKt10LCTopoTrimmed_TopQuark_MC15c_20170511_NOTFORANALYSIS.dat");
+  m_JSSWTopTaggerDNN.retrieve();
+
+  //Instantiation (if not using some ToolHandle )
+  std::cout<<"Initializing BDT Tagger"<<std::endl;
+  ASG_SET_ANA_TOOL_TYPE( m_JSSWTopTaggerBDT, JSSWTopTaggerBDT);
+  m_JSSWTopTaggerBDT.setName("JSSWTopTaggerBDT");
+  m_JSSWTopTaggerBDT.setProperty( "ConfigFile",   "JSSWTopTaggerBDT/JSSBDTTagger_AntiKt10LCTopoTrimmed_TopQuarkInclusive_MC15c_20170511_NOTFORANALYSIS.dat");
+  m_JSSWTopTaggerBDT.retrieve();
+
+  //Instantiation (if not using some ToolHandle )
+  std::cout<<"Initializing Topocluster Top Tagger"<<std::endl;
+  ASG_SET_ANA_TOOL_TYPE( m_TopoclusterTopTagger, TopoclusterTopTagger);
+  m_TopoclusterTopTagger.setName("TopoclusterTopTagger");
+  m_TopoclusterTopTagger.setProperty( "ConfigFile",   "TopoclusterTopTagger/TopoclusterTopTagger_AntiKt10LCTopoTrimmed_TopQuark_MC15c_20170511_NOTFORANALYSIS.dat");
+  m_TopoclusterTopTagger.retrieve();
+
+  //Instantiation (if not using some ToolHandle )
+//   std::cout<<"Initializing q/g Tagger"<<std::endl;
+//   ASG_SET_ANA_TOOL_TYPE( m_JetQGTagger, JetQGTagger);
+//   m_JetQGTagger.setName("JetQGTagger");
+//   m_JetQGTagger.setProperty( "NTrackCut",   20);
+//   m_JetQGTagger.retrieve();
+
 
   ATH_MSG_INFO( "JSSTutorialAlgo Interface succesfully initialized!" );
   return EL::StatusCode::SUCCESS;
@@ -296,241 +338,103 @@ EL::StatusCode JSSTutorialAlgo :: execute ()
 
   int ijet=0;
   for(const xAOD::Jet* jet : * myJets ){
-    // don't store if doesn't pass cuts
-    // EXOT_PT_CUT
-    if (jet->pt() < 450e3)
-      continue;
-    // MAX_ETA
-    if (abs(jet->eta()) > 2.0)
-      continue;
-
     ijet++;
+
+    std::cout<<"Jet # "<<ijet<<"   ";
+    // try{
+    //   std::vector<xAOD::JetConstituent> clusters = jet->getConstituents().asSTLVector();
+    //   std::cout<<"Num clusters # "<<clusters.size()<<std::endl;
+    // } catch (...){
+    //   std::cout<<"Failed "<< std::endl;
+    //   continue;
+    // }
+    // continue;
+
+    static SG::AuxElement::ConstAccessor<float>    acc_D2   ("D2");
+    static SG::AuxElement::ConstAccessor<float>    acc_ECF1 ("ECF1");
+    static SG::AuxElement::ConstAccessor<float>    acc_ECF2 ("ECF2");
+    static SG::AuxElement::ConstAccessor<float>    acc_ECF3 ("ECF3");
+
 
     std::cout<<std::endl<<"Uncalibrated Jet : "<<ijet<<std::endl;
     std::cout<<jet->pt()<<"  "<<jet->eta()<<std::endl;
 
-    // xAOD::Jet * caljet = 0;
-    // std::cout<<"Applying Calibration"<<std::endl;
-    // m_jetCalibration->calibratedCopy(*jet,caljet); //make a calibrated copy, assuming a copy hasn't been made already, alternative is:
+    xAOD::Jet * caljet = 0;
+    std::cout<<"Applying Calibration"<<std::endl;
+    m_jetCalibration->calibratedCopy(*jet,caljet); //make a calibrated copy, assuming a copy hasn't been made already, alternative is:
 
-    // std::cout<<std::endl<<"Calibrated Jet : "<<ijet<<std::endl;
-    // std::cout<<caljet->pt()<<"  "<<caljet->eta()<<std::endl;
+    float D2 = acc_ECF3(*caljet) * pow(acc_ECF1(*caljet), 3.0) / pow(acc_ECF2(*caljet), 3.0);
+
+
+    std::cout<<std::endl<<"Calibrated Jet : "<<ijet<<std::endl;
+    std::cout<<caljet->pt()<<"  "<<caljet->eta()<<"  "<<caljet->m()<<"  "<<D2<<std::endl;
+
+    std::cout<<"Testing W Tagger "<<std::endl;
+    const Root::TAccept& res_wz = m_smoothedWZTagger->tag( *caljet );
+    std::cout<<"RunningTag : "<<res_wz<<std::endl;
+    std::cout<<"result(W) d2pass       = "<<res_wz.getCutResult("PassD2")<<std::endl;
+    std::cout<<"result(W) masspasslow  = "<<res_wz.getCutResult("PassMassLow")<<std::endl;
+    std::cout<<"result(W) masspasshigh = "<<res_wz.getCutResult("PassMassHigh")<<std::endl;
+
+    std::cout<<"Testing top Tagger "<<std::endl;
+    const Root::TAccept& res_top = m_smoothedTopTagger->tag( *caljet );
+    std::cout<<"RunningTag : "<<res_top<<std::endl;
+    std::cout<<"result(top) var1= "<<res_top.getCutResult("PassMass")<<std::endl;
+    std::cout<<"result(top) var2= "<<res_top.getCutResult("PassTau32")<<std::endl;
+
+
+    std::cout<<"Testing Xbb Tagger "<<std::endl;
+    const Root::TAccept& res_xbb = m_BoostedXbbTagger->tag( *caljet );
+    std::cout<<"RunningTag : "<<res_xbb<<std::endl;
+    std::cout<<"result(Xbb) masslow  = "<<res_xbb.getCutResult("PassMassLow")<<std::endl;
+    std::cout<<"result(Xbb) masshigh = "<<res_xbb.getCutResult("PassMassHigh")<<std::endl;
+    std::cout<<"result(Xbb) btag     = "<<res_xbb.getCutResult("PassBTag")<<std::endl;
+    std::cout<<"result(Xbb) jss      = "<<res_xbb.getCutResult("PassJSS")<<std::endl;
+
 
     std::cout<<"Testing DNN Tagger "<<std::endl;
-    // The topocluster DNN seems to require the uncalibrated jet
-    // TopoclusterTopTagger::Result h_res = m_topoclusterTopTagger->result( *caljet , true ); // 2nd argument enables jet decorations
-    Root::TAccept h_res = m_topoclusterTopTagger->tag( *jet); // 2nd argument enables jet decorations
-    std::cout<<"result(DNN) = "<<h_res<<std::endl;
-  }
+    const Root::TAccept& res_dnn = m_JSSWTopTaggerDNN->tag( *caljet );
+    std::cout<<"RunningTag = "<<res_dnn<<std::endl;
+    std::cout<<"result(DNN) mass  = "<<res_dnn.getCutResult("PassMass")<<std::endl;
+    std::cout<<"result(DNN) score = "<<res_dnn.getCutResult("PassScore")<<std::endl;
+    static SG::AuxElement::ConstAccessor<float>    acc_DNNScore("DNNTaggerScoreTopQuark");
+    if(!acc_DNNScore.isAvailable(*caljet)){
+      std::cout<<"DNN moment not existent"<<std::endl;
+    }
+    std::cout<<"value(DNN)  = "<<acc_DNNScore(*caljet)<<std::endl;
 
 
-/*
-  ///////////////////////////
-  // Build Jets
-  // In native fastjet this is done by passing a vector of PseudoJets to a ClusterSequence and
-  // retrieving from this a vector of PseudoJets which are themselves the jets
-  ///////////////////////////
-
-  // Obtain the set of clusters from StoreGate
-  const xAOD::CaloClusterContainer* clusters;
-  RETURN_CHECK("JSSTutorialAlgo::execute()", HelperFunctions::retrieve(clusters, "CaloCalTopoClusters", m_event, m_store,  m_verbose), "");
-  std::cout<<"NumClus: "<<clusters->size()<<std::endl;
-
-  //reformat the vector of clusters into a vector of fastjet::PseudoJets
-  std::vector<fastjet::PseudoJet> jet_inputs;
-  TLorentzVector temp_p4;
-  for (const xAOD::CaloCluster* clus : *clusters) {
-
-    if(clus->e()<0) continue; // Remove neg energy clusters !
-    std::cout<<"cluster(pt,m,eta,phi): pt="<<clus->pt()/1000.
-                                  <<"  m="<<clus->m()/1000.
-                                  <<"  eta="<<clus->eta()
-                                  <<"  phi="<<clus->phi()
-                                  <<std::endl;
-
-    //temp_p4.SetPtEtaPhiM(clus->pt()/1000., clus->eta(), clus->phi(), clus->m()/1000.);
-    temp_p4.SetPtEtaPhiM(clus->pt(), clus->eta(), clus->phi(), clus->m());
-
-    jet_inputs.push_back(fastjet::PseudoJet(temp_p4.Px(),temp_p4.Py(),temp_p4.Pz(),temp_p4.E()));
-  }
-
-  //define the type of jets you will build (http://fastjet.fr/repo/doxygen-3.0.3/classfastjet_1_1JetDefinition.html)
-  fastjet::JetDefinition jet_def = fastjet::JetDefinition(fastjet::antikt_algorithm, 1.0, fastjet::E_scheme, fastjet::Best);
-
-  //define the cluster sequence (http://fastjet.fr/repo/doxygen-3.0.0/classfastjet_1_1ClusterSequence.html)
-  fastjet::ClusterSequence clust_seq = fastjet::ClusterSequence(jet_inputs, jet_def);
-
-  //get the jets with some pt cut, in this case pt>0 and sorted by pt
-  std::vector<fastjet::PseudoJet> pjets =  fastjet::sorted_by_pt(clust_seq.inclusive_jets(0.0) );
-
-  /////////////////////////////////////////
-  // Loop over those jets and perform a few basic calculation
-  //
-  // GROOMING
-  // 1) Trimming
-  // 2) SoftDrop
-  // 3) Pruning
-  //
-  // JSS MOMENT CALCULATION
-  // 1) D2 from ECFs
-  // 2) Tau32 from NSubjettiness
-  /////////////////////////////////////////
+    std::cout<<"Testing BDT Tagger "<<std::endl;
+    const Root::TAccept& res_bdt = m_JSSWTopTaggerBDT->tag( *caljet );
+    std::cout<<"RunningTag = "<<res_bdt<<std::endl;
+    std::cout<<"result(BDT) mass  = "<<res_bdt.getCutResult("PassMass")<<std::endl;
+    std::cout<<"result(BDT) score = "<<res_bdt.getCutResult("PassScore")<<std::endl;
+    static SG::AuxElement::ConstAccessor<float>    acc_BDTScore("BDTTaggerScoreTopQuark");
+    if(!acc_BDTScore.isAvailable(*caljet)){
+      std::cout<<"BDT moment not existent"<<std::endl;
+    }
+    std::cout<<"value(BDT)  = "<<acc_BDTScore(*caljet)<<std::endl;
 
 
-  ////////////////////////
-  //configure pruning tool
-  //http://fastjet.fr/repo/doxygen-3.0.3/classfastjet_1_1Pruner.html
-  ////////////////////////
-  fastjet::Pruner tool_Pruning(fastjet::cambridge_algorithm, 0.1, 0.5);
-
-  ////////////////////////
-  //configure soft drop tool
-  //http://fastjet.hepforge.org/svn/contrib/contribs/RecursiveTools/tags/1.0.0/SoftDrop.hh
-  ////////////////////////
-  fastjet::contrib::SoftDrop tool_SoftDrop(0.0, 0.1);
-
-  ////////////////////////
-  //configure trimming tool
-  //http://fastjet.fr/repo/doxygen-3.2.1/classfastjet_1_1Filter.html
-  ////////////////////////
-  fastjet::Transformer *trimmer = new fastjet::Filter(fastjet::JetDefinition(fastjet::kt_algorithm, 0.2), fastjet::SelectorPtFractionMin(0.05) );
-  const fastjet::Transformer &tool_Trimming = *trimmer;
-
-  ////////////////////////
-  //D2 calculation from ECF
-  //http://fastjet.hepforge.org/svn/contrib/contribs/EnergyCorrelator/tags/1.1.0/example.cc
-  ////////////////////////
-  fastjet::contrib::EnergyCorrelator ECF1(1, 1.0, fastjet::contrib::EnergyCorrelator::pt_R);
-  fastjet::contrib::EnergyCorrelator ECF2(2, 1.0, fastjet::contrib::EnergyCorrelator::pt_R);
-  fastjet::contrib::EnergyCorrelator ECF3(3, 1.0, fastjet::contrib::EnergyCorrelator::pt_R);
-
-  ////////////////////////
-  //Define Nsubjettiness functions for beta = 1.0 using one-pass WTA KT axes
-  //http://fastjet.hepforge.org/svn/contrib/contribs/Nsubjettiness/tags/2.2.4/example_basic_usage.cc
-  ////////////////////////
-  fastjet::contrib::Nsubjettiness nSub1_beta1(1, fastjet::contrib::OnePass_WTA_KT_Axes(), fastjet::contrib::UnnormalizedMeasure(1.0));
-  fastjet::contrib::Nsubjettiness nSub2_beta1(2, fastjet::contrib::OnePass_WTA_KT_Axes(), fastjet::contrib::UnnormalizedMeasure(1.0));
-  fastjet::contrib::Nsubjettiness nSub3_beta1(3, fastjet::contrib::OnePass_WTA_KT_Axes(), fastjet::contrib::UnnormalizedMeasure(1.0));
-
-  //temporary variables
-  float d2    = 0.0;
-  float tau32 = 0.0;
-
-  //loop over the vector of jets
-  for(auto jet_Ungroomed : pjets){
-
-    //only examine jets above 200 GeV
-    if(jet_Ungroomed.pt()<200000.0)
-      continue;
-
-    std::cout<<std::endl<<"JetPt : "<<jet_Ungroomed.pt()<<std::endl;
-
-    //Ungroomed
-    std::cout<<"Ungroomed(mass):         "<<jet_Ungroomed.m()<<std::endl;
-    std::cout<<"ECF1:      "<<ECF1(jet_Ungroomed)<<std::endl;
-    std::cout<<"ECF2:      "<<ECF2(jet_Ungroomed)<<std::endl;
-    std::cout<<"ECF3:      "<<ECF3(jet_Ungroomed)<<std::endl;
-    std::cout<<"Tau1WTA:   "<<nSub1_beta1(jet_Ungroomed)<<std::endl;
-    std::cout<<"Tau2WTA:   "<<nSub2_beta1(jet_Ungroomed)<<std::endl;
-    std::cout<<"Tau3WTA:   "<<nSub3_beta1(jet_Ungroomed)<<std::endl;
-
-    d2    = ECF3(jet_Ungroomed) * pow(ECF1(jet_Ungroomed),3) / pow(ECF2(jet_Ungroomed),3);
-    tau32 = nSub3_beta1(jet_Ungroomed)/nSub2_beta1(jet_Ungroomed);
-
-    h_jet_Ungroomed_pt   ->Fill(jet_Ungroomed.pt()/1000.0);
-    h_jet_Ungroomed_m    ->Fill(jet_Ungroomed.m()/1000.0);
-    h_jet_Ungroomed_d2   ->Fill(d2);
-    h_jet_Ungroomed_tau32->Fill(tau32);
-
-    tvar_jet_Ungroomed_pt    = jet_Ungroomed.pt()/1000.0;
-    tvar_jet_Ungroomed_m     = jet_Ungroomed.m()/1000.0;
-    tvar_jet_Ungroomed_d2    = d2;
-    tvar_jet_Ungroomed_tau32 = tau32;
+    std::cout<<"Testing TTT Tagger "<<std::endl;
+    const Root::TAccept& res_ttt = m_TopoclusterTopTagger->tag( *caljet );
+    std::cout<<"RunningTag = "<<res_ttt<<std::endl;
+    std::cout<<"result(TTT) mass  = "<<res_ttt.getCutResult("PassMass")<<std::endl;
+    std::cout<<"result(TTT) score = "<<res_ttt.getCutResult("PassScore")<<std::endl;
+    static SG::AuxElement::ConstAccessor<float>    acc_TTTScore("TopoclusterTopTaggerScoreTopQuark");
+    if(!acc_TTTScore.isAvailable(*caljet)){
+      std::cout<<"TTT moment not existent"<<std::endl;
+    }
+    std::cout<<"value(TTT)  = "<<acc_TTTScore(*caljet)<<std::endl;
 
 
-    //Trimmed
-    fastjet::PseudoJet jet_Trimmed;
-    jet_Trimmed = tool_Trimming(jet_Ungroomed);
-    std::cout<<"Trimmed(mass):         "<<jet_Trimmed.m()<<std::endl;
-    std::cout<<"ECF1:      "<<ECF1(jet_Trimmed)<<std::endl;
-    std::cout<<"ECF2:      "<<ECF2(jet_Trimmed)<<std::endl;
-    std::cout<<"ECF3:      "<<ECF3(jet_Trimmed)<<std::endl;
-    std::cout<<"Tau1WTA:   "<<nSub1_beta1(jet_Trimmed)<<std::endl;
-    std::cout<<"Tau2WTA:   "<<nSub2_beta1(jet_Trimmed)<<std::endl;
-    std::cout<<"Tau3WTA:   "<<nSub3_beta1(jet_Trimmed)<<std::endl;
+//     std::cout<<"Testing JetQG Tagger "<<std::endl;
+//     const Root::TAccept& res_qg = m_JetQGTagger->tag( *caljet );
+//     std::cout<<"RunningTag : "<<res_qg<<std::endl;
+//     std::cout<<"result(qg) q = "<<res_qg.getCutResult("QuarkJetTag")<<std::endl;
+//     std::cout<<"result(qg) g = "<<res_qg.getCutResult("GluonJetTag")<<std::endl;
 
-    d2    = ECF3(jet_Trimmed) * pow(ECF1(jet_Trimmed),3) / pow(ECF2(jet_Trimmed),3);
-    tau32 = nSub3_beta1(jet_Trimmed)/nSub2_beta1(jet_Trimmed);
-
-    h_jet_Trimmed_pt   ->Fill(jet_Trimmed.pt()/1000.0);
-    h_jet_Trimmed_m    ->Fill(jet_Trimmed.m()/1000.0);
-    h_jet_Trimmed_d2   ->Fill(d2);
-    h_jet_Trimmed_tau32->Fill(tau32);
-
-    tvar_jet_Trimmed_pt    = jet_Trimmed.pt()/1000.0;
-    tvar_jet_Trimmed_m     = jet_Trimmed.m()/1000.0;
-    tvar_jet_Trimmed_d2    = d2;
-    tvar_jet_Trimmed_tau32 = tau32;
-
-
-    //SoftDrop
-    fastjet::PseudoJet jet_SoftDrop;
-    jet_SoftDrop = tool_SoftDrop(jet_Ungroomed);
-    std::cout<<"SoftDrop(mass):      "<<jet_SoftDrop.m()<<std::endl;
-    std::cout<<"ECF1:      "<<ECF1(jet_SoftDrop)<<std::endl;
-    std::cout<<"ECF2:      "<<ECF2(jet_SoftDrop)<<std::endl;
-    std::cout<<"ECF3:      "<<ECF3(jet_SoftDrop)<<std::endl;
-    std::cout<<"Tau1WTA:   "<<nSub1_beta1(jet_SoftDrop)<<std::endl;
-    std::cout<<"Tau2WTA:   "<<nSub2_beta1(jet_SoftDrop)<<std::endl;
-    std::cout<<"Tau3WTA:   "<<nSub3_beta1(jet_SoftDrop)<<std::endl;
-
-    d2    = ECF3(jet_SoftDrop) * pow(ECF1(jet_SoftDrop),3) / pow(ECF2(jet_SoftDrop),3);
-    tau32 = nSub3_beta1(jet_SoftDrop)/nSub2_beta1(jet_SoftDrop);
-
-    h_jet_SoftDrop_pt   ->Fill(jet_SoftDrop.pt()/1000.0);
-    h_jet_SoftDrop_m    ->Fill(jet_SoftDrop.m()/1000.0);
-    h_jet_SoftDrop_d2   ->Fill(d2);
-    h_jet_SoftDrop_tau32->Fill(tau32);
-
-    tvar_jet_SoftDrop_pt    = jet_SoftDrop.pt()/1000.0;
-    tvar_jet_SoftDrop_m     = jet_SoftDrop.m()/1000.0;
-    tvar_jet_SoftDrop_d2    = d2;
-    tvar_jet_SoftDrop_tau32 = tau32;
-
-
-    //Pruned
-    fastjet::PseudoJet jet_Pruned;
-    jet_Pruned = tool_Pruning(jet_Ungroomed);
-    std::cout<<"Pruned(mass):         "<<jet_Pruned.m()<<std::endl;
-    std::cout<<"ECF1:      "<<ECF1(jet_Pruned)<<std::endl;
-    std::cout<<"ECF2:      "<<ECF2(jet_Pruned)<<std::endl;
-    std::cout<<"ECF3:      "<<ECF3(jet_Pruned)<<std::endl;
-    std::cout<<"Tau1WTA:   "<<nSub1_beta1(jet_Pruned)<<std::endl;
-    std::cout<<"Tau2WTA:   "<<nSub2_beta1(jet_Pruned)<<std::endl;
-    std::cout<<"Tau3WTA:   "<<nSub3_beta1(jet_Pruned)<<std::endl;
-
-    d2    = ECF3(jet_Pruned) * pow(ECF1(jet_Pruned),3) / pow(ECF2(jet_Pruned),3);
-    tau32 = nSub3_beta1(jet_Pruned)/nSub2_beta1(jet_Pruned);
-
-    h_jet_Pruned_pt   ->Fill(jet_Pruned.pt()/1000.0);
-    h_jet_Pruned_m    ->Fill(jet_Pruned.m()/1000.0);
-    h_jet_Pruned_d2   ->Fill(d2);
-    h_jet_Pruned_tau32->Fill(tau32);
-
-    tvar_jet_Pruned_pt    = jet_Pruned.pt()/1000.0;
-    tvar_jet_Pruned_m     = jet_Pruned.m()/1000.0;
-    tvar_jet_Pruned_d2    = d2;
-    tvar_jet_Pruned_tau32 = tau32;
-
-
-    //////////////////////////////
-    //Fill the jet as a new entry into the output tree
-    //////////////////////////////
-    outTree->Fill();
-
-  }
-*/
-
+}
 
   return EL::StatusCode::SUCCESS;
 

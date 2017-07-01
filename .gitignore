@@ -36,3 +36,4 @@ cmake-build-debug/
 run/*.csv
 run/run.sh.*
 
+RootCore.par

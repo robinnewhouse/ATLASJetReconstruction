@@ -1,3 +1,0 @@
-setupATLAS
-rcsetup
-rc build
