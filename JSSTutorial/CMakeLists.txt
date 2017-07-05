@@ -1,9 +1,9 @@
 ################################################################################
-# Build configuration for BoostedJetTaggers
+# Build configuration for JSSTutorial
 ################################################################################
 
 # Declare the name of the package:
-atlas_subdir( BoostedJetTaggers )
+atlas_subdir( JSSTutorial )
 
 # Extra dependencies, based on the environment:
 set( extra_deps )
